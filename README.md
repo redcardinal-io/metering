@@ -1,1 +1,1 @@
-## Metering componet of RedCardinal
+## Metering component of RedCardinal
