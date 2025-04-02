@@ -1,0 +1,92 @@
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.9-alpine
+    ports:
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9009:9009"
+    environment:
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: default
+      CLICKHOUSE_DB: openmeter
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://clickhouse:8123/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  ch-ui:
+    image: ghcr.io/caioricciuti/ch-ui:latest
+    profiles:
+      - dev
+    depends_on:
+      - clickhouse
+    restart: always
+    ports:
+      - "${CH_UI_PORT:-5521}:5521"
+    environment:
+      VITE_CLICKHOUSE_URL: http://localhost:8123
+      VITE_CLICKHOUSE_USER: default
+      VITE_CLICKHOUSE_PASS: default
+
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=redcardinal
+      - POSTGRES_PASSWORD=redcardinal
+      - POSTGRES_DB=redcardinal
+      - DB_NAMESPACE=auth
+
+  redpanda:
+    command:
+      - redpanda
+      - start
+      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --rpc-addr redpanda:33145
+      - --advertise-rpc-addr redpanda:33145
+      - --mode dev-container
+      - --smp 1
+      - --default-log-level=info
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.1
+    container_name: redpanda
+    volumes:
+      - ./volumes/redpanda:/var/lib/redpanda/data
+    ports:
+      - 19092:19092
+    healthcheck:
+      test: ["CMD", "rpm", "-q", "redpanda"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redpanda-console:
+    container_name: redpanda-console
+    image: docker.redpanda.com/redpandadata/console:v2.7.0
+    entrypoint: /bin/sh
+    command: -c 'echo "$$CONSOLE_CONFIG_FILE" > /tmp/config.yml; /app/console'
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["redpanda:9092"]
+          schemaRegistry:
+            enabled: true
+            urls: ["http://redpanda:8081"]
+        redpanda:
+          adminApi:
+            enabled: true
+            urls: ["http://redpanda:9644"]
+    ports:
+      - 8080:8080
+    depends_on:
+      - redpanda
