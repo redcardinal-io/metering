@@ -6,9 +6,12 @@ import (
 	"github.com/gofiber/contrib/fiberzap"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/redcardinal-io/metering/application/services"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
+	"github.com/redcardinal-io/metering/infrastructure/kafka"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
+	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/events"
 	"go.uber.org/zap"
 )
 
@@ -41,8 +44,27 @@ func ServeHttp() error {
 		Logger: logger.Sugar().Desugar(),
 	}))
 
+	// initialize repositories
+	producer, err := kafka.NewKafkaProducerRepository(logger, config.Kafka)
+	if err != nil {
+		return fmt.Errorf("error creating Kafka producer: %w", err)
+	}
+
+	// intialize services
+	producerService := services.NewProducerService(producer, logger)
+
 	// Register routes
-	routes.RegisterRoutes(app, logger)
+	routes := routes.NewHTTPHandler(logger)
+	routes.RegisterRoutes(app)
+
+	// register v1 routes
+	v1 := app.Group("/v1")
+	eventsRoutes := events.NewHTTPHandler(events.HttpHandlerParams{
+		PublishTopic: config.Kafka.KafkaRawEventsTopic,
+		Producer:     producerService,
+		Logger:       logger,
+	})
+	eventsRoutes.RegisterRoutes(v1)
 
 	// Start server
 	return app.Listen(":" + config.Server.Port)

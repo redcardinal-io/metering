@@ -13,13 +13,12 @@ type httpHandler struct {
 	logger *logger.Logger
 }
 
-func newHTTPHandler(logger *logger.Logger) *httpHandler {
+func NewHTTPHandler(logger *logger.Logger) *httpHandler {
 	return &httpHandler{
 		logger: logger,
 	}
 }
 
-func RegisterRoutes(app *fiber.App, logger *logger.Logger) {
-	handler := newHTTPHandler(logger)
-	app.Get("/health", handler.healthCheck)
+func (h *httpHandler) RegisterRoutes(app *fiber.App) {
+	app.Get("/health", h.healthCheck)
 }
