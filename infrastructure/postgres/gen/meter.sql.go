@@ -289,20 +289,18 @@ func (q *Queries) ListMetersCursorPaginated(ctx context.Context, arg ListMetersC
 const listMetersCursorPaginatedByEventType = `-- name: ListMetersCursorPaginatedByEventType :many
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
 WHERE event_type = $1 and 
-    CASE WHEN $4::boolean THEN 
-        (created_at, id) < ($5, $6::uuid)
+    CASE WHEN $3::boolean THEN 
+        (created_at, id) < ($4, $5::uuid)
     ELSE 
         TRUE 
     END
-ORDER BY created_at DESC
+ORDER BY created_at DESC, id DESC
 LIMIT $2
-OFFSET $3
 `
 
 type ListMetersCursorPaginatedByEventTypeParams struct {
 	EventType  pgtype.Text
 	Limit      int32
-	Offset     int32
 	UseCursor  bool
 	CursorTime pgtype.Timestamptz
 	CursorID   pgtype.UUID
@@ -312,7 +310,6 @@ func (q *Queries) ListMetersCursorPaginatedByEventType(ctx context.Context, arg 
 	rows, err := q.db.Query(ctx, listMetersCursorPaginatedByEventType,
 		arg.EventType,
 		arg.Limit,
-		arg.Offset,
 		arg.UseCursor,
 		arg.CursorTime,
 		arg.CursorID,
