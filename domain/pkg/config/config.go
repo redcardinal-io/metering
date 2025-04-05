@@ -27,6 +27,14 @@ type LoggerConfig struct {
 	Mode    string
 }
 
+type PostgresConfig struct {
+	Host     string
+	Port     string
+	Database string
+	User     string
+	Password string
+}
+
 type KafkaConfig struct {
 	KafkaBootstrapServers string
 	KafkaRawEventsTopic   string
@@ -37,9 +45,10 @@ type KafkaConfig struct {
 }
 
 type Config struct {
-	Server ServerConfig
-	Logger LoggerConfig
-	Kafka  KafkaConfig
+	Server   ServerConfig
+	Logger   LoggerConfig
+	Kafka    KafkaConfig
+	Postgres PostgresConfig
 }
 
 func initializeViper() error {
@@ -80,6 +89,11 @@ func validateConfig(config *Config) error {
 		{config.Logger.Mode, "logger mode"},
 		{config.Kafka.KafkaBootstrapServers, "kafka bootstrap servers"},
 		{config.Kafka.KafkaRawEventsTopic, "kafka raw events topic"},
+		{config.Postgres.Host, "postgres host"},
+		{config.Postgres.Port, "postgres port"},
+		{config.Postgres.Database, "postgres database"},
+		{config.Postgres.User, "postgres user"},
+		{config.Postgres.Password, "postgres password"},
 	}
 
 	for _, v := range validations {
@@ -117,6 +131,13 @@ func LoadConfig() (*Config, error) {
 			KafkaSaslMechanisms:   viper.GetString("RCMETERING_KAFKA_SASL_MECHANISMS"),
 			KafkaUsername:         viper.GetString("RCMETERING_KAFKA_USERNAME"),
 			KafkaPassword:         viper.GetString("RCMETERING_KAFKA_PASSWORD"),
+		},
+		Postgres: PostgresConfig{
+			Host:     viper.GetString("RCMETERING_POSTGRES_HOST"),
+			Port:     viper.GetString("RCMETERING_POSTGRES_PORT"),
+			Database: viper.GetString("RCMETERING_POSTGRES_DATABASE"),
+			User:     viper.GetString("RCMETERING_POSTGRES_USER"),
+			Password: viper.GetString("RCMETERING_POSTGRES_PASSWORD"),
 		},
 	}
 
