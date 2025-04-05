@@ -44,7 +44,7 @@ func TestLoadConfig(t *testing.T) {
 		assert.Equal(t, "8000", config.Server.Port)
 		assert.Equal(t, INFO, config.Logger.Level)
 		assert.Equal(t, "dev", config.Logger.Mode)
-		assert.Empty(t, config.Logger.LogFile)
+		assert.Equal(t, "rcmetering.log", config.Logger.LogFile) // Updated to match default
 	})
 
 	t.Run("Configuration from File", func(t *testing.T) {
@@ -106,78 +106,103 @@ LOGGER_MODE=dev
 func TestValidateConfig(t *testing.T) {
 	testCases := []struct {
 		name         string
-		setupFunc    func()
+		setupConfig  func() *Config
 		expectError  bool
 		errorMessage string
 	}{
 		{
 			name: "Valid Configuration",
-			setupFunc: func() {
-				resetState()
-				viper.Set("SERVER_HOST", "localhost")
-				viper.Set("SERVER_PORT", "8000")
-				viper.Set("LOGGER_LEVEL", "info")
-				viper.Set("LOGGER_MODE", "dev")
+			setupConfig: func() *Config {
+				return &Config{
+					Server: ServerConfig{
+						Host: "localhost",
+						Port: "8000",
+					},
+					Logger: LoggerConfig{
+						Level: INFO,
+						Mode:  "dev",
+					},
+				}
 			},
 			expectError: false,
 		},
 		{
 			name: "Missing Server Host",
-			setupFunc: func() {
-				resetState()
-				viper.Set("SERVER_HOST", "")
-				viper.Set("SERVER_PORT", "8000")
-				viper.Set("LOGGER_LEVEL", "info")
-				viper.Set("LOGGER_MODE", "dev")
+			setupConfig: func() *Config {
+				return &Config{
+					Server: ServerConfig{
+						Host: "",
+						Port: "8000",
+					},
+					Logger: LoggerConfig{
+						Level: INFO,
+						Mode:  "dev",
+					},
+				}
 			},
 			expectError:  true,
-			errorMessage: "server host is required",
+			errorMessage: "missing server host",
 		},
 		{
 			name: "Missing Server Port",
-			setupFunc: func() {
-				resetState()
-				viper.Set("SERVER_HOST", "localhost")
-				viper.Set("SERVER_PORT", "")
-				viper.Set("LOGGER_LEVEL", "info")
-				viper.Set("LOGGER_MODE", "dev")
+			setupConfig: func() *Config {
+				return &Config{
+					Server: ServerConfig{
+						Host: "localhost",
+						Port: "",
+					},
+					Logger: LoggerConfig{
+						Level: INFO,
+						Mode:  "dev",
+					},
+				}
 			},
 			expectError:  true,
-			errorMessage: "server port must be greater than 0",
+			errorMessage: "missing server port",
 		},
 		{
 			name: "Missing Logger Level",
-			setupFunc: func() {
-				resetState()
-				viper.Set("SERVER_HOST", "localhost")
-				viper.Set("SERVER_PORT", "8000")
-				viper.Set("LOGGER_LEVEL", "")
-				viper.Set("LOGGER_MODE", "dev")
+			setupConfig: func() *Config {
+				return &Config{
+					Server: ServerConfig{
+						Host: "localhost",
+						Port: "8000",
+					},
+					Logger: LoggerConfig{
+						Level: "",
+						Mode:  "dev",
+					},
+				}
 			},
 			expectError:  true,
-			errorMessage: "logger level is required",
+			errorMessage: "missing logger level",
 		},
 		{
 			name: "Missing Logger Mode",
-			setupFunc: func() {
-				resetState()
-				viper.Set("SERVER_HOST", "localhost")
-				viper.Set("SERVER_PORT", "8000")
-				viper.Set("LOGGER_LEVEL", "info")
-				viper.Set("LOGGER_MODE", "")
+			setupConfig: func() *Config {
+				return &Config{
+					Server: ServerConfig{
+						Host: "localhost",
+						Port: "8000",
+					},
+					Logger: LoggerConfig{
+						Level: INFO,
+						Mode:  "",
+					},
+				}
 			},
 			expectError:  true,
-			errorMessage: "logger mode is required",
+			errorMessage: "missing logger mode",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Setup
-			tc.setupFunc()
+			config := tc.setupConfig()
 
 			// Test
-			err := validateConfig()
+			err := validateConfig(config)
 
 			// Verify
 			if tc.expectError {

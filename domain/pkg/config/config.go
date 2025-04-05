@@ -7,16 +7,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Config struct {
-	Server ServerConfig
-	Logger LoggerConfig
-}
-
-type ServerConfig struct {
-	Host string
-	Port string
-}
-
 type LogLevel string
 
 const (
@@ -26,49 +16,76 @@ const (
 	ERROR    LogLevel = "error"
 )
 
+type ServerConfig struct {
+	Host string
+	Port string
+}
+
 type LoggerConfig struct {
 	Level   LogLevel
 	LogFile string
 	Mode    string
 }
 
-func initializeViper() error {
-	viper.SetEnvPrefix("rcmetering")
-	viper.SetConfigName("config")
-	viper.SetConfigType("env")
-	viper.AddConfigPath(".")
+type KafkaConfig struct {
+	KafkaBootstrapServers string
+	KafkaRawEventsTopic   string
+	KafkaSecurityProtocol string
+	KafkaSaslMechanisms   string
+	KafkaUsername         string
+	KafkaPassword         string
+}
 
-	// Allow viper to use environment variables
-	viper.AutomaticEnv()
+type Config struct {
+	Server ServerConfig
+	Logger LoggerConfig
+	Kafka  KafkaConfig
+}
+
+func initializeViper() error {
+	// Load .env file
+	viper.SetConfigFile(".env")
 
 	if err := viper.ReadInConfig(); err != nil {
 		log.Printf("Error reading config file: %s", err)
-		log.Println("Using environment variables")
-		return nil
+		log.Println("Using environment variables only")
+	} else {
+		log.Println("Config file loaded successfully")
 	}
+
+	// No prefix, we'll use the full environment variable names
+	viper.AllowEmptyEnv(true)
+	viper.AutomaticEnv()
 
 	return nil
 }
 
 func setDefaults() {
-	viper.SetDefault("SERVER_HOST", "localhost")
-	viper.SetDefault("SERVER_PORT", "8000")
-	viper.SetDefault("LOGGER_LEVEL", string(INFO))
-	viper.SetDefault("LOGGER_MODE", "dev")
+	viper.SetDefault("RCMETERING_SERVER_HOST", "localhost")
+	viper.SetDefault("RCMETERING_SERVER_PORT", "8000")
+	viper.SetDefault("RCMETERING_LOGGER_LEVEL", string(INFO))
+	viper.SetDefault("RCMETERING_LOGGER_MODE", "dev")
+	viper.SetDefault("RCMETERING_LOGGER_LOGFILE", "rcmetering.log")
 }
 
-func validateConfig() error {
-	if viper.GetString("SERVER_HOST") == "" {
-		return fmt.Errorf("server host is required")
+func validateConfig(config *Config) error {
+	type validation struct {
+		value string
+		name  string
 	}
-	if viper.GetString("SERVER_PORT") == "" {
-		return fmt.Errorf("server port must be greater than 0")
+	validations := []validation{
+		{config.Server.Host, "server host"},
+		{config.Server.Port, "server port"},
+		{string(config.Logger.Level), "logger level"},
+		{config.Logger.Mode, "logger mode"},
+		{config.Kafka.KafkaBootstrapServers, "kafka bootstrap servers"},
+		{config.Kafka.KafkaRawEventsTopic, "kafka raw events topic"},
 	}
-	if viper.GetString("LOGGER_LEVEL") == "" {
-		return fmt.Errorf("logger level is required")
-	}
-	if viper.GetString("LOGGER_MODE") == "" {
-		return fmt.Errorf("logger mode is required")
+
+	for _, v := range validations {
+		if v.value == "" {
+			return fmt.Errorf("missing %s", v.name)
+		}
 	}
 	return nil
 }
@@ -80,20 +97,31 @@ func LoadConfig() (*Config, error) {
 
 	setDefaults()
 
-	if err := validateConfig(); err != nil {
-		return nil, err
-	}
+	// Debug output - check full names
+	log.Println("Checking 'RCMETERING_KAFKA_BOOTSTRAP_SERVERS' value:", viper.GetString("RCMETERING_KAFKA_BOOTSTRAP_SERVERS"))
 
 	config := &Config{
 		Server: ServerConfig{
-			Host: viper.GetString("SERVER_HOST"),
-			Port: viper.GetString("SERVER_PORT"),
+			Host: viper.GetString("RCMETERING_SERVER_HOST"),
+			Port: viper.GetString("RCMETERING_SERVER_PORT"),
 		},
 		Logger: LoggerConfig{
-			Level:   LogLevel(viper.GetString("LOGGER_LEVEL")),
-			LogFile: viper.GetString("LOGGER_LOGFILE"),
-			Mode:    viper.GetString("LOGGER_MODE"),
+			Level:   LogLevel(viper.GetString("RCMETERING_LOGGER_LEVEL")),
+			LogFile: viper.GetString("RCMETERING_LOGGER_LOGFILE"),
+			Mode:    viper.GetString("RCMETERING_LOGGER_MODE"),
 		},
+		Kafka: KafkaConfig{
+			KafkaBootstrapServers: viper.GetString("RCMETERING_KAFKA_BOOTSTRAP_SERVERS"),
+			KafkaRawEventsTopic:   viper.GetString("RCMETERING_KAFKA_RAW_EVENTS_TOPIC"),
+			KafkaSecurityProtocol: viper.GetString("RCMETERING_KAFKA_SECURITY_PROTOCOL"),
+			KafkaSaslMechanisms:   viper.GetString("RCMETERING_KAFKA_SASL_MECHANISMS"),
+			KafkaUsername:         viper.GetString("RCMETERING_KAFKA_USERNAME"),
+			KafkaPassword:         viper.GetString("RCMETERING_KAFKA_PASSWORD"),
+		},
+	}
+
+	if err := validateConfig(config); err != nil {
+		return nil, err
 	}
 
 	return config, nil
