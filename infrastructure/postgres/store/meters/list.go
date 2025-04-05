@@ -28,7 +28,8 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, limit int32, cu
 
 	m, err := p.q.ListMetersCursorPaginated(ctx, params)
 	if err != nil {
-		return nil, err
+		p.logger.Error("Error listing meters: ", zap.Error(err))
+		return nil, errors.ErrDatabaseOperation
 	}
 
 	meters := make([]models.Meter, 0, len(m))

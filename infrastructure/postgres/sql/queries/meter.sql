@@ -40,9 +40,8 @@ WHERE event_type = $1 and
     ELSE 
         TRUE 
     END
-ORDER BY created_at DESC
-LIMIT $2
-OFFSET $3;
+ORDER BY created_at DESC, id DESC
+LIMIT $2;
 
 -- name: DeleteMeterByID :exec
 DELETE FROM meter

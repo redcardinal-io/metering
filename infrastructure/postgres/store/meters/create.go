@@ -9,6 +9,7 @@ import (
 	"github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
+	"go.uber.org/zap"
 )
 
 func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.CreateMeterInput) (*models.Meter, error) {
@@ -24,6 +25,7 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 	})
 
 	if err != nil {
+		p.logger.Error("failed to create meter", zap.Error(err))
 		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "23505" {
 			return nil, errors.ErrMeterAlreadyExists
 		}
@@ -32,6 +34,7 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 
 	id, err := uuid.FromBytes(m.ID.Bytes[:])
 	if err != nil {
+		p.logger.Error("failed to parse UUID from bytes", zap.Error(err))
 		return nil, errors.ErrDatabaseOperation
 	}
 
