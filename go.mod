@@ -3,7 +3,7 @@ module github.com/redcardinal-io/metering
 go 1.24.1
 
 require (
-	github.com/IBM/sarama v1.45.1
+	github.com/Shopify/sarama v1.38.0
 	github.com/ThreeDotsLabs/watermill v1.2.0
 	github.com/ThreeDotsLabs/watermill-kafka/v2 v2.5.0
 	github.com/gofiber/contrib/fiberzap v1.0.2
@@ -16,7 +16,6 @@ require (
 )
 
 require (
-	github.com/Shopify/sarama v1.38.0 // indirect
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eapache/go-resiliency v1.7.0 // indirect
@@ -63,8 +62,8 @@ require (
 	go.opentelemetry.io/otel/metric v1.29.0 // indirect
 	go.opentelemetry.io/otel/trace v1.29.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	golang.org/x/crypto v0.33.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
+	golang.org/x/crypto v0.35.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
