@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 
-	"github.com/gofrs/uuid"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
@@ -16,11 +15,9 @@ type StoreRepository interface {
 }
 
 type MeterStoreRepository interface {
-	CreateMeter(ctx context.Context, arg models.CreateMeterInput) (models.Meter, error)
-	GetMeterByID(ctx context.Context, id uuid.UUID) (models.Meter, error)
-	GetMeterBySlug(ctx context.Context, slug string) (models.Meter, error)
-	ListMeters(ctx context.Context, limit int, page int) (pagination.Result[models.Meter], error)
-	ListMetersByEventType(ctx context.Context, eventType string) ([]models.Meter, error)
-	DeleteMeterByID(ctx context.Context, id uuid.UUID) error
-	DeleteMeterBySlug(ctx context.Context, slug string) error
+	CreateMeter(ctx context.Context, arg models.CreateMeterInput) (*models.Meter, error)
+	GetMeterByIDorSlug(ctx context.Context, idOrSlug string) (*models.Meter, error)
+	ListMeters(ctx context.Context, limit int32, cursor *pagination.Cursor) (*pagination.Result[models.Meter], error)
+	ListMetersByEventType(ctx context.Context, limit int32, eventType string, pagination *pagination.Cursor) (*pagination.Result[models.Meter], error)
+	DeleteMeterByIDorSlug(ctx context.Context, idOrSlug string) error
 }
