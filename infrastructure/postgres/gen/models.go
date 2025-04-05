@@ -59,6 +59,7 @@ func (ns NullAggregationEnum) Value() (driver.Value, error) {
 
 type Meter struct {
 	ID            pgtype.UUID
+	Name          string
 	Slug          string
 	EventType     pgtype.Text
 	Description   pgtype.Text

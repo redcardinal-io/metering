@@ -11,7 +11,6 @@ import (
 )
 
 type Querier interface {
-	CheckMeterSlugExists(ctx context.Context, slug string) (bool, error)
 	CountMeters(ctx context.Context) (int64, error)
 	CountMetersByEventType(ctx context.Context, eventType pgtype.Text) (int64, error)
 	CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error)
@@ -22,10 +21,8 @@ type Querier interface {
 	GetMeterBySlug(ctx context.Context, slug string) (Meter, error)
 	GetPropertiesByEventType(ctx context.Context, eventType pgtype.Text) ([]interface{}, error)
 	GetValuePropertiesByEventType(ctx context.Context, eventType pgtype.Text) ([]pgtype.Text, error)
-	ListMeters(ctx context.Context) ([]Meter, error)
-	ListMetersByEventType(ctx context.Context, eventType pgtype.Text) ([]Meter, error)
-	ListMetersByEventTypeAndValueProperty(ctx context.Context, arg ListMetersByEventTypeAndValuePropertyParams) ([]Meter, error)
-	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)
+	ListMetersCursorPaginated(ctx context.Context, arg ListMetersCursorPaginatedParams) ([]Meter, error)
+	ListMetersCursorPaginatedByEventType(ctx context.Context, arg ListMetersCursorPaginatedByEventTypeParams) ([]Meter, error)
 }
 
 var _ Querier = (*Queries)(nil)

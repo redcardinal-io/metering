@@ -11,20 +11,6 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const checkMeterSlugExists = `-- name: CheckMeterSlugExists :one
-SELECT EXISTS (
-    SELECT 1 FROM meter
-    WHERE slug = $1
-) AS exists
-`
-
-func (q *Queries) CheckMeterSlugExists(ctx context.Context, slug string) (bool, error) {
-	row := q.db.QueryRow(ctx, checkMeterSlugExists, slug)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
-}
-
 const countMeters = `-- name: CountMeters :one
 SELECT count(*) FROM meter
 `
@@ -50,6 +36,7 @@ func (q *Queries) CountMetersByEventType(ctx context.Context, eventType pgtype.T
 
 const createMeter = `-- name: CreateMeter :one
 INSERT INTO meter (
+    name,
     slug,
     event_type,
     description,
@@ -58,11 +45,12 @@ INSERT INTO meter (
     aggregation,
     created_by
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7
-) RETURNING id, slug, event_type, description, value_property, properties, aggregation, created_at, created_by
+    $1, $2, $3, $4, $5, $6, $7, $8
+) RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by
 `
 
 type CreateMeterParams struct {
+	Name          string
 	Slug          string
 	EventType     pgtype.Text
 	Description   pgtype.Text
@@ -74,6 +62,7 @@ type CreateMeterParams struct {
 
 func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error) {
 	row := q.db.QueryRow(ctx, createMeter,
+		arg.Name,
 		arg.Slug,
 		arg.EventType,
 		arg.Description,
@@ -85,6 +74,7 @@ func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter
 	var i Meter
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Slug,
 		&i.EventType,
 		&i.Description,
@@ -143,9 +133,8 @@ func (q *Queries) GetEventTypes(ctx context.Context) ([]pgtype.Text, error) {
 }
 
 const getMeterByID = `-- name: GetMeterByID :one
-SELECT id, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
 WHERE id = $1
-LIMIT 1
 `
 
 func (q *Queries) GetMeterByID(ctx context.Context, id pgtype.UUID) (Meter, error) {
@@ -153,6 +142,7 @@ func (q *Queries) GetMeterByID(ctx context.Context, id pgtype.UUID) (Meter, erro
 	var i Meter
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Slug,
 		&i.EventType,
 		&i.Description,
@@ -166,9 +156,8 @@ func (q *Queries) GetMeterByID(ctx context.Context, id pgtype.UUID) (Meter, erro
 }
 
 const getMeterBySlug = `-- name: GetMeterBySlug :one
-SELECT id, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
 WHERE slug = $1
-LIMIT 1
 `
 
 func (q *Queries) GetMeterBySlug(ctx context.Context, slug string) (Meter, error) {
@@ -176,6 +165,7 @@ func (q *Queries) GetMeterBySlug(ctx context.Context, slug string) (Meter, error
 	var i Meter
 	err := row.Scan(
 		&i.ID,
+		&i.Name,
 		&i.Slug,
 		&i.EventType,
 		&i.Description,
@@ -241,132 +231,32 @@ func (q *Queries) GetValuePropertiesByEventType(ctx context.Context, eventType p
 	return items, nil
 }
 
-const listMeters = `-- name: ListMeters :many
-SELECT id, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-ORDER BY created_at DESC
-`
-
-func (q *Queries) ListMeters(ctx context.Context) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMeters)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Meter
-	for rows.Next() {
-		var i Meter
-		if err := rows.Scan(
-			&i.ID,
-			&i.Slug,
-			&i.EventType,
-			&i.Description,
-			&i.ValueProperty,
-			&i.Properties,
-			&i.Aggregation,
-			&i.CreatedAt,
-			&i.CreatedBy,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listMetersByEventType = `-- name: ListMetersByEventType :many
-SELECT id, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-WHERE event_type = $1
-ORDER BY created_at DESC
-`
-
-func (q *Queries) ListMetersByEventType(ctx context.Context, eventType pgtype.Text) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersByEventType, eventType)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Meter
-	for rows.Next() {
-		var i Meter
-		if err := rows.Scan(
-			&i.ID,
-			&i.Slug,
-			&i.EventType,
-			&i.Description,
-			&i.ValueProperty,
-			&i.Properties,
-			&i.Aggregation,
-			&i.CreatedAt,
-			&i.CreatedBy,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listMetersByEventTypeAndValueProperty = `-- name: ListMetersByEventTypeAndValueProperty :many
-SELECT id, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-WHERE event_type = $1 AND value_property = $2
-ORDER BY created_at DESC
-`
-
-type ListMetersByEventTypeAndValuePropertyParams struct {
-	EventType     pgtype.Text
-	ValueProperty pgtype.Text
-}
-
-func (q *Queries) ListMetersByEventTypeAndValueProperty(ctx context.Context, arg ListMetersByEventTypeAndValuePropertyParams) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersByEventTypeAndValueProperty, arg.EventType, arg.ValueProperty)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Meter
-	for rows.Next() {
-		var i Meter
-		if err := rows.Scan(
-			&i.ID,
-			&i.Slug,
-			&i.EventType,
-			&i.Description,
-			&i.ValueProperty,
-			&i.Properties,
-			&i.Aggregation,
-			&i.CreatedAt,
-			&i.CreatedBy,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listMetersPaginated = `-- name: ListMetersPaginated :many
-SELECT id, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-ORDER BY created_at DESC
+const listMetersCursorPaginated = `-- name: ListMetersCursorPaginated :many
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
+WHERE 
+    CASE WHEN $2::boolean THEN 
+        (created_at, id) < ($3, $4::uuid)
+    ELSE 
+        TRUE 
+    END
+ORDER BY created_at DESC, id DESC
 LIMIT $1
-OFFSET $2
 `
 
-type ListMetersPaginatedParams struct {
-	Limit  int32
-	Offset int32
+type ListMetersCursorPaginatedParams struct {
+	Limit      int32
+	UseCursor  bool
+	CursorTime pgtype.Timestamptz
+	CursorID   pgtype.UUID
 }
 
-func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersPaginated, arg.Limit, arg.Offset)
+func (q *Queries) ListMetersCursorPaginated(ctx context.Context, arg ListMetersCursorPaginatedParams) ([]Meter, error) {
+	rows, err := q.db.Query(ctx, listMetersCursorPaginated,
+		arg.Limit,
+		arg.UseCursor,
+		arg.CursorTime,
+		arg.CursorID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -376,6 +266,67 @@ func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginat
 		var i Meter
 		if err := rows.Scan(
 			&i.ID,
+			&i.Name,
+			&i.Slug,
+			&i.EventType,
+			&i.Description,
+			&i.ValueProperty,
+			&i.Properties,
+			&i.Aggregation,
+			&i.CreatedAt,
+			&i.CreatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMetersCursorPaginatedByEventType = `-- name: ListMetersCursorPaginatedByEventType :many
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
+WHERE event_type = $1 and 
+    CASE WHEN $4::boolean THEN 
+        (created_at, id) < ($5, $6::uuid)
+    ELSE 
+        TRUE 
+    END
+ORDER BY created_at DESC
+LIMIT $2
+OFFSET $3
+`
+
+type ListMetersCursorPaginatedByEventTypeParams struct {
+	EventType  pgtype.Text
+	Limit      int32
+	Offset     int32
+	UseCursor  bool
+	CursorTime pgtype.Timestamptz
+	CursorID   pgtype.UUID
+}
+
+func (q *Queries) ListMetersCursorPaginatedByEventType(ctx context.Context, arg ListMetersCursorPaginatedByEventTypeParams) ([]Meter, error) {
+	rows, err := q.db.Query(ctx, listMetersCursorPaginatedByEventType,
+		arg.EventType,
+		arg.Limit,
+		arg.Offset,
+		arg.UseCursor,
+		arg.CursorTime,
+		arg.CursorID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Meter
+	for rows.Next() {
+		var i Meter
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
 			&i.Slug,
 			&i.EventType,
 			&i.Description,
