@@ -42,6 +42,8 @@ type KafkaConfig struct {
 	KafkaSaslMechanisms   string
 	KafkaUsername         string
 	KafkaPassword         string
+	KafkaWorkerCount      int
+	KafkaQueueSize        int
 }
 
 type Config struct {
@@ -75,6 +77,8 @@ func setDefaults() {
 	viper.SetDefault("RCMETERING_LOGGER_LEVEL", string(INFO))
 	viper.SetDefault("RCMETERING_LOGGER_MODE", "dev")
 	viper.SetDefault("RCMETERING_LOGGER_LOGFILE", "rcmetering.log")
+	viper.SetDefault("RCMETERING_KAFKA_WORKER_COUNT", 5)
+	viper.SetDefault("RCMETERING_KAFKA_QUEUE_SIZE", 1000)
 }
 
 func validateConfig(config *Config) error {
@@ -131,6 +135,8 @@ func LoadConfig() (*Config, error) {
 			KafkaSaslMechanisms:   viper.GetString("RCMETERING_KAFKA_SASL_MECHANISMS"),
 			KafkaUsername:         viper.GetString("RCMETERING_KAFKA_USERNAME"),
 			KafkaPassword:         viper.GetString("RCMETERING_KAFKA_PASSWORD"),
+			KafkaWorkerCount:      viper.GetInt("RCMETERING_KAFKA_WORKER_COUNT"),
+			KafkaQueueSize:        viper.GetInt("RCMETERING_KAFKA_QUEUE_SIZE"),
 		},
 		Postgres: PostgresConfig{
 			Host:     viper.GetString("RCMETERING_POSTGRES_HOST"),
