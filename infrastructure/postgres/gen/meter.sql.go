@@ -231,32 +231,20 @@ func (q *Queries) GetValuePropertiesByEventType(ctx context.Context, eventType p
 	return items, nil
 }
 
-const listMetersCursorPaginated = `-- name: ListMetersCursorPaginated :many
+const listMetersPaginated = `-- name: ListMetersPaginated :many
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-WHERE 
-    CASE WHEN $2::boolean THEN 
-        (created_at, id) < ($3, $4::uuid)
-    ELSE 
-        TRUE 
-    END
-ORDER BY created_at DESC, id DESC
+ORDER BY created_at DESC
 LIMIT $1
+OFFSET $2
 `
 
-type ListMetersCursorPaginatedParams struct {
-	Limit      int32
-	UseCursor  bool
-	CursorTime pgtype.Timestamptz
-	CursorID   pgtype.UUID
+type ListMetersPaginatedParams struct {
+	Limit  int32
+	Offset int32
 }
 
-func (q *Queries) ListMetersCursorPaginated(ctx context.Context, arg ListMetersCursorPaginatedParams) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersCursorPaginated,
-		arg.Limit,
-		arg.UseCursor,
-		arg.CursorTime,
-		arg.CursorID,
-	)
+func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error) {
+	rows, err := q.db.Query(ctx, listMetersPaginated, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -286,34 +274,21 @@ func (q *Queries) ListMetersCursorPaginated(ctx context.Context, arg ListMetersC
 	return items, nil
 }
 
-const listMetersCursorPaginatedByEventType = `-- name: ListMetersCursorPaginatedByEventType :many
+const listMetersPaginatedByEventType = `-- name: ListMetersPaginatedByEventType :many
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-WHERE event_type = $1 and 
-    CASE WHEN $3::boolean THEN 
-        (created_at, id) < ($4, $5::uuid)
-    ELSE 
-        TRUE 
-    END
-ORDER BY created_at DESC, id DESC
+WHERE event_type = $1 
 LIMIT $2
+OFFSET $3
 `
 
-type ListMetersCursorPaginatedByEventTypeParams struct {
-	EventType  pgtype.Text
-	Limit      int32
-	UseCursor  bool
-	CursorTime pgtype.Timestamptz
-	CursorID   pgtype.UUID
+type ListMetersPaginatedByEventTypeParams struct {
+	EventType pgtype.Text
+	Limit     int32
+	Offset    int32
 }
 
-func (q *Queries) ListMetersCursorPaginatedByEventType(ctx context.Context, arg ListMetersCursorPaginatedByEventTypeParams) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersCursorPaginatedByEventType,
-		arg.EventType,
-		arg.Limit,
-		arg.UseCursor,
-		arg.CursorTime,
-		arg.CursorID,
-	)
+func (q *Queries) ListMetersPaginatedByEventType(ctx context.Context, arg ListMetersPaginatedByEventTypeParams) ([]Meter, error) {
+	rows, err := q.db.Query(ctx, listMetersPaginatedByEventType, arg.EventType, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -12,21 +12,12 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, limit int32, cursor *pagination.Cursor) (*pagination.Result[models.Meter], error) {
-	var params gen.ListMetersCursorPaginatedParams
+func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination.Pagination) (*pagination.PaginationView[models.Meter], error) {
 
-	if cursor != nil {
-		id := uuid.MustParse(cursor.ID)
-		params.CursorID = pgtype.UUID{Bytes: id, Valid: true}
-		params.Limit = limit
-		params.UseCursor = true
-		params.CursorTime = pgtype.Timestamptz{Time: cursor.Time, Valid: true}
-	} else {
-		params.Limit = limit
-		params.UseCursor = false
-	}
-
-	m, err := p.q.ListMetersCursorPaginated(ctx, params)
+	m, err := p.q.ListMetersPaginated(ctx, gen.ListMetersPaginatedParams{
+		Limit:  int32(page.Limit),
+		Offset: int32(page.GetOffset()),
+	})
 	if err != nil {
 		p.logger.Error("Error listing meters: ", zap.Error(err))
 		return nil, errors.ErrDatabaseOperation
@@ -49,31 +40,27 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, limit int32, cu
 		})
 	}
 
-	result := pagination.NewResult(meters)
+	count, err := p.q.CountMeters(ctx)
+	if err != nil {
+		p.logger.Error("Error counting meters: ", zap.Error(err))
+		return nil, errors.ErrDatabaseOperation
+	}
+
+	result := pagination.FormatWith(page, int(count), meters)
 
 	return &result, nil
 }
 
 func (p *PgMeterStoreRepository) ListMetersByEventType(
 	ctx context.Context,
-	limit int32,
 	eventType string,
-	cursor *pagination.Cursor) (*pagination.Result[models.Meter], error) {
-	var params gen.ListMetersCursorPaginatedByEventTypeParams
+	page pagination.Pagination) (*pagination.PaginationView[models.Meter], error) {
 
-	params.EventType = pgtype.Text{String: eventType, Valid: true}
-	if cursor != nil {
-		id := uuid.MustParse(cursor.ID)
-		params.CursorID = pgtype.UUID{Bytes: id, Valid: true}
-		params.Limit = limit
-		params.UseCursor = true
-		params.CursorTime = pgtype.Timestamptz{Time: cursor.Time, Valid: true}
-	} else {
-		params.Limit = limit
-		params.UseCursor = false
-	}
-
-	m, err := p.q.ListMetersCursorPaginatedByEventType(ctx, params)
+	m, err := p.q.ListMetersPaginatedByEventType(ctx, gen.ListMetersPaginatedByEventTypeParams{
+		EventType: pgtype.Text{String: eventType, Valid: true},
+		Limit:     int32(page.Limit),
+		Offset:    int32(page.GetOffset()),
+	})
 	if err != nil {
 		p.logger.Error("Error listing meters by event type: ", zap.Error(err))
 		return nil, errors.ErrDatabaseOperation
@@ -96,6 +83,12 @@ func (p *PgMeterStoreRepository) ListMetersByEventType(
 		})
 	}
 
-	result := pagination.NewResult(meters)
+	count, err := p.q.CountMetersByEventType(ctx, pgtype.Text{String: eventType, Valid: true})
+	if err != nil {
+		p.logger.Error("Error counting meters by event type: ", zap.Error(err))
+		return nil, errors.ErrDatabaseOperation
+	}
+
+	result := pagination.FormatWith(page, int(count), meters)
 	return &result, nil
 }

@@ -1,35 +1,130 @@
 package pagination
 
-import "github.com/samber/lo"
+import (
+	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
+)
 
-// Item is the interface that must be implemented by items used in cursor pagination.
-// It provides access to the time and ID fields needed for cursor generation.
-type Item interface {
-	// Cursor returns the cursor used for cursor-based ordering
-	Cursor() Cursor
+// DefaultLimit is the default limit for pagination, set to 20 items per page
+const DefaultLimit = 20
+
+// Pagination represents pagination parameters and search options
+type Pagination struct {
+	Page        int               `json:"page"`
+	Limit       int               `json:"limit"`
+	SearchQuery string            `json:"search_query,omitempty"`
+	Queries     map[string]string `json:"queries,omitempty"`
 }
 
-// Result represents the response structure for cursor-based pagination
-type Result[T any] struct {
-	// The items returned
-	Items []T `json:"items"`
-
-	// Cursor for the next page
-	NextCursor *string `json:"nextCursor"`
+// PaginationView represents a paginated view of results
+type PaginationView[T any] struct {
+	Results []T `json:"results"`
+	Page    int `json:"page"`
+	Limit   int `json:"limit"`
+	Total   int `json:"total"`
 }
 
-// NewResult creates a new pagination result
-// T must implement the Item interface for cursor generation
-func NewResult[T Item](items []T) Result[T] {
-	result := Result[T]{
-		Items: items,
+// UnmarshalJSON implements custom JSON unmarshaling for Pagination
+func (p *Pagination) UnmarshalJSON(data []byte) error {
+	type Alias Pagination
+	aux := &struct {
+		*Alias
+		Limit *int `json:"limit,omitempty"`
+	}{
+		Alias: (*Alias)(p),
 	}
 
-	// Generate next cursor from the last item if there are any items
-	if len(items) > 0 {
-		lastItem := items[len(items)-1]
-		result.NextCursor = lo.ToPtr(lastItem.Cursor().Encode())
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
 	}
 
-	return result
+	if aux.Limit == nil {
+		p.Limit = DefaultLimit
+	} else {
+		p.Limit = *aux.Limit
+	}
+
+	return nil
+}
+
+// GetOffset calculates the offset based on page and limit
+func (p Pagination) GetOffset() int {
+	return (p.Page - 1) * p.Limit
+}
+
+// AutoPaginate automatically paginates the given content
+func AutoPaginate[T any](p Pagination, content []T) PaginationView[T] {
+	start := p.GetOffset()
+	end := start + p.Limit
+
+	if start > len(content) {
+		start = len(content)
+	}
+	if end > len(content) {
+		end = len(content)
+	}
+
+	results := content[start:end]
+	return FormatWith(p, len(content), results)
+}
+
+// FormatWith formats the given results into a PaginationView
+func FormatWith[T any](p Pagination, total int, results []T) PaginationView[T] {
+	return PaginationView[T]{
+		Results: results,
+		Page:    p.Page,
+		Limit:   p.Limit,
+		Total:   total,
+	}
+}
+
+// NewPaginationView creates a new PaginationView instance
+func NewPaginationView[T any](page, limit, total int, results []T) PaginationView[T] {
+	return PaginationView[T]{
+		Results: results,
+		Page:    page,
+		Limit:   limit,
+		Total:   total,
+	}
+}
+
+func GetPaginationFromReq(r *http.Request) (*Pagination, error) {
+	pagination := &Pagination{}
+	var err error
+	page := r.URL.Query().Get("page")
+	if page == "" {
+		pagination.Page = 1
+	} else {
+		pagination.Page, err = strconv.Atoi(page)
+		if err != nil {
+			return nil, errors.New("Invalid page parameter")
+		}
+	}
+
+	limit := r.URL.Query().Get("limit")
+	if limit == "" {
+		pagination.Limit = 20
+	} else {
+		pagination.Limit, err = strconv.Atoi(limit)
+		if err != nil {
+			return nil, errors.New("Invalid limit parameter")
+		}
+	}
+
+	pagination.SearchQuery = r.URL.Query().Get("search_query")
+	pagination.Queries = map[string]string{}
+
+	sort := r.URL.Query().Get("sort")
+	if sort != "" {
+		if sort != "asc" && sort != "desc" {
+			return nil, errors.New("Invalid sort parameter")
+		}
+		pagination.Queries["sort"] = sort
+	} else {
+		pagination.Queries["sort"] = "desc"
+	}
+
+	return pagination, nil
 }

@@ -2,7 +2,6 @@ package meters
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -361,7 +360,7 @@ func TestGetMeterByIDorSlug(t *testing.T) {
 	})
 }
 
-func TestListMetersByEventType(t *testing.T) {
+func TestListMeters(t *testing.T) {
 	db, ctx := setupTestDB(t)
 	defer db.Close()
 	defer cleanupTestMeters(t, ctx, db)
@@ -369,200 +368,63 @@ func TestListMetersByEventType(t *testing.T) {
 	l := createTestLogger(t)
 	repo := NewPostgresMeterStoreRepository(db, l)
 
-	// Create meters with different event types
-	createTestMetersWithEventTypes := func() (string, []*models.Meter) {
-		// Create a unique event type for this test
-		uniqueEventType := "test.event." + uuid.New().String()[0:8]
-
-		// Create 3 meters with the unique event type
-		metersWithType := make([]*models.Meter, 0, 3)
-		for i := range 3 {
-			input := models.CreateMeterInput{
-				Name:          fmt.Sprintf("Event Type Meter %d", i),
-				Slug:          fmt.Sprintf("event-type-meter-%s-%d", uuid.New().String()[0:8], i),
-				EventType:     uniqueEventType,
-				ValueProperty: "amount",
-				Description:   fmt.Sprintf("Test meter for event type %d", i),
-				Properties:    []string{fmt.Sprintf("property%d", i)},
-				Aggregation:   models.AggregationSum,
-				CreatedBy:     "test-user",
-			}
-			meter, err := repo.CreateMeter(ctx, input)
-			require.NoError(t, err)
-			metersWithType = append(metersWithType, meter)
-
-			// Add a small delay to ensure created timestamps are different
-			time.Sleep(10 * time.Millisecond)
-		}
-
-		// Create 2 meters with different event types
-		for i := range 2 {
-			input := models.CreateMeterInput{
-				Name:          fmt.Sprintf("Other Event Type Meter %d", i),
-				Slug:          fmt.Sprintf("other-event-type-%s-%d", uuid.New().String()[0:8], i),
-				EventType:     fmt.Sprintf("other.event.%d", i),
-				ValueProperty: "amount",
-				Description:   "Test meter with different event type",
-				Properties:    []string{"property"},
-				Aggregation:   models.AggregationSum,
-				CreatedBy:     "test-user",
-			}
-			_, err := repo.CreateMeter(ctx, input)
-			require.NoError(t, err)
-		}
-
-		return uniqueEventType, metersWithType
+	// Create multiple test meters for listing
+	numMeters := 5
+	createdMeters := make([]models.Meter, 0, numMeters)
+	for range numMeters {
+		input := createTestMeterInput()
+		meter, err := repo.CreateMeter(ctx, input)
+		require.NoError(t, err)
+		createdMeters = append(createdMeters, *meter)
 	}
 
-	t.Run("List meters by event type without cursor", func(t *testing.T) {
-		// Clean up any existing test meters
-		cleanupTestMeters(t, ctx, db)
+	t.Run("Success list all meters with pagination", func(t *testing.T) {
+		// Request first page with limit 3
+		page := pagination.Pagination{
+			Page:  1,
+			Limit: 3,
+		}
 
-		// Create test meters with a specific event type
-		eventType, metersWithType := createTestMetersWithEventTypes()
-
-		// List meters by the specific event type
-		limit := int32(10)
-		result, err := repo.ListMetersByEventType(ctx, limit, eventType, nil)
+		// List meters
+		result, err := repo.ListMeters(ctx, page)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
-		// Verify we got exactly the meters with the specific event type
-		assert.Len(t, result.Items, 3)
+		// Verify pagination info
+		assert.Equal(t, 1, result.Page)
+		assert.Equal(t, 3, result.Limit)
+		assert.GreaterOrEqual(t, result.Total, numMeters) // Database might have other meters
+		assert.Len(t, result.Results, 3)
 
-		// Verify all meters in the result match the expected event type
-		for _, meter := range result.Items {
-			assert.Equal(t, eventType, meter.EventType)
-		}
-
-		// Verify all expected meters are in the result
-		foundCount := 0
-		for _, created := range metersWithType {
-			for _, listed := range result.Items {
-				if created.ID == listed.ID {
-					foundCount++
-					break
-				}
-			}
-		}
-		assert.Equal(t, len(metersWithType), foundCount)
-
-		// With items, NextCursor should be set
-		assert.NotNil(t, result.NextCursor)
-	})
-
-	t.Run("List meters by event type with pagination", func(t *testing.T) {
-		// Clean up any existing test meters
-		cleanupTestMeters(t, ctx, db)
-
-		// Create a unique event type for this test
-		uniqueEventType := "test.event.paginated." + uuid.New().String()[0:8]
-
-		// Create 5 meters with the unique event type
-		createdMeters := make([]*models.Meter, 0, 5)
-		for i := range 5 {
-			input := models.CreateMeterInput{
-				Name:          fmt.Sprintf("Paginated Event Type Meter %d", i),
-				Slug:          fmt.Sprintf("paginated-event-type-%s-%d", uuid.New().String()[0:8], i),
-				EventType:     uniqueEventType,
-				ValueProperty: "amount",
-				Description:   fmt.Sprintf("Test meter for paginated event type %d", i),
-				Properties:    []string{fmt.Sprintf("property%d", i)},
-				Aggregation:   models.AggregationSum,
-				CreatedBy:     "test-user",
-			}
-			meter, err := repo.CreateMeter(ctx, input)
-			require.NoError(t, err)
-			createdMeters = append(createdMeters, meter)
-
-			// Add a small delay to ensure created timestamps are different
-			time.Sleep(10 * time.Millisecond)
-		}
-
-		// Map of IDs for quicker lookup
-		createdIDs := make(map[uuid.UUID]bool)
-		for _, m := range createdMeters {
-			createdIDs[m.ID] = true
-		}
-
-		// Keep track of all found meters
-		allItems := make([]models.Meter, 0, len(createdMeters))
-		foundIDs := make(map[uuid.UUID]bool)
-
-		// Use smaller page size for pagination test
-		limit := int32(2)
-		var cursor *pagination.Cursor
-
-		// Fetch pages until we've found all the meters we created or hit an empty page
-		for {
-			page, err := repo.ListMetersByEventType(ctx, limit, uniqueEventType, cursor)
-			require.NoError(t, err)
-
-			// If we get an empty page, break
-			if len(page.Items) == 0 {
-				t.Logf("No more items found, breaking pagination loop")
-				break
-			}
-
-			// Verify all items have the correct event type
-			for _, item := range page.Items {
-				assert.Equal(t, uniqueEventType, item.EventType)
-
-				// Skip if we've already seen this ID
-				if foundIDs[item.ID] {
-					continue
-				}
-
-				// Add to our found collection
-				foundIDs[item.ID] = true
-
-				// Only count items that were from our test set
-				if createdIDs[item.ID] {
-					allItems = append(allItems, item)
-				}
-			}
-
-			t.Logf("Found %d items in this page, total %d", len(page.Items), len(allItems))
-			t.Logf("Next cursor: %v", *page.NextCursor)
-
-			// Break if we don't have a next cursor
-			if page.NextCursor == nil {
-				break
-			}
-
-			// Set up cursor for next page
-			nextCursor, err := pagination.DecodeCursor(*page.NextCursor)
-			t.Logf("Next cursor: %v", nextCursor)
-			require.NoError(t, err)
-			cursor = nextCursor
-
-			// Break if we've found all our test meters
-			if len(allItems) >= len(createdMeters) {
-				t.Logf("Found all test meters, breaking pagination loop %d", len(allItems))
-				break
-			}
-		}
-
-		// Verify we found all our test meters
-		t.Logf("Found %d meters out of %d created with event type %s", len(allItems), len(createdMeters), uniqueEventType)
-		assert.Equal(t, len(createdMeters), len(allItems), "Should find all created meters via pagination")
-	})
-
-	t.Run("List meters by non-existent event type", func(t *testing.T) {
-		// Use a random event type that shouldn't exist
-		nonExistentEventType := "non.existent.event.type." + uuid.New().String()
-
-		// List meters by the non-existent event type
-		limit := int32(10)
-		result, err := repo.ListMetersByEventType(ctx, limit, nonExistentEventType, nil)
+		// Request second page
+		page.Page = 2
+		result, err = repo.ListMeters(ctx, page)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 
-		// Verify we got no meters
-		assert.Empty(t, result.Items)
+		// Verify pagination info for second page
+		assert.Equal(t, 2, result.Page)
+		assert.Equal(t, 3, result.Limit)
+		assert.GreaterOrEqual(t, result.Total, numMeters)
+		assert.LessOrEqual(t, len(result.Results), 3) // Might be less than 3 items on second page
+	})
 
-		// With no items, NextCursor should be nil
-		assert.Nil(t, result.NextCursor)
+	t.Run("Success empty result with high page number", func(t *testing.T) {
+		// Request a very high page number that should be empty
+		page := pagination.Pagination{
+			Page:  100,
+			Limit: 10,
+		}
+
+		result, err := repo.ListMeters(ctx, page)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// Verify empty results but correct total
+		assert.Equal(t, 100, result.Page)
+		assert.Equal(t, 10, result.Limit)
+		assert.GreaterOrEqual(t, result.Total, numMeters)
+		assert.Empty(t, result.Results)
 	})
 
 	t.Run("Error database operation", func(t *testing.T) {
@@ -573,8 +435,143 @@ func TestListMetersByEventType(t *testing.T) {
 
 		badRepo := NewPostgresMeterStoreRepository(badDB, l)
 
+		page := pagination.Pagination{
+			Page:  1,
+			Limit: 10,
+		}
+
 		// Attempt to list with closed connection
-		result, err := badRepo.ListMetersByEventType(ctx, 10, "any.event.type", nil)
+		result, err := badRepo.ListMeters(ctx, page)
+		assert.Nil(t, result)
+		assert.Equal(t, errors.ErrDatabaseOperation, err)
+	})
+}
+
+func TestListMetersByEventType(t *testing.T) {
+	db, ctx := setupTestDB(t)
+	defer db.Close()
+	defer cleanupTestMeters(t, ctx, db)
+
+	l := createTestLogger(t)
+	repo := NewPostgresMeterStoreRepository(db, l)
+
+	// Create meters with different event types
+	eventType1 := "test.event.type1"
+	eventType2 := "test.event.type2"
+
+	// Create 3 meters with eventType1
+	eventType1Meters := make([]models.Meter, 0, 3)
+	for range 3 {
+		input := createTestMeterInput()
+		input.EventType = eventType1
+		meter, err := repo.CreateMeter(ctx, input)
+		require.NoError(t, err)
+		eventType1Meters = append(eventType1Meters, *meter)
+	}
+
+	// Create 2 meters with eventType2
+	eventType2Meters := make([]models.Meter, 0, 2)
+	for range 2 {
+		input := createTestMeterInput()
+		input.EventType = eventType2
+		meter, err := repo.CreateMeter(ctx, input)
+		require.NoError(t, err)
+		eventType2Meters = append(eventType2Meters, *meter)
+	}
+
+	t.Run("Success list meters by event type with pagination", func(t *testing.T) {
+		// Request first page with limit 2
+		page := pagination.Pagination{
+			Page:  1,
+			Limit: 2,
+		}
+
+		// List meters with eventType1
+		result, err := repo.ListMetersByEventType(ctx, eventType1, page)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// Verify pagination info
+		assert.Equal(t, 1, result.Page)
+		assert.Equal(t, 2, result.Limit)
+		assert.Equal(t, 3, result.Total) // We created 3 meters with eventType1
+		assert.Len(t, result.Results, 2)
+
+		// Verify all results have the correct event type
+		for _, meter := range result.Results {
+			assert.Equal(t, eventType1, meter.EventType)
+		}
+
+		// Request second page
+		page.Page = 2
+		result, err = repo.ListMetersByEventType(ctx, eventType1, page)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// Verify pagination info for second page
+		assert.Equal(t, 2, result.Page)
+		assert.Equal(t, 2, result.Limit)
+		assert.Equal(t, 3, result.Total)
+		assert.Len(t, result.Results, 1) // Only 1 meter left on the second page
+
+		// Verify the result has the correct event type
+		assert.Equal(t, eventType1, result.Results[0].EventType)
+	})
+
+	t.Run("Success list meters with different event type", func(t *testing.T) {
+		page := pagination.Pagination{
+			Page:  1,
+			Limit: 10,
+		}
+
+		// List meters with eventType2
+		result, err := repo.ListMetersByEventType(ctx, eventType2, page)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// Verify pagination info
+		assert.Equal(t, 1, result.Page)
+		assert.Equal(t, 10, result.Limit)
+		assert.Equal(t, 2, result.Total) // We created 2 meters with eventType2
+		assert.Len(t, result.Results, 2)
+
+		// Verify all results have the correct event type
+		for _, meter := range result.Results {
+			assert.Equal(t, eventType2, meter.EventType)
+		}
+	})
+
+	t.Run("Success empty result for non-existent event type", func(t *testing.T) {
+		page := pagination.Pagination{
+			Page:  1,
+			Limit: 10,
+		}
+
+		// List meters with non-existent event type
+		result, err := repo.ListMetersByEventType(ctx, "non.existent.event.type", page)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		// Verify empty results
+		assert.Equal(t, 0, result.Total)
+		assert.Empty(t, result.Results)
+	})
+
+	t.Run("Error database operation", func(t *testing.T) {
+		// Create a new connection and close it to force errors
+		badDB, err := pgxpool.New(ctx, os.Getenv("DATABASE_URL"))
+		require.NoError(t, err)
+		badDB.Close() // Close immediately to cause errors
+
+		badRepo := NewPostgresMeterStoreRepository(badDB, l)
+
+		page := pagination.Pagination{
+			Page:  1,
+			Limit: 10,
+		}
+
+		// Attempt to list with closed connection
+		result, err := badRepo.ListMetersByEventType(ctx, eventType1, page)
 		assert.Nil(t, result)
 		assert.Equal(t, errors.ErrDatabaseOperation, err)
 	})
