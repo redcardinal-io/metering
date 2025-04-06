@@ -8,7 +8,7 @@ services:
     environment:
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: default
-      CLICKHOUSE_DB: openmeter
+      CLICKHOUSE_DB: redcardinal
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     ulimits:
       nofile:
