@@ -35,7 +35,7 @@ func ServeHttp() error {
 	// Set up Fiber app
 	app := fiber.New(fiber.Config{
 		CaseSensitive: true,
-		AppName:       "gopie",
+		AppName:       "rcmetering",
 	})
 
 	// Configure middleware
@@ -49,6 +49,7 @@ func ServeHttp() error {
 	if err != nil {
 		return fmt.Errorf("error creating Kafka producer: %w", err)
 	}
+	defer producer.Close()
 
 	// intialize services
 	producerService := services.NewProducerService(producer, logger)

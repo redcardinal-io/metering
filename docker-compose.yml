@@ -43,8 +43,7 @@ services:
     environment:
       - POSTGRES_USER=redcardinal
       - POSTGRES_PASSWORD=redcardinal
-      - POSTGRES_DB=redcardinal
-      - DB_NAMESPACE=auth
+      - POSTGRES_DB=rcmetering
 
   redpanda:
     command:

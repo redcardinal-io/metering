@@ -1,304 +1,400 @@
 package pagination
 
 import (
-	"encoding/base64"
-	"fmt"
+	"encoding/json"
+	"net/http"
+	"net/url"
+	"reflect"
 	"testing"
-	"time"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-// TestItem implements the Item interface for testing
-type TestItem struct {
-	ID        string
-	CreatedAt time.Time
-	Data      string
-}
-
-// Cursor implements the Item interface
-func (i TestItem) Cursor() Cursor {
-	return NewCursor(i.CreatedAt, i.ID)
-}
-
-// createTestItems generates n test items with descending timestamps
-func createTestItems(n int) []TestItem {
-	items := make([]TestItem, n)
-	now := time.Now().UTC()
-
-	for i := range items {
-		items[i] = TestItem{
-			ID:        fmt.Sprintf("item-%d", i+1),
-			CreatedAt: now.Add(time.Duration(-i) * time.Hour),
-			Data:      fmt.Sprintf("Data for item %d", i+1),
-		}
+func TestPagination_UnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		name        string
+		jsonData    string
+		expected    Pagination
+		expectError bool
+	}{
+		{
+			name:     "With Limit",
+			jsonData: `{"page": 2, "limit": 10, "search_query": "test"}`,
+			expected: Pagination{
+				Page:        2,
+				Limit:       10,
+				SearchQuery: "test",
+			},
+			expectError: false,
+		},
+		{
+			name:     "Without Limit",
+			jsonData: `{"page": 3, "search_query": "query"}`,
+			expected: Pagination{
+				Page:        3,
+				Limit:       DefaultLimit,
+				SearchQuery: "query",
+			},
+			expectError: false,
+		},
+		{
+			name:        "Invalid JSON",
+			jsonData:    `{"page": "invalid"}`,
+			expectError: true,
+		},
 	}
 
-	return items
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var p Pagination
+			err := json.Unmarshal([]byte(tt.jsonData), &p)
+
+			if tt.expectError {
+				if err == nil {
+					t.Error("Expected error, but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if p.Page != tt.expected.Page {
+				t.Errorf("Expected Page %d, got %d", tt.expected.Page, p.Page)
+			}
+			if p.Limit != tt.expected.Limit {
+				t.Errorf("Expected Limit %d, got %d", tt.expected.Limit, p.Limit)
+			}
+			if p.SearchQuery != tt.expected.SearchQuery {
+				t.Errorf("Expected SearchQuery %s, got %s", tt.expected.SearchQuery, p.SearchQuery)
+			}
+		})
+	}
 }
 
-func TestNewCursor(t *testing.T) {
-	t.Run("Creates cursor with UTC time", func(t *testing.T) {
-		// Use a non-UTC time
-		localTime := time.Date(2023, 1, 1, 12, 0, 0, 0, time.Local)
-		id := "test-id"
+func TestPagination_GetOffset(t *testing.T) {
+	tests := []struct {
+		name     string
+		page     int
+		limit    int
+		expected int
+	}{
+		{
+			name:     "Page 1 Limit 10",
+			page:     1,
+			limit:    10,
+			expected: 0,
+		},
+		{
+			name:     "Page 2 Limit 10",
+			page:     2,
+			limit:    10,
+			expected: 10,
+		},
+		{
+			name:     "Page 3 Limit 5",
+			page:     3,
+			limit:    5,
+			expected: 10,
+		},
+		{
+			name:     "Page 0 Limit 10",
+			page:     0,
+			limit:    10,
+			expected: -10, // edge case - negative page
+		},
+	}
 
-		cursor := NewCursor(localTime, id)
-
-		// Verify time is converted to UTC
-		assert.Equal(t, localTime.UTC(), cursor.Time)
-		assert.Equal(t, id, cursor.ID)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := Pagination{
+				Page:  tt.page,
+				Limit: tt.limit,
+			}
+			if got := p.GetOffset(); got != tt.expected {
+				t.Errorf("GetOffset() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
 }
 
-func TestCursorValidate(t *testing.T) {
-	t.Run("Valid cursor", func(t *testing.T) {
-		cursor := Cursor{
-			Time: time.Now(),
-			ID:   "valid-id",
-		}
+func TestAutoPaginate(t *testing.T) {
+	type testItem struct {
+		ID   int
+		Name string
+	}
 
-		err := cursor.Validate()
-		assert.NoError(t, err)
-	})
+	items := []testItem{
+		{ID: 1, Name: "Item 1"},
+		{ID: 2, Name: "Item 2"},
+		{ID: 3, Name: "Item 3"},
+		{ID: 4, Name: "Item 4"},
+		{ID: 5, Name: "Item 5"},
+		{ID: 6, Name: "Item 6"},
+		{ID: 7, Name: "Item 7"},
+		{ID: 8, Name: "Item 8"},
+		{ID: 9, Name: "Item 9"},
+		{ID: 10, Name: "Item 10"},
+	}
 
-	t.Run("Zero time", func(t *testing.T) {
-		cursor := Cursor{
-			Time: time.Time{},
-			ID:   "id",
-		}
-
-		err := cursor.Validate()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "time is zero")
-	})
-
-	t.Run("Empty ID", func(t *testing.T) {
-		cursor := Cursor{
-			Time: time.Now(),
-			ID:   "",
-		}
-
-		err := cursor.Validate()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "id is empty")
-	})
-
-	t.Run("Multiple errors", func(t *testing.T) {
-		cursor := Cursor{
-			Time: time.Time{},
-			ID:   "",
-		}
-
-		err := cursor.Validate()
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "time is zero")
-		assert.Contains(t, err.Error(), "id is empty")
-	})
-}
-
-func TestCursorEncodeDecode(t *testing.T) {
-	t.Run("Encode and decode", func(t *testing.T) {
-		originalCursor := Cursor{
-			Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-			ID:   "test-id",
-		}
-
-		encoded := originalCursor.Encode()
-
-		decoded, err := DecodeCursor(encoded)
-		require.NoError(t, err)
-		assert.Equal(t, originalCursor.Time, decoded.Time)
-		assert.Equal(t, originalCursor.ID, decoded.ID)
-	})
-
-	t.Run("Encode with ID containing delimiter", func(t *testing.T) {
-		originalCursor := Cursor{
-			Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-			ID:   "test" + cursorDelimiter + "id",
-		}
-
-		encoded := originalCursor.Encode()
-
-		decoded, err := DecodeCursor(encoded)
-		require.NoError(t, err)
-		assert.Equal(t, originalCursor.Time, decoded.Time)
-		assert.Equal(t, originalCursor.ID, decoded.ID)
-	})
-}
-
-func TestDecodeCursorErrors(t *testing.T) {
-	t.Run("Empty string", func(t *testing.T) {
-		_, err := DecodeCursor("")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "text is empty")
-	})
-
-	t.Run("Invalid base64", func(t *testing.T) {
-		_, err := DecodeCursor("!invalid-base64!")
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "decode cursor")
-	})
-
-	t.Run("No delimiter", func(t *testing.T) {
-		encoded := base64.StdEncoding.EncodeToString([]byte("2023-01-01T12:00:00Z"))
-		_, err := DecodeCursor(encoded)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "no delimiter found")
-	})
-
-	t.Run("Invalid time format", func(t *testing.T) {
-		invalidTime := "invalid-time" + cursorDelimiter + "id"
-		encoded := base64.StdEncoding.EncodeToString([]byte(invalidTime))
-		_, err := DecodeCursor(encoded)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "parse cursor timestamp")
-	})
-}
-
-func TestNewResult(t *testing.T) {
-	t.Run("With items", func(t *testing.T) {
-		items := []TestItem{
-			{
-				ID:        "1",
-				CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-				Data:      "Item 1",
+	tests := []struct {
+		name     string
+		page     int
+		limit    int
+		content  []testItem
+		expected PaginationView[testItem]
+	}{
+		{
+			name:    "Empty Content",
+			page:    1,
+			limit:   5,
+			content: []testItem{},
+			expected: PaginationView[testItem]{
+				Results: []testItem{},
+				Page:    1,
+				Limit:   5,
+				Total:   0,
 			},
-			{
-				ID:        "2",
-				CreatedAt: time.Date(2023, 1, 2, 12, 0, 0, 0, time.UTC),
-				Data:      "Item 2",
+		},
+		{
+			name:    "First Page Partial Content",
+			page:    1,
+			limit:   5,
+			content: items[:3], // Only 3 items
+			expected: PaginationView[testItem]{
+				Results: items[:3],
+				Page:    1,
+				Limit:   5,
+				Total:   3,
 			},
-			{
-				ID:        "3",
-				CreatedAt: time.Date(2023, 1, 3, 12, 0, 0, 0, time.UTC),
-				Data:      "Item 3",
+		},
+		{
+			name:    "First Page Full Content",
+			page:    1,
+			limit:   5,
+			content: items,
+			expected: PaginationView[testItem]{
+				Results: items[:5],
+				Page:    1,
+				Limit:   5,
+				Total:   10,
 			},
-		}
+		},
+		{
+			name:    "Second Page",
+			page:    2,
+			limit:   5,
+			content: items,
+			expected: PaginationView[testItem]{
+				Results: items[5:10],
+				Page:    2,
+				Limit:   5,
+				Total:   10,
+			},
+		},
+		{
+			name:    "Page Beyond Content",
+			page:    3,
+			limit:   5,
+			content: items,
+			expected: PaginationView[testItem]{
+				Results: []testItem{},
+				Page:    3,
+				Limit:   5,
+				Total:   10,
+			},
+		},
+	}
 
-		result := NewResult(items)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := Pagination{
+				Page:  tt.page,
+				Limit: tt.limit,
+			}
+			result := AutoPaginate(p, tt.content)
 
-		assert.Equal(t, items, result.Items, "Items should be stored without modification")
-
-		require.NotNil(t, result.NextCursor, "NextCursor should not be nil")
-
-		cursor, err := DecodeCursor(*result.NextCursor)
-		require.NoError(t, err, "Cursor should decode without error")
-		assert.Equal(t, items[2].CreatedAt.UTC(), cursor.Time, "Cursor time should match last item")
-		assert.Equal(t, items[2].ID, cursor.ID, "Cursor ID should match last item")
-	})
-
-	t.Run("With empty items", func(t *testing.T) {
-		result := NewResult([]TestItem{})
-
-		assert.Empty(t, result.Items, "Items should be empty")
-
-		assert.Nil(t, result.NextCursor, "NextCursor should be nil for empty results")
-	})
-
-	t.Run("With single item", func(t *testing.T) {
-		item := TestItem{
-			ID:        "single",
-			CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-			Data:      "Single item",
-		}
-
-		result := NewResult([]TestItem{item})
-
-		assert.Equal(t, []TestItem{item}, result.Items, "Item should be stored without modification")
-
-		require.NotNil(t, result.NextCursor, "NextCursor should not be nil")
-
-		cursor, err := DecodeCursor(*result.NextCursor)
-		require.NoError(t, err, "Cursor should decode without error")
-		assert.Equal(t, item.CreatedAt.UTC(), cursor.Time, "Cursor time should match the item")
-		assert.Equal(t, item.ID, cursor.ID, "Cursor ID should match the item")
-	})
+			if !reflect.DeepEqual(result.Results, tt.expected.Results) {
+				t.Errorf("Results = %v, want %v", result.Results, tt.expected.Results)
+			}
+			if result.Page != tt.expected.Page {
+				t.Errorf("Page = %v, want %v", result.Page, tt.expected.Page)
+			}
+			if result.Limit != tt.expected.Limit {
+				t.Errorf("Limit = %v, want %v", result.Limit, tt.expected.Limit)
+			}
+			if result.Total != tt.expected.Total {
+				t.Errorf("Total = %v, want %v", result.Total, tt.expected.Total)
+			}
+		})
+	}
 }
 
-func TestEdgeCases(t *testing.T) {
-	t.Run("Items with same timestamp", func(t *testing.T) {
-		sameTime := time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC)
-		items := []TestItem{
-			{ID: "a", CreatedAt: sameTime, Data: "Item A"},
-			{ID: "b", CreatedAt: sameTime, Data: "Item B"},
-			{ID: "c", CreatedAt: sameTime, Data: "Item C"},
-		}
+func TestFormatWith(t *testing.T) {
+	type testItem struct {
+		ID   int
+		Name string
+	}
 
-		result := NewResult(items)
+	items := []testItem{
+		{ID: 1, Name: "Item 1"},
+		{ID: 2, Name: "Item 2"},
+		{ID: 3, Name: "Item 3"},
+	}
 
-		assert.NotNil(t, result.NextCursor, "Should generate cursor with identical timestamps")
+	p := Pagination{
+		Page:  2,
+		Limit: 10,
+	}
 
-		cursor, err := DecodeCursor(*result.NextCursor)
-		assert.NoError(t, err, "Should decode cursor without error")
+	result := FormatWith(p, 25, items)
 
-		assert.Equal(t, sameTime, cursor.Time)
-		assert.Equal(t, "c", cursor.ID)
-	})
-
-	t.Run("Items with different time zones", func(t *testing.T) {
-		nyZone, _ := time.LoadLocation("America/New_York")
-		tokyoZone, _ := time.LoadLocation("Asia/Tokyo")
-
-		items := []TestItem{
-			{ID: "ny", CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, nyZone), Data: "NY Item"},
-			{ID: "utc", CreatedAt: time.Date(2023, 1, 1, 17, 0, 0, 0, time.UTC), Data: "UTC Item"},
-			{ID: "tokyo", CreatedAt: time.Date(2023, 1, 2, 2, 0, 0, 0, tokyoZone), Data: "Tokyo Item"},
-		}
-
-		result := NewResult(items)
-
-		cursor, err := DecodeCursor(*result.NextCursor)
-		assert.NoError(t, err)
-
-		assert.Equal(t, items[2].CreatedAt.UTC(), cursor.Time)
-		assert.Equal(t, "tokyo", cursor.ID)
-	})
+	if len(result.Results) != 3 {
+		t.Errorf("Expected 3 results, got %d", len(result.Results))
+	}
+	if result.Page != 2 {
+		t.Errorf("Expected Page 2, got %d", result.Page)
+	}
+	if result.Limit != 10 {
+		t.Errorf("Expected Limit 10, got %d", result.Limit)
+	}
+	if result.Total != 25 {
+		t.Errorf("Expected Total 25, got %d", result.Total)
+	}
 }
 
-func TestCursorMarshalUnmarshal(t *testing.T) {
-	t.Run("Marshal and unmarshal", func(t *testing.T) {
-		originalCursor := Cursor{
-			Time: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
-			ID:   "test-id",
-		}
+func TestNewPaginationView(t *testing.T) {
+	type testItem struct {
+		ID   int
+		Name string
+	}
 
-		bytes, err := originalCursor.MarshalText()
-		require.NoError(t, err)
+	items := []testItem{
+		{ID: 1, Name: "Item 1"},
+		{ID: 2, Name: "Item 2"},
+	}
 
-		var decodedCursor Cursor
-		err = decodedCursor.UnmarshalText(bytes)
-		require.NoError(t, err)
+	result := NewPaginationView(3, 15, 30, items)
 
-		assert.Equal(t, originalCursor.Time, decodedCursor.Time)
-		assert.Equal(t, originalCursor.ID, decodedCursor.ID)
-	})
+	if len(result.Results) != 2 {
+		t.Errorf("Expected 2 results, got %d", len(result.Results))
+	}
+	if result.Page != 3 {
+		t.Errorf("Expected Page 3, got %d", result.Page)
+	}
+	if result.Limit != 15 {
+		t.Errorf("Expected Limit 15, got %d", result.Limit)
+	}
+	if result.Total != 30 {
+		t.Errorf("Expected Total 30, got %d", result.Total)
+	}
 }
 
-func BenchmarkPagination(b *testing.B) {
-	items := createTestItems(100)
+func TestGetPaginationFromReq(t *testing.T) {
+	tests := []struct {
+		name        string
+		queryParams map[string]string
+		expected    *Pagination
+		expectError bool
+	}{
+		{
+			name:        "Default Values",
+			queryParams: map[string]string{},
+			expected: &Pagination{
+				Page:        1,
+				Limit:       20,
+				SearchQuery: "",
+				Queries: map[string]string{
+					"sort": "desc",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Valid Parameters",
+			queryParams: map[string]string{
+				"page":         "2",
+				"limit":        "15",
+				"search_query": "test query",
+				"sort":         "asc",
+			},
+			expected: &Pagination{
+				Page:        2,
+				Limit:       15,
+				SearchQuery: "test query",
+				Queries: map[string]string{
+					"sort": "asc",
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Invalid Page",
+			queryParams: map[string]string{
+				"page": "invalid",
+			},
+			expectError: true,
+		},
+		{
+			name: "Invalid Limit",
+			queryParams: map[string]string{
+				"limit": "invalid",
+			},
+			expectError: true,
+		},
+		{
+			name: "Invalid Sort",
+			queryParams: map[string]string{
+				"sort": "invalid",
+			},
+			expectError: true,
+		},
+	}
 
-	b.Run("NewResult", func(b *testing.B) {
-		b.ResetTimer()
-		for b.Loop() {
-			_ = NewResult(items)
-		}
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create request with query parameters
+			req := &http.Request{
+				URL: &url.URL{
+					RawQuery: buildQueryString(tt.queryParams),
+				},
+			}
 
-	b.Run("Cursor encoding", func(b *testing.B) {
-		cursor := items[0].Cursor()
-		b.ResetTimer()
-		for b.Loop() {
-			_ = cursor.Encode()
-		}
-	})
+			p, err := GetPaginationFromReq(req)
 
-	b.Run("Cursor decoding", func(b *testing.B) {
-		encoded := items[0].Cursor().Encode()
-		b.ResetTimer()
-		for b.Loop() {
-			_, _ = DecodeCursor(encoded)
-		}
-	})
+			if tt.expectError {
+				if err == nil {
+					t.Error("Expected error, but got none")
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+				return
+			}
+
+			if p.Page != tt.expected.Page {
+				t.Errorf("Expected Page %d, got %d", tt.expected.Page, p.Page)
+			}
+			if p.Limit != tt.expected.Limit {
+				t.Errorf("Expected Limit %d, got %d", tt.expected.Limit, p.Limit)
+			}
+			if p.SearchQuery != tt.expected.SearchQuery {
+				t.Errorf("Expected SearchQuery %s, got %s", tt.expected.SearchQuery, p.SearchQuery)
+			}
+			if !reflect.DeepEqual(p.Queries, tt.expected.Queries) {
+				t.Errorf("Expected Queries %v, got %v", tt.expected.Queries, p.Queries)
+			}
+		})
+	}
+}
+
+// Helper function to build query string
+func buildQueryString(params map[string]string) string {
+	values := url.Values{}
+	for key, value := range params {
+		values.Add(key, value)
+	}
+	return values.Encode()
 }
