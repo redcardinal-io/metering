@@ -123,8 +123,8 @@ func (k *KafkaProducerRepository) PublishEvent(topic string, event *models.Event
 
 	for attempt := 0; attempt <= k.maxRetries; attempt++ {
 		if attempt > 0 {
-			// Apply backoff for retries
-			backoff := k.retryBackoff * time.Duration(attempt)
+			// Apply exponential backoff for retries
+			backoff := k.retryBackoff * time.Duration(1<<attempt) // 1<<attempt is equivalent to 2^attempt
 			k.logger.Warn(fmt.Sprintf("Retrying event publish (attempt %d/%d) after %v due to: %v",
 				attempt, k.maxRetries, backoff, err))
 			time.Sleep(backoff)
