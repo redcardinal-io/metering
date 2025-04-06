@@ -35,6 +35,14 @@ type PostgresConfig struct {
 	Password string
 }
 
+type ClickHouseConfig struct {
+	Host     string
+	Port     string
+	Database string
+	User     string
+	Password string
+}
+
 type KafkaConfig struct {
 	KafkaBootstrapServers string
 	KafkaRawEventsTopic   string
@@ -49,10 +57,11 @@ type KafkaConfig struct {
 }
 
 type Config struct {
-	Server   ServerConfig
-	Logger   LoggerConfig
-	Kafka    KafkaConfig
-	Postgres PostgresConfig
+	Server     ServerConfig
+	Logger     LoggerConfig
+	Kafka      KafkaConfig
+	Postgres   PostgresConfig
+	ClickHouse ClickHouseConfig
 }
 
 func initializeViper() error {
@@ -102,6 +111,11 @@ func validateConfig(config *Config) error {
 		{config.Postgres.Database, "postgres database"},
 		{config.Postgres.User, "postgres user"},
 		{config.Postgres.Password, "postgres password"},
+		{config.ClickHouse.Host, "clickhouse host"},
+		{config.ClickHouse.Port, "clickhouse port"},
+		{config.ClickHouse.Database, "clickhouse database"},
+		{config.ClickHouse.User, "clickhouse user"},
+		{config.ClickHouse.Password, "clickhouse password"},
 	}
 
 	for _, v := range validations {
@@ -147,6 +161,13 @@ func LoadConfig() (*Config, error) {
 			Database: viper.GetString("RCMETERING_POSTGRES_DATABASE"),
 			User:     viper.GetString("RCMETERING_POSTGRES_USER"),
 			Password: viper.GetString("RCMETERING_POSTGRES_PASSWORD"),
+		},
+		ClickHouse: ClickHouseConfig{
+			Host:     viper.GetString("RCMETERING_CLICKHOUSE_HOST"),
+			Port:     viper.GetString("RCMETERING_CLICKHOUSE_PORT"),
+			Database: viper.GetString("RCMETERING_CLICKHOUSE_DATABASE"),
+			User:     viper.GetString("RCMETERING_CLICKHOUSE_USER"),
+			Password: viper.GetString("RCMETERING_CLICKHOUSE_PASSWORD"),
 		},
 	}
 
