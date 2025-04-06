@@ -44,6 +44,8 @@ type KafkaConfig struct {
 	KafkaPassword         string
 	KafkaWorkerCount      int
 	KafkaQueueSize        int
+	KafkaMaxRetries       int
+	KafkaRetryBackoffMs   int
 }
 
 type Config struct {
@@ -79,6 +81,8 @@ func setDefaults() {
 	viper.SetDefault("RCMETERING_LOGGER_LOGFILE", "rcmetering.log")
 	viper.SetDefault("RCMETERING_KAFKA_WORKER_COUNT", 5)
 	viper.SetDefault("RCMETERING_KAFKA_QUEUE_SIZE", 1000)
+	viper.SetDefault("RCMETERING_KAFKA_MAX_RETRIES", 3)
+	viper.SetDefault("RCMETERING_KAFKA_RETRY_BACKOFF_MS", 100)
 }
 
 func validateConfig(config *Config) error {
@@ -115,9 +119,6 @@ func LoadConfig() (*Config, error) {
 
 	setDefaults()
 
-	// Debug output - check full names
-	log.Println("Checking 'RCMETERING_KAFKA_BOOTSTRAP_SERVERS' value:", viper.GetString("RCMETERING_KAFKA_BOOTSTRAP_SERVERS"))
-
 	config := &Config{
 		Server: ServerConfig{
 			Host: viper.GetString("RCMETERING_SERVER_HOST"),
@@ -137,6 +138,8 @@ func LoadConfig() (*Config, error) {
 			KafkaPassword:         viper.GetString("RCMETERING_KAFKA_PASSWORD"),
 			KafkaWorkerCount:      viper.GetInt("RCMETERING_KAFKA_WORKER_COUNT"),
 			KafkaQueueSize:        viper.GetInt("RCMETERING_KAFKA_QUEUE_SIZE"),
+			KafkaMaxRetries:       viper.GetInt("RCMETERING_KAFKA_MAX_RETRIES"),
+			KafkaRetryBackoffMs:   viper.GetInt("RCMETERING_KAFKA_RETRY_BACKOFF_MS"),
 		},
 		Postgres: PostgresConfig{
 			Host:     viper.GetString("RCMETERING_POSTGRES_HOST"),
