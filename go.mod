@@ -3,15 +3,14 @@ module github.com/redcardinal-io/metering
 go 1.24.1
 
 require (
+	github.com/IBM/sarama v1.45.1
 	github.com/Shopify/sarama v1.38.0
 	github.com/ThreeDotsLabs/watermill v1.2.0
 	github.com/ThreeDotsLabs/watermill-kafka/v2 v2.5.0
 	github.com/gofiber/contrib/fiberzap v1.0.2
 	github.com/gofiber/fiber/v2 v2.52.6
-	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.7.4
-	github.com/samber/lo v1.49.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
