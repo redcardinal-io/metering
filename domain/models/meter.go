@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 )
 
 // AggregationEnum represents the possible aggregation types for a meter
@@ -54,8 +53,4 @@ func ValidateAggregation(value string) bool {
 	default:
 		return false
 	}
-}
-
-func (m Meter) Cursor() pagination.Cursor {
-	return pagination.NewCursor(m.CreatedAt, m.ID.String())
 }

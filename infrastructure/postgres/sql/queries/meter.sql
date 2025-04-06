@@ -21,27 +21,17 @@ SELECT * FROM meter
 WHERE slug = $1;
 
 
--- name: ListMetersCursorPaginated :many
+-- name: ListMetersPaginated :many
 SELECT * FROM meter
-WHERE 
-    CASE WHEN @use_cursor::boolean THEN 
-        (created_at, id) < (@cursor_time, @cursor_id::uuid)
-    ELSE 
-        TRUE 
-    END
-ORDER BY created_at DESC, id DESC
-LIMIT $1;
+ORDER BY created_at DESC
+LIMIT $1
+OFFSET $2;
 
--- name: ListMetersCursorPaginatedByEventType :many
+-- name: ListMetersPaginatedByEventType :many
 SELECT * FROM meter
-WHERE event_type = $1 and 
-    CASE WHEN @use_cursor::boolean THEN 
-        (created_at, id) < (@cursor_time, @cursor_id::uuid)
-    ELSE 
-        TRUE 
-    END
-ORDER BY created_at DESC, id DESC
-LIMIT $2;
+WHERE event_type = $1 
+LIMIT $2
+OFFSET $3;
 
 -- name: DeleteMeterByID :exec
 DELETE FROM meter
