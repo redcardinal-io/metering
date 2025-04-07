@@ -1,18 +1,20 @@
-package store
+package olap
 
 import (
 	"context"
 	"fmt"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"github.com/jmoiron/sqlx"
 	"github.com/redcardinal-io/metering/application/repositories"
+	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
 	"go.uber.org/zap"
 )
 
 type ClickHouseStore struct {
-	driver driver.Conn
+	db     *sqlx.DB
 	logger *logger.Logger
 }
 
@@ -22,12 +24,10 @@ func ClickHouseStoreRepository(logger *logger.Logger) repositories.OlapRepositor
 	}
 }
 
-// Connect - Connect to Postgres
 func (store *ClickHouseStore) Connect(cfg *config.ClickHouseConfig) error {
 	store.logger.Info("Connecting to ClickHouse", zap.String("host", cfg.Host), zap.String("port", cfg.Port), zap.String("database", cfg.Database))
 
-	ctx := context.Background()
-	conn, err := clickhouse.Open(&clickhouse.Options{
+	conn := clickhouse.OpenDB(&clickhouse.Options{
 		Addr: []string{fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)},
 		Auth: clickhouse.Auth{
 			Database: cfg.Database,
@@ -44,27 +44,28 @@ func (store *ClickHouseStore) Connect(cfg *config.ClickHouseConfig) error {
 		},
 	})
 
-	if err != nil {
-		store.logger.Error("Error connecting to ClickHouse", zap.Error(err))
+	store.db = sqlx.NewDb(conn, "clickhouse")
+
+	if err := store.db.Ping(); err != nil {
+		store.logger.Error("Error pinging ClickHouse", zap.Error(err))
 		return err
 	}
 
-	if err := conn.Ping(ctx); err != nil {
-		store.logger.Error("Error Pinging ClickHouse", zap.Error(err))
-		return err
-	}
-	store.driver = conn
-	store.logger.Info("Connected to CLickHouse")
+	store.logger.Info("Connected to ClickHouse")
 	return nil
 }
 
 func (store *ClickHouseStore) Close() error {
-	if store.driver != nil {
-		store.driver.Close()
+	if store.db != nil {
+		return store.db.Close()
 	}
 	return nil
 }
 
 func (store *ClickHouseStore) GetDB() any {
-	return store.driver
+	return store.db
+}
+
+func (store *ClickHouseStore) CreateMeter(ctx context.Context, arg models.MaterializedView) error {
+	return nil
 }
