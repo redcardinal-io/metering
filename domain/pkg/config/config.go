@@ -35,6 +35,14 @@ type PostgresConfig struct {
 	Password string
 }
 
+type ClickHouseConfig struct {
+	Host     string
+	Port     string
+	Database string
+	User     string
+	Password string
+}
+
 type KafkaConfig struct {
 	KafkaBootstrapServers string
 	KafkaRawEventsTopic   string
@@ -42,17 +50,17 @@ type KafkaConfig struct {
 	KafkaSaslMechanisms   string
 	KafkaUsername         string
 	KafkaPassword         string
-	KafkaWorkerCount      int
 	KafkaQueueSize        int
 	KafkaMaxRetries       int
 	KafkaRetryBackoffMs   int
 }
 
 type Config struct {
-	Server   ServerConfig
-	Logger   LoggerConfig
-	Kafka    KafkaConfig
-	Postgres PostgresConfig
+	Server     ServerConfig
+	Logger     LoggerConfig
+	Kafka      KafkaConfig
+	Postgres   PostgresConfig
+	ClickHouse ClickHouseConfig
 }
 
 func initializeViper() error {
@@ -79,7 +87,6 @@ func setDefaults() {
 	viper.SetDefault("RCMETERING_LOGGER_LEVEL", string(INFO))
 	viper.SetDefault("RCMETERING_LOGGER_MODE", "dev")
 	viper.SetDefault("RCMETERING_LOGGER_LOGFILE", "rcmetering.log")
-	viper.SetDefault("RCMETERING_KAFKA_WORKER_COUNT", 5)
 	viper.SetDefault("RCMETERING_KAFKA_QUEUE_SIZE", 1000)
 	viper.SetDefault("RCMETERING_KAFKA_MAX_RETRIES", 3)
 	viper.SetDefault("RCMETERING_KAFKA_RETRY_BACKOFF_MS", 100)
@@ -102,6 +109,11 @@ func validateConfig(config *Config) error {
 		{config.Postgres.Database, "postgres database"},
 		{config.Postgres.User, "postgres user"},
 		{config.Postgres.Password, "postgres password"},
+		{config.ClickHouse.Host, "clickhouse host"},
+		{config.ClickHouse.Port, "clickhouse port"},
+		{config.ClickHouse.Database, "clickhouse database"},
+		{config.ClickHouse.User, "clickhouse user"},
+		{config.ClickHouse.Password, "clickhouse password"},
 	}
 
 	for _, v := range validations {
@@ -136,7 +148,6 @@ func LoadConfig() (*Config, error) {
 			KafkaSaslMechanisms:   viper.GetString("RCMETERING_KAFKA_SASL_MECHANISMS"),
 			KafkaUsername:         viper.GetString("RCMETERING_KAFKA_USERNAME"),
 			KafkaPassword:         viper.GetString("RCMETERING_KAFKA_PASSWORD"),
-			KafkaWorkerCount:      viper.GetInt("RCMETERING_KAFKA_WORKER_COUNT"),
 			KafkaQueueSize:        viper.GetInt("RCMETERING_KAFKA_QUEUE_SIZE"),
 			KafkaMaxRetries:       viper.GetInt("RCMETERING_KAFKA_MAX_RETRIES"),
 			KafkaRetryBackoffMs:   viper.GetInt("RCMETERING_KAFKA_RETRY_BACKOFF_MS"),
@@ -147,6 +158,13 @@ func LoadConfig() (*Config, error) {
 			Database: viper.GetString("RCMETERING_POSTGRES_DATABASE"),
 			User:     viper.GetString("RCMETERING_POSTGRES_USER"),
 			Password: viper.GetString("RCMETERING_POSTGRES_PASSWORD"),
+		},
+		ClickHouse: ClickHouseConfig{
+			Host:     viper.GetString("RCMETERING_CLICKHOUSE_HOST"),
+			Port:     viper.GetString("RCMETERING_CLICKHOUSE_PORT"),
+			Database: viper.GetString("RCMETERING_CLICKHOUSE_DATABASE"),
+			User:     viper.GetString("RCMETERING_CLICKHOUSE_USER"),
+			Password: viper.GetString("RCMETERING_CLICKHOUSE_PASSWORD"),
 		},
 	}
 
