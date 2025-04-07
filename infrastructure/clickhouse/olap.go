@@ -1,17 +1,17 @@
-package olap
+package clickhouse
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/redcardinal-io/metering/application/repositories"
-	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
 	"go.uber.org/zap"
 )
+
+const eventsTable = "rc_events"
 
 type ClickHouseStore struct {
 	db     *sqlx.DB
@@ -64,8 +64,4 @@ func (store *ClickHouseStore) Close() error {
 
 func (store *ClickHouseStore) GetDB() any {
 	return store.db
-}
-
-func (store *ClickHouseStore) CreateMeter(ctx context.Context, arg models.MaterializedView) error {
-	return nil
 }

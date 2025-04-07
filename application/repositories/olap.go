@@ -9,7 +9,7 @@ import (
 
 type OlapRepository interface {
 	Connect(cfg *config.ClickHouseConfig) error
-	CreateMeter(ctx context.Context, arg models.MaterializedView) error
+	CreateMeter(ctx context.Context, arg models.CreateMeterInput) error
 	Close() error
 	GetDB() any
 }

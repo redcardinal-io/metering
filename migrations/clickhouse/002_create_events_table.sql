@@ -1,14 +1,22 @@
-CREATE TABLE IF NOT EXISTS rc_events(
-    id String NOT NULL,
-    type String NOT NULL,
-    source String NOT NULL,
-    source_metadata Map(String, String) NOT NULL,
-    organization String NOT NULL,
-    user String NOT NULL,
-    timestamp DateTime64(3) NOT NULL,
-    properties Map(String, String) NOT NULL,
-    ingested_at DateTime64(3) NOT NULL,
+-- +goose Up
+-- +goose StatementBegin
+create table if not exists rc_events(
+    id String not null,
+    type String not null,
+    source String not null,
+    source_metadata Map(String, String) not null,
+    organization String not null,
+    user String not null,
+    timestamp DateTime64(3) not null,
+    properties Map(String, String) not null,
+    ingested_at DateTime64(3) not null,
     validation_errors Map(String, String)
 )
 ENGINE = MergeTree
 ORDER BY (timestamp);
+-- +goose StatementEnd
+-- +goose Down
+
+-- +goose StatementBegin
+drop table if exists rc_events;
+-- +goose StatementEnd

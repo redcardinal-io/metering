@@ -1,7 +1,9 @@
-CREATE MATERIALIZED VIEW IF NOT EXISTS rc_events_mv
-TO rc_events
-AS
-SELECT
+-- +goose Up
+-- +goose StatementBegin
+create materialized view if not exists rc_events_mv
+to rc_events
+as
+select
     id,
     type,
     source,
@@ -12,4 +14,10 @@ SELECT
     properties,
     ingested_at,
     validation_errors
-FROM rc_events_queue;
+from rc_events_queue;
+-- +goose StatementEnd
+
+-- +goose Down
+-- +goose StatementBegin
+drop view if exists rc_events_mv;
+-- +goose StatementEnd
