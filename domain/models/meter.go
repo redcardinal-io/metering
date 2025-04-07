@@ -42,6 +42,8 @@ type CreateMeterInput struct {
 	Properties    []string        `json:"properties" validate:"required,min=1"`
 	Aggregation   AggregationEnum `json:"aggregation" validate:"required,oneof=count sum avg unique_count min max"`
 	CreatedBy     string          `json:"created_by" validate:"required"`
+	Populate      bool            `json:"populate" validate:"required"`
+	Organization  string          `json:"organization" validate:"required"`
 }
 
 // ValidateAggregation checks if a string is a valid aggregation enum value
