@@ -25,7 +25,7 @@ func upEventsMv(ctx context.Context, tx *sql.Tx) error {
     		user,
     		timestamp,
     		properties,
-    		ingested_at,
+    		now() as ingested_at,
     		validation_errors
 		from rc_events_queue;
 	`)
