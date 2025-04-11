@@ -4,9 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 
 	"github.com/pressly/goose/v3"
-	"github.com/spf13/viper"
 )
 
 func init() {
@@ -15,20 +15,20 @@ func init() {
 
 func upEventsQueue(ctx context.Context, tx *sql.Tx) error {
 	// load envs for kafka
-	brokerList := viper.GetString("RCMETERING_KAFKA_BROKER_LIST")
+	brokerList := os.Getenv("RCMETERING_KAFKA_BROKER_LIST")
 	if brokerList == "" {
 		return fmt.Errorf("RCMETERING_KAFKA_BROKER_LIST is not set")
 	}
-	topicList := viper.GetString("RCMETERING_KAFKA_TOPIC_LIST")
+	topicList := os.Getenv("RCMETERING_KAFKA_TOPIC_LIST")
 	if topicList == "" {
 		return fmt.Errorf("RCMETERING_KAFKA_TOPIC_LIST is not set")
 	}
-	groupName := viper.GetString("RCMETERING_KAFKA_GROUP_NAME")
+	groupName := os.Getenv("RCMETERING_KAFKA_GROUP_NAME")
 	if groupName == "" {
 		return fmt.Errorf("RCMETERING_KAFKA_GROUP_NAME is not set")
 	}
 
-	_, err := tx.ExecContext(ctx, fmt.Sprintf(`
+	sql := fmt.Sprintf(`
 		create table if not exists rc_events_queue(
     		id String not null,
     		type String not null,
@@ -38,7 +38,6 @@ func upEventsQueue(ctx context.Context, tx *sql.Tx) error {
     		user String not null,
     		timestamp DateTime not null,
     		properties Map(String, String) not null,
-    		ingested_at DateTime default now(),
     		validation_errors Map(String, String)
 		)
 		engine = Kafka()
@@ -47,7 +46,9 @@ func upEventsQueue(ctx context.Context, tx *sql.Tx) error {
     		kafka_topic_list = '%s',
     		kafka_group_name = '%s',
     		kafka_format = 'JSONEachRow';
-	`, brokerList, topicList, groupName))
+	`, brokerList, topicList, groupName)
+
+	_, err := tx.ExecContext(ctx, sql)
 	return err
 }
 
