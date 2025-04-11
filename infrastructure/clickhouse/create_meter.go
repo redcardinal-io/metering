@@ -56,6 +56,11 @@ func buildCreateMeterSQL(arg models.CreateMeterInput, eventsTable string) (strin
 		return "", nil, fmt.Errorf("invalid aggregation type: %s", arg.Aggregation)
 	}
 
+	// Validate the ValueProperty, if aggregation is unique_count value_property cannot be empty
+	if arg.Aggregation == "unique_count" && arg.ValueProperty == "" {
+		return "", nil, fmt.Errorf("value_property is required for unique_count")
+	}
+
 	// Build the column definitions for the materialized view
 	var columnDefs []string
 
