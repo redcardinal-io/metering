@@ -6,34 +6,42 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/huandu/go-sqlbuilder"
 	"github.com/redcardinal-io/metering/domain/models"
 	"go.uber.org/zap"
 )
 
+// Map aggregation types to their corresponding ClickHouse functions
 var aggregationToFunctions = map[models.AggregationEnum]struct {
 	aggFunc      string
+	aggMergeFunc string
 	aggStateFunc string
 	dataType     string
 }{
-	"sum":          {"sum", "sumState", "Float64"},
-	"avg":          {"avg", "avgState", "Float64"},
-	"min":          {"min", "minState", "Float64"},
-	"max":          {"max", "maxState", "Float64"},
-	"count":        {"count", "countState", "Float64"},
-	"unique_count": {"uniq", "uniqState", "String"},
+	"sum":          {"sum", "sumMerge", "sumState", "Float64"},
+	"avg":          {"avg", "avgMerge", "avgState", "Float64"},
+	"min":          {"min", "minMerge", "minState", "Float64"},
+	"max":          {"max", "maxMerge", "maxState", "Float64"},
+	"count":        {"count", "countMerge", "countState", "Float64"},
+	"unique_count": {"uniq", "uniqMerge", "uniqState", "String"},
 }
 
+// TablePrefix defines the prefix used for all tables and views
+const TablePrefix = "rc_"
+const EventsTableName = "events"
+
+// CreateMeter creates a materialized view for meter data in ClickHouse
 func (store *ClickHouseStore) CreateMeter(ctx context.Context, arg models.CreateMeterInput) error {
 	// Build the SQL for creating the materialized view
-	sql, params, err := buildCreateMeterSQL(arg, eventsTable)
+	sql, params, err := buildCreateMeterSQL(arg)
 	if err != nil {
 		store.logger.Error("Failed to build meter view SQL", zap.Error(err))
 		return fmt.Errorf("failed to build meter view SQL: %w", err)
 	}
 
-	// Execute the SQL with the provided parameters (SQL injection safe)
+	// Execute the SQL with the provided parameters
 	_, err = store.db.ExecContext(ctx, sql, params...)
 	if err != nil {
 		store.logger.Error("Failed to create meter view", zap.Error(err), zap.String("sql", sql))
@@ -46,34 +54,29 @@ func (store *ClickHouseStore) CreateMeter(ctx context.Context, arg models.Create
 	return nil
 }
 
-func buildCreateMeterSQL(arg models.CreateMeterInput, eventsTable string) (string, []any, error) {
-	// Generate a safe, escaped view name (SQL injection safe)
+// buildCreateMeterSQL builds the SQL for creating the materialized view
+func buildCreateMeterSQL(arg models.CreateMeterInput) (string, []any, error) {
+	// Get the view name
 	viewName := getMeterViewName(arg.Organization, arg.Slug)
+	eventsTable := getEventsTableName()
 
-	// Validate the aggregation type against supported types
+	// Validate the aggregation type
 	aggInfo, ok := aggregationToFunctions[arg.Aggregation]
 	if !ok {
 		return "", nil, fmt.Errorf("invalid aggregation type: %s", arg.Aggregation)
 	}
 
-	// Validate the ValueProperty, if aggregation is unique_count value_property cannot be empty
-	if arg.Aggregation == "unique_count" && arg.ValueProperty == "" {
-		return "", nil, fmt.Errorf("value_property is required for unique_count")
-	}
-
 	// Build the column definitions for the materialized view
-	var columnDefs []string
-
-	// Add base columns that are always present
-	columnDefs = append(columnDefs,
+	var columns []string
+	columns = append(columns,
 		"organization String",       // Organization identifier
-		"user String",               // User identifier
-		"windowstart DateTime64(3)", // Start of the time window (millisecond precision)
-		"windowend DateTime64(3)",   // End of the time window (millisecond precision)
-		fmt.Sprintf("value AggregateFunction(%s, %s)", aggInfo.aggFunc, aggInfo.dataType), // Aggregated value with appropriate function and type
+		"user String",
+		"windowstart DateTime",
+		"windowend DateTime",
+		fmt.Sprintf("value AggregateFunction(%s, %s)", aggInfo.aggFunc, aggInfo.dataType),
 	)
 
-	// Define the columns to order by (important for query performance in ClickHouse)
+	// Define the ORDER BY columns
 	orderByColumns := []string{
 		"windowstart",
 		"windowend",
@@ -81,144 +84,130 @@ func buildCreateMeterSQL(arg models.CreateMeterInput, eventsTable string) (strin
 		"user",
 	}
 
-	// Process the user-defined properties to group by
-	// Sorting ensures consistent column ordering regardless of input order
+	// Sort group_by keys for consistency
 	groupByKeys := make([]string, 0, len(arg.Properties))
-	for _, k := range arg.Properties {
+	for k := range arg.Properties {
 		groupByKeys = append(groupByKeys, k)
 	}
 	sort.Strings(groupByKeys)
 
-	// Add each property as a column (all properties are stored as strings)
+	// Add each group_by property as a column
 	for _, k := range groupByKeys {
-		columnName := k // The column name matches the property name
-		// These are schema definitions, not user inputs, so direct string formatting is safe
-		columnDefs = append(columnDefs, fmt.Sprintf("%s String", columnName))
+		columnName := escape(k)
+		columns = append(columns, fmt.Sprintf("%s String", columnName))
 		orderByColumns = append(orderByColumns, columnName)
 	}
 
-	// Build the SELECT query that populates the materialized view
-	selectSQL, selectArgs, err := buildMeterSelectSQL(arg, eventsTable, aggInfo.aggStateFunc, aggInfo.dataType)
+	// Build the SELECT query for the materialized view
+	selectSQL, selectParams, err := buildMeterSelectSQL(arg, eventsTable, aggInfo.aggStateFunc, aggInfo.dataType)
 	if err != nil {
 		return "", nil, err
 	}
 
-	// Handle the POPULATE option (backfills the view with existing data if true)
+	// Handle the POPULATE option
 	populateClause := ""
 	if arg.Populate {
 		populateClause = "POPULATE"
 	}
 
 	// Construct the complete CREATE MATERIALIZED VIEW statement
-	// Note: column definitions and ORDER BY columns are constructed from validated inputs
 	createSQL := fmt.Sprintf(
-		`create materialized view if not exists %s (
+		`CREATE MATERIALIZED VIEW IF NOT EXISTS %s (
 			%s
-		) engine = AggregatingMergeTree()
-		order by (%s)
+		) ENGINE = AggregatingMergeTree()
+		PARTITION BY toYYYYMM(windowstart)
+		ORDER BY (%s)
 		%s
 		AS
 		%s`,
-		viewName, // Already escaped in getMeterViewName
-		strings.Join(columnDefs, ", "),
+		viewName,
+		strings.Join(columns, ",\n\t\t\t"),
 		strings.Join(orderByColumns, ", "),
 		populateClause,
-		selectSQL, // Generated using parameterized queries
+		selectSQL,
 	)
 
-	return createSQL, selectArgs, nil
+	return createSQL, selectParams, nil
 }
 
+// buildMeterSelectSQL builds the SELECT statement for populating the materialized view
 func buildMeterSelectSQL(arg models.CreateMeterInput, eventsTable string, aggStateFunc string, dataType string) (string, []any, error) {
-	sb := sqlbuilder.ClickHouse.NewSelectBuilder()
-
-	// Add the basic dimensions to select
-	sb.Select(
+	// Initialize the list of columns to select
+	selects := []string{
 		"organization", // Organization identifier
 		"user",         // User identifier
-		// Time window functions with 1-minute granularity
-		// These are ClickHouse functions, not user inputs, so string formatting is safe
-		"tumbleStart(timestamp, toIntervalMinute(1)) AS windowstart",
-		"tumbleEnd(timestamp, toIntervalMinute(1)) AS windowend",
-	)
-
-	// Handle the value aggregation based on the aggregation type
-	if arg.ValueProperty == "" && arg.Aggregation == "count" {
-		// For simple counting without a specific value property
-		sb.Select(fmt.Sprintf("%s(*) AS value", aggStateFunc))
-	} else if arg.Aggregation == "unique_count" {
-		// For counting unique values of a property
-		// The value property is escaped to prevent SQL injection
-		sb.Select(fmt.Sprintf("%s(JSONExtractString(properties, '%s')) AS value",
-			aggStateFunc, sqlbuilder.Escape(arg.ValueProperty)))
-	} else {
-		// For other aggregations (sum, avg, min, max)
-		// Cast to the appropriate data type
-		// Both the value property and data type are sanitized
-		sb.Select(fmt.Sprintf("%s(cast(JSONExtractString(properties, '%s'), '%s')) AS value",
-			aggStateFunc, sqlbuilder.Escape(arg.ValueProperty), dataType))
+		"tumbleStart(time, toIntervalMinute(1)) AS windowstart",
+		"tumbleEnd(time, toIntervalMinute(1)) AS windowend",
 	}
 
-	// Create a map of property paths (currently using property name as path)
+	var params []any
+
+	// Handle the value aggregation based on the aggregation type
+	valueSelect := ""
+	if arg.ValueProperty == "" && arg.Aggregation == "count" {
+		valueSelect = fmt.Sprintf("%s(*) AS value", aggStateFunc)
+	} else if arg.Aggregation == "unique_count" {
+		valueSelect = fmt.Sprintf("%s(JSONExtractString(data, '%s')) AS value",
+			aggStateFunc, escape(arg.ValueProperty))
+	} else {
+		valueSelect = fmt.Sprintf("%s(cast(JSONExtractString(data, '%s'), '%s')) AS value",
+			aggStateFunc, escape(arg.ValueProperty), dataType)
+	}
+	selects = append(selects, valueSelect)
+
+	// Define the ORDER BY columns
+	orderBy := []string{
+		"windowstart",
+		"windowend",
+		"subject",
+	}
+
 	propertyPaths := make(map[string]string)
 	for _, prop := range arg.Properties {
 		propertyPaths[prop] = prop // Using property name as the JSON path
 	}
 
-	// Process the user-defined properties to group by
-	// Sorting ensures consistent column ordering
-	groupByKeys := make([]string, 0, len(propertyPaths))
-	for k := range propertyPaths {
+	// Sort group_by keys for consistency
+	groupByKeys := make([]string, 0, len(arg.propertyPaths))
+	for k := range arg.propertyPaths {
 		groupByKeys = append(groupByKeys, k)
 	}
 	sort.Strings(groupByKeys)
 
-	// Add each property as a column, extracting values from JSON
+	// Add each group_by property as a column
 	for _, k := range groupByKeys {
-		jsonPath := propertyPaths[k]
-		// The JSON path is escaped to prevent SQL injection
-		sb.Select(fmt.Sprintf("JSONExtractString(properties, '%s') as %s",
-			sqlbuilder.Escape(jsonPath), k))
+		v := arg.propertyPaths[k]
+		columnName := escape(k)
+		orderBy = append(orderBy, columnName)
+		selects = append(selects, fmt.Sprintf("JSONExtractString(data, '%s') as %s",
+			escape(v), columnName))
 	}
 
-	// Specify the source table
-	sb.From(eventsTable)
-
-	// Add WHERE clause conditions
-	// 1. Filter by event type (using parameterized query for safety)
-	sb.Where(sb.Equal("type", arg.EventType))
-	// 2. Only include events without validation errors
-	sb.Where("(validation_errors IS NULL OR length(validation_errors) = 0)")
-
-	// Define the GROUP BY columns
-	groupByColumns := []string{
-		"organization",
-		"user",
-		"windowstart",
-		"windowend",
+	// Construct the WHERE clause to filter events
+	whereClauses := []string{
+		"empty(validation_error) = 1",
+		"type = ?",
 	}
+	params = append(params, arg.EventType)
 
-	// Add custom properties to GROUP BY
-	for _, k := range groupByKeys {
-		groupByColumns = append(groupByColumns, k)
-	}
+	// Complete SELECT query
+	sql := fmt.Sprintf(
+		"SELECT %s\nFROM %s\nWHERE %s\nGROUP BY %s",
+		strings.Join(selects, ", "),
+		eventsTable,
+		strings.Join(whereClauses, " AND "),
+		strings.Join(orderBy, ", "),
+	)
 
-	// Apply the GROUP BY clause
-	sb.GroupBy(groupByColumns...)
-
-	// Build the final SQL and parameters
-	// The sqlbuilder library handles SQL injection protection
-	sql, args := sb.Build()
-
-	// Fix spacing issues in the generated SQL
-	sql = strings.Replace(sql, "SELECT", "SELECT ", 1)
-	sql = strings.Replace(sql, "NULLOR", "NULL OR", 1)
-	sql = strings.Replace(sql, "errorsIS", "errors IS", 1)
-
-	return sql, args, nil
+	return sql, params, nil
 }
 
-func getMeterViewName(organization, meterSlug string) string {
+// getEventsTableName returns the fully qualified name of the events table
+func getEventsTableName() string {
+	return fmt.Sprintf("%s%s", TablePrefix, EventsTableName)
+}
+
+func getMeterViewName(organization string, meterSlug string) string {
 	// Replace invalid characters with underscores for ClickHouse identifiers
 	sanitizeIdentifier := func(s string) string {
 		// Replace hyphens and other invalid characters with underscores
@@ -226,7 +215,12 @@ func getMeterViewName(organization, meterSlug string) string {
 		return re.ReplaceAllString(s, "_")
 	}
 
-	return fmt.Sprintf("meter_%s_%s",
+	return fmt.Sprintf("meter_%s_%s_mv",
 		sanitizeIdentifier(organization),
 		sanitizeIdentifier(meterSlug))
+}
+
+// escape escapes a string for use in SQL queries
+func escape(s string) string {
+	return strings.Replace(s, "$", "$$", -1)
 }
