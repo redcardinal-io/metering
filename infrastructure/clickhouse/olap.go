@@ -10,6 +10,7 @@ import (
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
+	"github.com/redcardinal-io/metering/infrastructure/clickhouse/meters"
 	"go.uber.org/zap"
 )
 
@@ -25,6 +26,33 @@ func ClickHouseOlapRepository(logger *logger.Logger) repositories.OlapRepository
 }
 
 func (store *ClickHouseStore) CreateMeter(ctx context.Context, arg models.CreateMeterInput) error {
+	createMeter := meters.CreateMeter{
+		Slug:          arg.Slug,
+		TenantSlug:    arg.TenantSlug,
+		ValueProperty: arg.ValueProperty,
+		Populate:      arg.Populate,
+		Properties:    arg.Properties,
+		Aggregation:   arg.Aggregation,
+		EventType:     arg.EventType,
+	}
+
+	sql, args, err := createMeter.ToCreateSQL()
+	fmt.Printf("SQL: %v\n", sql)
+	for i, arg := range args {
+		fmt.Printf("Arg-%v: %v\n", i, arg)
+	}
+	if err != nil {
+		store.logger.Error("Error creating meter SQL", zap.Error(err))
+		return err
+	}
+
+	_, err = store.db.ExecContext(ctx, sql, args...)
+	if err != nil {
+		store.logger.Error("Error executing meter creation SQL", zap.Error(err))
+		return err
+	}
+
+	store.logger.Debug("Created meter", zap.String("slug", arg.Slug), zap.String("tenant_slug", arg.TenantSlug))
 	return nil
 }
 

@@ -9,13 +9,13 @@ import (
 func TestDeleteMeter(t *testing.T) {
 	tests := []struct {
 		name        string
-		deleteMeter deleteMeter
+		deleteMeter DeleteMeter
 		wantSQL     string
 		wantArgs    []any
 	}{
 		{
 			name: "Delete simple meter",
-			deleteMeter: deleteMeter{
+			deleteMeter: DeleteMeter{
 				MeterSlug:  "page_views",
 				TenantSlug: "test_tenant",
 			},

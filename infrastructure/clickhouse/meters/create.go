@@ -9,21 +9,18 @@ import (
 	"github.com/redcardinal-io/metering/domain/models"
 )
 
-// createMeter creates a materialized view for meter data in ClickHouse
-type createMeter struct {
-	Name          string
+// CreateMeter creates a materialized view for meter data in ClickHouse
+type CreateMeter struct {
 	Slug          string
 	EventType     string
-	Description   string
 	ValueProperty string
 	Properties    []string
 	Aggregation   models.AggregationEnum
-	CreatedBy     string
 	Populate      bool
 	TenantSlug    string
 }
 
-func (c *createMeter) toCreateSQL() (string, []any, error) {
+func (c *CreateMeter) ToCreateSQL() (string, []any, error) {
 	agg, ok := aggregationMap[c.Aggregation]
 	if !ok {
 		return "", nil, fmt.Errorf("invalid aggregation type: %s", c.Aggregation)
@@ -32,23 +29,12 @@ func (c *createMeter) toCreateSQL() (string, []any, error) {
 	// Get view name
 	viewName := getMeterViewName(c.TenantSlug, c.Slug)
 
-	// Build columns for the materialized view
-	var columns []string
-	columns = append(columns,
-		"organization String",
-		"user String",
-		"windowstart DateTime",
-		"windowend DateTime",
-		fmt.Sprintf("value AggregateFunction(%s, %s)", agg.mergeFunc, agg.dataType),
-	)
+	var columnsStr strings.Builder
+	columnsStr.WriteString("organization String, \n\tuser String, \n\twindowstart DateTime, \n\twindowend DateTime, \n\t")
+	columnsStr.WriteString(fmt.Sprintf("value AggregateFunction(%s, %s)", agg.mergeFunc, agg.dataType))
 
-	// Define order by columns
-	orderByColumns := []string{
-		"windowstart",
-		"windowend",
-		"organization",
-		"user",
-	}
+	var orderByString strings.Builder
+	orderByString.WriteString("windowstart, windowend, organization, user")
 
 	propertyNames := make([]string, len(c.Properties))
 	copy(propertyNames, c.Properties)
@@ -56,8 +42,8 @@ func (c *createMeter) toCreateSQL() (string, []any, error) {
 	// Add each property as a column
 	for _, name := range propertyNames {
 		columnName := sqlbuilder.Escape(name)
-		columns = append(columns, fmt.Sprintf("%s String", columnName))
-		orderByColumns = append(orderByColumns, columnName)
+		columnsStr.WriteString(fmt.Sprintf(", \n\t%s String", columnName))
+		orderByString.WriteString(fmt.Sprintf(", %s", columnName))
 	}
 
 	// Build the SELECT query using the helper method
@@ -72,14 +58,14 @@ func (c *createMeter) toCreateSQL() (string, []any, error) {
 	// Construct the complete CREATE MATERIALIZED VIEW statement
 	builder := sqlbuilder.Buildf(`
 		CREATE MATERIALIZED VIEW IF NOT EXISTS %v (
-		 %s
+		 %v
 		) ENGINE = AggregatingMergeTree()
 		ORDER BY (%v)
 		%v AS %v
 		`, sqlbuilder.Raw(viewName),
-		strings.Join(columns, ", "),
-		strings.Join(orderByColumns, ", "),
-		populateClause,
+		sqlbuilder.Raw(columnsStr.String()),
+		sqlbuilder.Raw(orderByString.String()),
+		sqlbuilder.Raw(populateClause),
 		sqlbuilder.Raw(selectSQL),
 	)
 
@@ -88,7 +74,7 @@ func (c *createMeter) toCreateSQL() (string, []any, error) {
 	return createSQL, append(createArgs, selectArgs...), nil
 }
 
-func (c *createMeter) toSeleteSQL(aggStateFunc, dataType string) (string, []any) {
+func (c *CreateMeter) toSeleteSQL(aggStateFunc, dataType string) (string, []any) {
 	// Create the select builder
 	query := sqlbuilder.ClickHouse.NewSelectBuilder()
 
@@ -109,8 +95,8 @@ func (c *createMeter) toSeleteSQL(aggStateFunc, dataType string) (string, []any)
 	columnNames := []string{
 		"organization",
 		"user",
-		"tumbleStart(time, toIntervalMinute(1)) AS windowstart",
-		"tumbleEnd(time, toIntervalMinute(1)) AS windowend",
+		"tumbleStart(timestamp, toIntervalMinute(1)) AS windowstart",
+		"tumbleEnd(timestamp, toIntervalMinute(1)) AS windowend",
 		valueColumn,
 	}
 
@@ -129,8 +115,6 @@ func (c *createMeter) toSeleteSQL(aggStateFunc, dataType string) (string, []any)
 	query.Select(columnNames...)
 	query.From(eventsTable)
 
-	// Set WHERE clause with validation check
-	query.Where(fmt.Sprintf("empty(%s.validation_error) = 1", eventsTable))
 	query.Where(query.Equal(fmt.Sprintf("%s.type", eventsTable), c.EventType))
 
 	// Set GROUP BY clause

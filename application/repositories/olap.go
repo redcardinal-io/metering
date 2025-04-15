@@ -8,9 +8,10 @@ import (
 )
 
 type OlapRepository interface {
-	Connect(cfg *config.ClickHouseConfig) error
-	CreateMeter(ctx context.Context, arg models.CreateMeterInput) error
-	DeleteMeter(ctx context.Context, organization string, meterSlug string) error
+	Connect(cfg *config.OlapConfig) error
 	Close() error
 	GetDB() any
+
+	// meter methods
+	CreateMeter(ctx context.Context, arg models.CreateMeterInput) error
 }

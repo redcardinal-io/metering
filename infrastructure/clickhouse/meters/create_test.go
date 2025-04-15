@@ -11,22 +11,19 @@ func TestCreateMeter(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		meter    createMeter
+		meter    CreateMeter
 		wantSQL  string
 		wantArgs []any
 		wantErr  bool
 	}{
 		{
 			name: "Simple meter with sum aggregation",
-			meter: createMeter{
-				Name:          "Page Views",
+			meter: CreateMeter{
 				Slug:          "page_views",
 				EventType:     "page_view",
-				Description:   "Count of page views",
 				ValueProperty: "count",
 				Properties:    []string{"path", "referrer"},
 				Aggregation:   models.AggregationSum,
-				CreatedBy:     "test_user",
 				Populate:      false,
 				TenantSlug:    "test_tenant",
 			},
@@ -49,15 +46,12 @@ func TestCreateMeter(t *testing.T) {
 		},
 		{
 			name: "Meter with unique count aggregation",
-			meter: createMeter{
-				Name:          "Unique Users",
+			meter: CreateMeter{
 				Slug:          "unique_users",
 				EventType:     "user_login",
-				Description:   "Count of unique users",
 				ValueProperty: "user_id",
 				Properties:    []string{"country", "device"},
 				Aggregation:   models.AggregationUniqueCount,
-				CreatedBy:     "test_user",
 				Populate:      true,
 				TenantSlug:    "test_tenant",
 			},
@@ -80,15 +74,12 @@ func TestCreateMeter(t *testing.T) {
 		},
 		{
 			name: "Meter with count aggregation without value property",
-			meter: createMeter{
-				Name:          "API Requests",
+			meter: CreateMeter{
 				Slug:          "api_requests",
 				EventType:     "api_request",
-				Description:   "Count of API requests",
 				ValueProperty: "",
 				Properties:    []string{"endpoint", "method"},
 				Aggregation:   models.AggregationCount,
-				CreatedBy:     "test_user",
 				Populate:      false,
 				TenantSlug:    "test_tenant",
 			},
@@ -111,15 +102,12 @@ func TestCreateMeter(t *testing.T) {
 		},
 		{
 			name: "Invalid aggregation type",
-			meter: createMeter{
-				Name:          "Invalid Meter",
+			meter: CreateMeter{
 				Slug:          "invalid_meter",
 				EventType:     "event",
-				Description:   "This has an invalid aggregation",
 				ValueProperty: "value",
 				Properties:    []string{"property"},
 				Aggregation:   "invalid_aggregation", // Invalid aggregation
-				CreatedBy:     "test_user",
 				Populate:      false,
 				TenantSlug:    "test_tenant",
 			},
@@ -131,7 +119,7 @@ func TestCreateMeter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, gotArgs, err := tt.meter.toCreateSQL()
+			gotSQL, gotArgs, err := tt.meter.ToCreateSQL()
 
 			// Check error expectation
 			if tt.wantErr {
@@ -153,7 +141,7 @@ func TestCreateMeter(t *testing.T) {
 func TestCreateMeterSelectSQL(t *testing.T) {
 	tests := []struct {
 		name      string
-		meter     createMeter
+		meter     CreateMeter
 		stateFunc string
 		dataType  string
 		wantSQL   string
@@ -161,7 +149,7 @@ func TestCreateMeterSelectSQL(t *testing.T) {
 	}{
 		{
 			name: "Select SQL for sum aggregation",
-			meter: createMeter{
+			meter: CreateMeter{
 				EventType:     "page_view",
 				ValueProperty: "count",
 				Properties:    []string{"path", "referrer"},
@@ -185,7 +173,7 @@ func TestCreateMeterSelectSQL(t *testing.T) {
 		},
 		{
 			name: "Select SQL for count aggregation",
-			meter: createMeter{
+			meter: CreateMeter{
 				EventType:     "api_request",
 				ValueProperty: "",
 				Properties:    []string{"endpoint", "method"},

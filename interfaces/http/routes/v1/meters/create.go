@@ -36,7 +36,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		Aggregation:   models.AggregationEnum(req.Aggregation),
 		CreatedBy:     req.CreatedBy,
 		Populate:      req.Populate,
-		Organization:  ctx.Get("organization"),
+		TenantSlug:    ctx.Get("organization"),
 	})
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
