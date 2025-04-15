@@ -1,30 +1,34 @@
 package clickhouse
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/redcardinal-io/metering/application/repositories"
+	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
 	"go.uber.org/zap"
 )
-
-const eventsTable = "rc_events"
 
 type ClickHouseStore struct {
 	db     *sqlx.DB
 	logger *logger.Logger
 }
 
-func ClickHouseStoreRepository(logger *logger.Logger) repositories.OlapRepository {
+func ClickHouseOlapRepository(logger *logger.Logger) repositories.OlapRepository {
 	return &ClickHouseStore{
 		logger: logger,
 	}
 }
 
-func (store *ClickHouseStore) Connect(cfg *config.ClickHouseConfig) error {
+func (store *ClickHouseStore) CreateMeter(ctx context.Context, arg models.CreateMeterInput) error {
+	return nil
+}
+
+func (store *ClickHouseStore) Connect(cfg *config.OlapConfig) error {
 	store.logger.Info("Connecting to ClickHouse", zap.String("host", cfg.Host), zap.String("port", cfg.Port), zap.String("database", cfg.Database))
 
 	conn := clickhouse.OpenDB(&clickhouse.Options{

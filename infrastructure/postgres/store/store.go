@@ -23,7 +23,7 @@ func NewPostgresStoreRepository(logger *logger.Logger) repositories.StoreReposit
 }
 
 // Connect - Connect to Postgres
-func (store *PostgresStore) Connect(cfg *config.PostgresConfig) error {
+func (store *PostgresStore) Connect(cfg *config.StoreConfig) error {
 	store.logger.Info("Connecting to Postgres", zap.String("host", cfg.Host), zap.String("port", cfg.Port), zap.String("database", cfg.Database))
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
