@@ -8,8 +8,8 @@ import (
 	"github.com/redcardinal-io/metering/domain/models"
 )
 
-// queryMeter represents the parameters used for querying meter data.
-type queryMeter struct {
+// QueryMeter represents the parameters used for querying meter data.
+type QueryMeter struct {
 	TenantSlug     string                 // Unique identifier for the tenant
 	MeterSlug      string                 // Unique identifier for the meter
 	Aggregation    models.AggregationEnum // Type of aggregation to apply (sum, count, etc.)
@@ -24,7 +24,7 @@ type queryMeter struct {
 
 }
 
-func (q *queryMeter) toSQL() (string, []any, error) {
+func (q *QueryMeter) toSQL() (string, []any, error) {
 	if q.WindowTimeZone != nil && *q.WindowTimeZone != "UTC" {
 		return "", nil, fmt.Errorf("Currently, only UTC is supported for WindowTimeZone")
 	}

@@ -26,13 +26,13 @@ func TestQueryMeterToSQL(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		query       queryMeter
+		query       QueryMeter
 		wantErr     bool
 		checkResult func(t *testing.T, sql string, args []any)
 	}{
 		{
 			name: "Basic query with sum aggregation",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -53,7 +53,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with minute window size",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -72,7 +72,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with hour window size",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -91,7 +91,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with day window size",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -110,7 +110,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with avg aggregation",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationAvg,
@@ -126,7 +126,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with min aggregation",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationMin,
@@ -142,7 +142,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with max aggregation",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationMax,
@@ -158,7 +158,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with unique count aggregation",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "unique_users",
 				Aggregation:    models.AggregationUniqueCount,
@@ -174,7 +174,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with count aggregation",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "api_requests",
 				Aggregation:    models.AggregationCount,
@@ -190,7 +190,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with organization filter",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -227,7 +227,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with user filter",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -264,7 +264,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with custom dimension filter",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:  "test_tenant",
 				MeterSlug:   "page_views",
 				Aggregation: models.AggregationSum,
@@ -311,7 +311,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with group by dimensions",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -335,7 +335,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with window size and group by",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -364,7 +364,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Query with combined filters and grouping",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -420,7 +420,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Error case - unsupported timezone",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
@@ -435,7 +435,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Error case - invalid aggregation",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    "invalid_aggregation",
@@ -450,7 +450,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 		},
 		{
 			name: "Error case - invalid window size",
-			query: queryMeter{
+			query: QueryMeter{
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,

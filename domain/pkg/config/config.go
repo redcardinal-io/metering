@@ -27,7 +27,7 @@ type LoggerConfig struct {
 	Mode    string
 }
 
-type PostgresConfig struct {
+type StoreConfig struct {
 	Host     string
 	Port     string
 	Database string
@@ -35,7 +35,7 @@ type PostgresConfig struct {
 	Password string
 }
 
-type ClickHouseConfig struct {
+type OlapConfig struct {
 	Host     string
 	Port     string
 	Database string
@@ -59,8 +59,8 @@ type Config struct {
 	Server     ServerConfig
 	Logger     LoggerConfig
 	Kafka      KafkaConfig
-	Postgres   PostgresConfig
-	ClickHouse ClickHouseConfig
+	Postgres   StoreConfig
+	ClickHouse OlapConfig
 }
 
 func initializeViper() error {
@@ -152,14 +152,14 @@ func LoadConfig() (*Config, error) {
 			KafkaMaxRetries:       viper.GetInt("RCMETERING_KAFKA_MAX_RETRIES"),
 			KafkaRetryBackoffMs:   viper.GetInt("RCMETERING_KAFKA_RETRY_BACKOFF_MS"),
 		},
-		Postgres: PostgresConfig{
+		Postgres: StoreConfig{
 			Host:     viper.GetString("RCMETERING_POSTGRES_HOST"),
 			Port:     viper.GetString("RCMETERING_POSTGRES_PORT"),
 			Database: viper.GetString("RCMETERING_POSTGRES_DATABASE"),
 			User:     viper.GetString("RCMETERING_POSTGRES_USER"),
 			Password: viper.GetString("RCMETERING_POSTGRES_PASSWORD"),
 		},
-		ClickHouse: ClickHouseConfig{
+		ClickHouse: OlapConfig{
 			Host:     viper.GetString("RCMETERING_CLICKHOUSE_HOST"),
 			Port:     viper.GetString("RCMETERING_CLICKHOUSE_PORT"),
 			Database: viper.GetString("RCMETERING_CLICKHOUSE_DATABASE"),

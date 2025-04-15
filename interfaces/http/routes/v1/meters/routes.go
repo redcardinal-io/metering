@@ -20,5 +20,5 @@ func NewHTTPHandler(logger *logger.Logger, meterSvc *services.MeterService) *htt
 
 func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	r.Post("/meters", h.create)
-	r.Poar("/meters", h.delete)
+	// r.Poar("/meters", h.delete)
 }
