@@ -55,7 +55,7 @@ func createTestLogger(t *testing.T) *logger.Logger {
 func createTestMeterInput() models.CreateMeterInput {
 	return models.CreateMeterInput{
 		Name:          "Test Meter " + time.Now().Format(time.RFC3339),
-		Slug:          "test-meter-" + uuid.New().String()[0:8],
+		MeterSlug:     "test-meter-" + uuid.New().String()[0:8],
 		EventType:     "test.event",
 		ValueProperty: "amount",
 		Description:   "Test meter description",
@@ -88,7 +88,7 @@ func TestCreateMeter(t *testing.T) {
 		assert.NotNil(t, meter)
 		assert.NotEqual(t, uuid.Nil, meter.ID)
 		assert.Equal(t, input.Name, meter.Name)
-		assert.Equal(t, input.Slug, meter.Slug)
+		assert.Equal(t, input.MeterSlug, meter.Slug)
 		assert.Equal(t, input.EventType, meter.EventType)
 		assert.Equal(t, input.ValueProperty, meter.ValueProperty)
 		assert.Equal(t, input.Description, meter.Description)
@@ -110,7 +110,7 @@ func TestCreateMeter(t *testing.T) {
 
 		assert.NotNil(t, meter)
 		assert.Equal(t, input.Name, meter.Name)
-		assert.Equal(t, input.Slug, meter.Slug)
+		assert.Equal(t, input.MeterSlug, meter.Slug)
 		assert.Equal(t, input.EventType, meter.EventType)
 		assert.Equal(t, "", meter.Description)
 		assert.Equal(t, "", meter.ValueProperty)
@@ -280,7 +280,7 @@ func TestGetMeterByIDorSlug(t *testing.T) {
 		// Verify fields match
 		assert.Equal(t, createdMeter.ID.String(), meter.ID.String())
 		assert.Equal(t, input.Name, meter.Name)
-		assert.Equal(t, input.Slug, meter.Slug)
+		assert.Equal(t, input.MeterSlug, meter.Slug)
 		assert.Equal(t, input.EventType, meter.EventType)
 		assert.Equal(t, input.ValueProperty, meter.ValueProperty)
 		assert.Equal(t, input.Description, meter.Description)
@@ -298,14 +298,14 @@ func TestGetMeterByIDorSlug(t *testing.T) {
 		require.NotNil(t, createdMeter)
 
 		// Retrieve by slug
-		meter, err := repo.GetMeterByIDorSlug(ctx, input.Slug)
+		meter, err := repo.GetMeterByIDorSlug(ctx, input.MeterSlug)
 		require.NoError(t, err)
 		require.NotNil(t, meter)
 
 		// Verify fields match
 		assert.Equal(t, createdMeter.ID.String(), meter.ID.String())
 		assert.Equal(t, input.Name, meter.Name)
-		assert.Equal(t, input.Slug, meter.Slug)
+		assert.Equal(t, input.MeterSlug, meter.Slug)
 		assert.Equal(t, input.EventType, meter.EventType)
 		assert.Equal(t, input.ValueProperty, meter.ValueProperty)
 		assert.Equal(t, input.Description, meter.Description)

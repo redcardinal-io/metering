@@ -27,7 +27,7 @@ func (c *CreateMeter) ToCreateSQL() (string, []any, error) {
 	}
 
 	// Get view name
-	viewName := getMeterViewName(c.TenantSlug, c.Slug)
+	viewName := GetMeterViewName(c.TenantSlug, c.Slug)
 
 	var columnsStr strings.Builder
 	columnsStr.WriteString("organization String, \n\tuser String, \n\twindowstart DateTime, \n\twindowend DateTime, \n\t")

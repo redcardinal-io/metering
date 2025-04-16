@@ -9,8 +9,8 @@ type DeleteMeter struct {
 	TenantSlug string
 }
 
-func (d *DeleteMeter) DeleteMeter() (string, []any) {
-	viewName := getMeterViewName(d.TenantSlug, d.MeterSlug)
+func (d *DeleteMeter) ToSQL() (string, []any) {
+	viewName := GetMeterViewName(d.TenantSlug, d.MeterSlug)
 	builder := sqlbuilder.Buildf("drop view if exists %s", viewName)
 	return builder.Build()
 }

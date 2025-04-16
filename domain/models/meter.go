@@ -35,7 +35,8 @@ type Meter struct {
 // CreateMeterInput represents the input for creating a new meter
 type CreateMeterInput struct {
 	Name          string
-	Slug          string
+	MeterSlug     string
+	TenantSlug    string
 	EventType     string
 	Description   string
 	ValueProperty string
@@ -43,7 +44,6 @@ type CreateMeterInput struct {
 	Aggregation   AggregationEnum
 	CreatedBy     string
 	Populate      bool
-	TenantSlug    string
 }
 
 type WindowSize string
@@ -63,4 +63,36 @@ func ValidateAggregation(value string) bool {
 	default:
 		return false
 	}
+}
+
+type QueryMeterInput struct {
+	TenantSlug     string
+	MeterSlug      string
+	Organizations  []string
+	Users          []string
+	FilterGroupBy  map[string][]string
+	From           *time.Time
+	To             *time.Time
+	GroupBy        []string
+	WindowSize     *WindowSize
+	WindowTimeZone *string
+}
+
+type QueryMeterOutput struct {
+	WindowStart *time.Time      `json:"window_start"`
+	WindowEnd   *time.Time      `json:"window_end"`
+	WindowSize  *WindowSize     `json:"window_size,omitempty"`
+	Data        []QueryMeterRow `json:"data"`
+}
+
+type QueryMeterRow struct {
+	WindowStart time.Time         `json:"window_start"`
+	WindowEnd   time.Time         `json:"window_end"`
+	Value       float64           `json:"value"`
+	GroupBy     map[string]string `json:"group_by,omitempty"`
+}
+
+type DeleteMeterInput struct {
+	TenantSlug string
+	MeterSlug  string
 }

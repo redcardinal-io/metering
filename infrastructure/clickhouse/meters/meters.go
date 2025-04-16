@@ -22,7 +22,7 @@ var aggregationMap = map[models.AggregationEnum]struct {
 	models.AggregationUniqueCount: {"uniqState", "uniq", "String"},
 }
 
-func getMeterViewName(organization, meterSlug string) string {
+func GetMeterViewName(organization, meterSlug string) string {
 	return fmt.Sprintf("rc_%s_%s_mv", organization, meterSlug)
 }
 

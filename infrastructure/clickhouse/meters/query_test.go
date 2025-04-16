@@ -12,8 +12,9 @@ import (
 func TestQueryMeterToSQL(t *testing.T) {
 	// Helper function to create a consistent time for testing
 	baseTime := time.Date(2023, 1, 1, 0, 0, 0, 0, time.UTC)
-	fromTime := baseTime
-	toTime := baseTime.Add(24 * time.Hour) // One day later
+	fromTime := &baseTime
+	to := baseTime.Add(24 * time.Hour) // One day later
+	toTime := &to
 
 	// Define UTC timezone for tests
 	utc := "UTC"
@@ -194,7 +195,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
-				Organization:   []string{"org1", "org2"},
+				Organizations:  []string{"org1", "org2"},
 				From:           fromTime,
 				To:             toTime,
 				WindowTimeZone: &utc,
@@ -231,7 +232,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
-				User:           []string{"user1", "user2"},
+				Users:          []string{"user1", "user2"},
 				From:           fromTime,
 				To:             toTime,
 				WindowTimeZone: &utc,
@@ -368,8 +369,8 @@ func TestQueryMeterToSQL(t *testing.T) {
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
-				Organization:   []string{"org1"},
-				User:           []string{"user1"},
+				Organizations:  []string{"org1"},
+				Users:          []string{"user1"},
 				FilterGroupBy:  map[string][]string{"path": {"home"}},
 				GroupBy:        []string{"referrer"},
 				From:           fromTime,
@@ -468,7 +469,7 @@ func TestQueryMeterToSQL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, gotArgs, err := tt.query.toSQL()
+			gotSQL, gotArgs, err := tt.query.ToSQL()
 
 			// Check error expectation
 			if tt.wantErr {

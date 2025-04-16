@@ -14,7 +14,7 @@ import (
 
 func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.CreateMeterInput) (*models.Meter, error) {
 	m, err := p.q.CreateMeter(ctx, gen.CreateMeterParams{
-		Slug:          arg.Slug,
+		Slug:          arg.MeterSlug,
 		Name:          arg.Name,
 		EventType:     pgtype.Text{String: arg.EventType, Valid: true},
 		Description:   pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
