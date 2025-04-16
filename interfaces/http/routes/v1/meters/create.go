@@ -19,6 +19,13 @@ type createMeterRequest struct {
 
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
 
+	tenant_slug := ctx.Get("tenant-slug")
+	if tenant_slug == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Tenant slug is required",
+		})
+	}
+
 	var req createMeterRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -28,7 +35,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 
 	meter, err := h.meterSvc.CreateMeter(ctx.UserContext(), models.CreateMeterInput{
 		Name:          req.Name,
-		Slug:          req.Slug,
+		MeterSlug:     req.Slug,
 		EventType:     req.EventType,
 		Description:   req.Description,
 		ValueProperty: req.ValueProperty,
@@ -36,7 +43,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		Aggregation:   models.AggregationEnum(req.Aggregation),
 		CreatedBy:     req.CreatedBy,
 		Populate:      req.Populate,
-		Organization:  ctx.Get("organization"),
+		TenantSlug:    tenant_slug,
 	})
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
