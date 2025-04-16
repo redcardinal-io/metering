@@ -20,31 +20,39 @@ const (
 
 // Meter represents a meter entity from the database
 type Meter struct {
-	ID            uuid.UUID       `json:"id" db:"id"`
-	Name          string          `json:"name" db:"name"`
-	Slug          string          `json:"slug" db:"slug"`
-	EventType     string          `json:"event_type" db:"event_type"`
-	Description   string          `json:"description,omitempty" db:"description"`
-	ValueProperty string          `json:"value_property,omitempty" db:"value_property"`
-	Properties    []string        `json:"properties" db:"properties"`
-	Aggregation   AggregationEnum `json:"aggregation" db:"aggregation"`
-	CreatedAt     time.Time       `json:"created_at" db:"created_at"`
-	CreatedBy     string          `json:"created_by" db:"created_by"`
+	ID            uuid.UUID       `json:"id"`
+	Name          string          `json:"name"`
+	Slug          string          `json:"slug"`
+	EventType     string          `json:"event_type"`
+	Description   string          `json:"description,omitempty"`
+	ValueProperty string          `json:"value_property,omitempty"`
+	Properties    []string        `json:"properties"`
+	Aggregation   AggregationEnum `json:"aggregation"`
+	CreatedAt     time.Time       `json:"created_at"`
+	CreatedBy     string          `json:"created_by"`
 }
 
 // CreateMeterInput represents the input for creating a new meter
 type CreateMeterInput struct {
-	Name          string          `json:"name" validate:"required"`
-	Slug          string          `json:"slug" validate:"required"`
-	EventType     string          `json:"event_type" validate:"required"`
-	Description   string          `json:"description,omitempty"`
-	ValueProperty string          `json:"value_property,omitempty"`
-	Properties    []string        `json:"properties" validate:"required,min=1"`
-	Aggregation   AggregationEnum `json:"aggregation" validate:"required,oneof=count sum avg unique_count min max"`
-	CreatedBy     string          `json:"created_by" validate:"required"`
-	Populate      bool            `json:"populate" validate:"required"`
-	Organization  string          `json:"organization" validate:"required"`
+	Name          string
+	MeterSlug     string
+	TenantSlug    string
+	EventType     string
+	Description   string
+	ValueProperty string
+	Properties    []string
+	Aggregation   AggregationEnum
+	CreatedBy     string
+	Populate      bool
 }
+
+type WindowSize string
+
+const (
+	WindowSizeMinute WindowSize = "minute"
+	WindowSizeHour   WindowSize = "hour"
+	WindowSizeDay    WindowSize = "day"
+)
 
 // ValidateAggregation checks if a string is a valid aggregation enum value
 func ValidateAggregation(value string) bool {
@@ -55,4 +63,36 @@ func ValidateAggregation(value string) bool {
 	default:
 		return false
 	}
+}
+
+type QueryMeterInput struct {
+	TenantSlug     string
+	MeterSlug      string
+	Organizations  []string
+	Users          []string
+	FilterGroupBy  map[string][]string
+	From           *time.Time
+	To             *time.Time
+	GroupBy        []string
+	WindowSize     *WindowSize
+	WindowTimeZone *string
+}
+
+type QueryMeterOutput struct {
+	WindowStart *time.Time      `json:"window_start"`
+	WindowEnd   *time.Time      `json:"window_end"`
+	WindowSize  *WindowSize     `json:"window_size,omitempty"`
+	Data        []QueryMeterRow `json:"data"`
+}
+
+type QueryMeterRow struct {
+	WindowStart time.Time         `json:"window_start"`
+	WindowEnd   time.Time         `json:"window_end"`
+	Value       float64           `json:"value"`
+	GroupBy     map[string]string `json:"group_by,omitempty"`
+}
+
+type DeleteMeterInput struct {
+	TenantSlug string
+	MeterSlug  string
 }

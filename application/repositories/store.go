@@ -9,7 +9,7 @@ import (
 )
 
 type StoreRepository interface {
-	Connect(cfg *config.PostgresConfig) error
+	Connect(cfg *config.StoreConfig) error
 	Close() error
 	GetDB() any
 }

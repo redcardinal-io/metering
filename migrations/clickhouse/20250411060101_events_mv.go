@@ -20,13 +20,11 @@ func upEventsMv(ctx context.Context, tx *sql.Tx) error {
     		id,
     		type,
     		source,
-    		source_metadata,
     		organization,
     		user,
     		timestamp,
     		properties,
-    		now() as ingested_at,
-    		validation_errors
+    		now() as ingested_at
 		from rc_events_queue;
 	`)
 	return err

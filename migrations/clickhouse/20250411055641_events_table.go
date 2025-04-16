@@ -18,13 +18,11 @@ func upEventsTable(ctx context.Context, tx *sql.Tx) error {
 			id String not null,
 			type String not null,
 			source String not null,
-			source_metadata Map(String, String) not null,
 			organization String not null,
 			user String not null,
 			timestamp DateTime not null,
-			properties Map(String, String) not null,
-			ingested_at DateTime default now(),
-			validation_errors Map(String, String)
+			properties String not null,
+			ingested_at DateTime default now()
 		)
 		engine = MergeTree
 		order by (timestamp);

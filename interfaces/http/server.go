@@ -56,7 +56,7 @@ func ServeHttp() error {
 	defer producer.Close()
 
 	// initialize OLAP repository
-	olap := clickhouse.ClickHouseStoreRepository(logger)
+	olap := clickhouse.ClickHouseOlapRepository(logger)
 	err = olap.Connect(&config.ClickHouse)
 	if err != nil {
 		return fmt.Errorf("error connecting to ClickHouse: %w", err)
