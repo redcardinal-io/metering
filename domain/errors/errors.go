@@ -123,13 +123,18 @@ func New(err error, code ErrorCode, message string, opts ...ErrorOption) *AppErr
 		message = err.Error()
 	}
 
+    data := make(map[string]any)
+    if appErr != nil && appErr.Data != nil {
+        data = appErr.Data
+    }
+
 	ae := &AppError{
 		Err:        err,
 		StatusCode: statusCode,
 		Code:       string(code),
 		Message:    message,
 		Internal:   err.Error(),
-		Data:       make(map[string]any),
+		Data:       data,
 	}
 
 	// Apply options
@@ -168,27 +173,6 @@ func WithInternal(internal string) ErrorOption {
 	}
 }
 
-// IsNotFound returns true if the error indicates a resource was not found.
-func IsNotFound(err error) bool {
-	return Is(err, ErrNotFound) || ErrorCode(GetErrorCode(err)) == ENOTFOUND
-}
-
-// IsConflict reports whether the given error represents a conflict condition.
-func IsConflict(err error) bool {
-	return Is(err, ErrConflict) || ErrorCode(GetErrorCode(err)) == ECONFLICT
-}
-
-// IsValidation reports whether the given error is a validation error.
-func IsValidation(err error) bool {
-	return Is(err, ErrValidation) || ErrorCode(GetErrorCode(err)) == EVALIDATION
-}
-
-// IsInternal reports whether the error represents an internal server error, either by matching the standard internal error or having the internal error code.
-func IsInternal(err error) bool {
-	return Is(err, ErrInternalServer) || ErrorCode(GetErrorCode(err)) == EINTERNAL
-}
-
-// GetErrorCode extracts the error code from an AppError, or returns an empty string if not present.
 func GetErrorCode(err error) string {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -207,6 +191,10 @@ func GetStatusCode(err error) int {
 
 	// Check if it's a standard error
 	if code, ok := errorStatusCodes[err]; ok {
+		return code
+	}
+
+	if code, ok := codeStatusCodes[ErrorCode(err.Error())]; ok {
 		return code
 	}
 
@@ -265,13 +253,15 @@ func NewErrorResponse(err error) ErrorResponse {
 			details = make(map[string]any)
 		}
 
+		statusCode := GetStatusCode(err)
+
 		// Add operation for easier debugging if not empty
 		if appErr.Op != "" {
 			details["operation"] = appErr.Op
 		}
 
 		return ErrorResponse{
-			Status:  appErr.StatusCode,
+			Status:  statusCode,
 			Code:    appErr.Code,
 			Message: appErr.Message,
 			Details: details,
@@ -305,4 +295,9 @@ func (e *ErrorResponse) ToJson() fiber.Map {
 		"code":    e.Code,
 		"message": e.Message,
 	}
+}
+
+func NewErrorResponseWithOpts(err error, code ErrorCode, message string, opts ...ErrorOption) ErrorResponse {
+    appErr := New(err, code, message, opts...)
+    return NewErrorResponse(appErr)
 }
