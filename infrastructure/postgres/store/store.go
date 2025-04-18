@@ -8,6 +8,7 @@ import (
 	"github.com/redcardinal-io/metering/application/repositories"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
+	"github.com/redcardinal-io/metering/infrastructure/postgres"
 	"go.uber.org/zap"
 )
 
@@ -31,21 +32,21 @@ func (store *PostgresStore) Connect(cfg *config.StoreConfig) error {
 	config, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		store.logger.Error("Error parsing postgres config", zap.Error(err))
-		return err
+		return postgres.MapError(err, "Postgres.ParseConfig")
 	}
 
 	ctx := context.Background()
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
 		store.logger.Error("Error connecting to Postgres", zap.Error(err))
-		return err
+		return postgres.MapError(err, "Postgres.Connect")
 	}
 
 	// Verify connection
 	if err := pool.Ping(ctx); err != nil {
 		store.logger.Error("Error pinging Postgres", zap.Error(err))
 		pool.Close()
-		return err
+		return postgres.MapError(err, "Postgres.Ping")
 	}
 
 	store.pool = pool

@@ -4,7 +4,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
+	"github.com/redcardinal-io/metering/interfaces/http/routes/constants"
 )
 
 type queryMeterRequest struct {
@@ -20,7 +22,7 @@ type queryMeterRequest struct {
 }
 
 func (h *httpHandler) query(ctx *fiber.Ctx) error {
-	tenantSlug := ctx.Get("tenant-slug")
+	tenantSlug := ctx.Get(constants.TenantHeader)
 	if tenantSlug == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Tenant slug is required",
@@ -48,13 +50,11 @@ func (h *httpHandler) query(ctx *fiber.Ctx) error {
 	})
 
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to query meter",
-		})
+		errResp := domainerrors.NewErrorResponse(err)
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"result": result,
-	})
+	return ctx.
+		Status(fiber.StatusOK).JSON(models.NewHttpResponse(result, "meter queried successfully", fiber.StatusOK))
 
 }

@@ -3,6 +3,7 @@ package meters
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/redcardinal-io/metering/domain/models"
+	"github.com/redcardinal-io/metering/interfaces/http/routes/constants"
 )
 
 type createMeterRequest struct {
@@ -18,8 +19,7 @@ type createMeterRequest struct {
 }
 
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
-
-	tenant_slug := ctx.Get("tenant-slug")
+	tenant_slug := ctx.Get(constants.TenantHeader)
 	if tenant_slug == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Tenant slug is required",
@@ -51,7 +51,6 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"meter": meter,
-	})
+	return ctx.
+		Status(fiber.StatusCreated).JSON(models.NewHttpResponse(meter, "meter created successfully", fiber.StatusCreated))
 }
