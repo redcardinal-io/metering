@@ -33,7 +33,9 @@ const (
 	ChErrTypeError   = "type mismatch"
 )
 
-// MapError translates ClickHouse errors (via sqlx) to domain errors
+// MapError converts a ClickHouse error into a structured domain error with an appropriate error type and message.
+//
+// It inspects the error for known ClickHouse error codes or message patterns and maps them to domain errors such as not found, unauthorized, conflict, invalid, timeout, or unavailable. If the error does not match any known pattern, a generic ClickHouse domain error is returned. Returns nil if the input error is nil. The operation context is included in the resulting error.
 func MapError(err error, op string) error {
 	if err == nil {
 		return nil
@@ -236,7 +238,8 @@ func MapError(err error, op string) error {
 	)
 }
 
-// Helper function to extract error code from ClickHouse error messages
+// extractErrorCode parses a ClickHouse error message and returns the numeric error code if present.
+// It searches for the pattern "code: <number>" (case-insensitive) and returns the extracted code, or 0 if not found.
 func extractErrorCode(errMsg string) int {
 	// Look for patterns like "Code: 60" or "code: 60"
 	codeIndex := strings.Index(strings.ToLower(errMsg), "code: ")
