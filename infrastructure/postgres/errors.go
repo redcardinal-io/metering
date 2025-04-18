@@ -23,7 +23,8 @@ const (
 
 )
 
-// MapError translates PostgreSQL errors to domain errors
+// MapError converts a PostgreSQL or database-related error into a domain-specific error with contextual information.
+// It interprets common PostgreSQL error codes and database error patterns, returning a corresponding domain error with a human-readable message and relevant metadata. If the error is not recognized, it returns a generic database domain error.
 func MapError(err error, op string) error {
 	if err == nil {
 		return nil
@@ -151,7 +152,7 @@ func MapError(err error, op string) error {
 // ErrNoRows is a sentinel error for when no rows are found
 var ErrNoRows = errors.New("no rows found")
 
-// Helper functions for extracting details from Postgres errors
+// extractConstraintName returns the constraint name from a PostgreSQL error detail string, or an empty string if not found.
 func extractConstraintName(detail string) string {
 	if idx := strings.Index(detail, "constraint \""); idx >= 0 {
 		end := strings.Index(detail[idx+12:], "\"")
@@ -162,6 +163,8 @@ func extractConstraintName(detail string) string {
 	return ""
 }
 
+// extractColumnName parses and returns the column name from a PostgreSQL error detail string.
+// Returns an empty string if no column name is found.
 func extractColumnName(detail string) string {
 	if idx := strings.Index(detail, "column \""); idx >= 0 {
 		end := strings.Index(detail[idx+8:], "\"")
@@ -172,7 +175,7 @@ func extractColumnName(detail string) string {
 	return ""
 }
 
-// Convert technical names to human-readable form
+// humanizeConstraint converts a technical database constraint name into a human-readable string by removing common prefixes, replacing underscores with spaces, and capitalizing each word.
 func humanizeConstraint(constraint string) string {
 	// Remove common prefixes
 	constraint = strings.TrimPrefix(constraint, "pk_")
@@ -191,6 +194,7 @@ func humanizeConstraint(constraint string) string {
 	return strings.Join(words, " ")
 }
 
+// humanizeColumn converts a technical column name to a human-readable string by replacing underscores with spaces and capitalizing each word.
 func humanizeColumn(column string) string {
 	// Replace underscores with spaces and capitalize
 	words := strings.Split(column, "_")
