@@ -1,12 +1,14 @@
 package meters
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/constants"
+	"go.uber.org/zap"
 )
 
 type queryMeterRequest struct {
@@ -24,16 +26,16 @@ type queryMeterRequest struct {
 func (h *httpHandler) query(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	if tenantSlug == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Tenant slug is required",
-		})
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EUNAUTHORIZED, fmt.Sprintf("header %s is required", constants.TenantHeader))
+		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	var req queryMeterRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request payload",
-		})
+		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
+		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	result, err := h.meterSvc.QueryMeter(ctx.UserContext(), models.QueryMeterInput{
@@ -50,11 +52,11 @@ func (h *httpHandler) query(ctx *fiber.Ctx) error {
 	})
 
 	if err != nil {
+		h.logger.Error("failed to query meter", zap.Error(err))
 		errResp := domainerrors.NewErrorResponse(err)
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	return ctx.
 		Status(fiber.StatusOK).JSON(models.NewHttpResponse(result, "meter queried successfully", fiber.StatusOK))
-
 }
