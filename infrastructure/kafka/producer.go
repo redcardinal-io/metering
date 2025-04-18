@@ -61,7 +61,7 @@ func NewKafkaProducerRepository(logger *logger.Logger, config config.KafkaConfig
 			} else if config.KafkaSecurityProtocol == "PLAINTEXT" {
 				saramaConfig.Net.TLS.Enable = false
 			} else {
-				return nil, fmt.Errorf("unsupported security protocol: %s", config.KafkaSecurityProtocol)
+				return nil, MapError(fmt.Errorf("unsupported security protocol: %s", config.KafkaSecurityProtocol), "Kafka.NewPublisher")
 			}
 		}
 	}
@@ -70,7 +70,7 @@ func NewKafkaProducerRepository(logger *logger.Logger, config config.KafkaConfig
 
 	publisher, err := kafka.NewPublisher(publisherConfig, watermillLogger)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Kafka publisher: %w", err)
+		return nil, MapError(err, "Kafka.NewPublisher")
 	}
 
 	// Default retry values if not configured
@@ -98,7 +98,7 @@ func NewKafkaProducerRepository(logger *logger.Logger, config config.KafkaConfig
 func (k *KafkaProducerRepository) publishEventSync(topic string, event *models.Event) error {
 	eventData, err := event.ToJSON()
 	if err != nil {
-		return fmt.Errorf("failed to marshal event: %w", err)
+		return MapError(err, "Kafka.PublishEventSync")
 	}
 
 	partitionKey := fmt.Sprintf("%s-%s", event.Organization, event.User)
@@ -110,7 +110,8 @@ func (k *KafkaProducerRepository) publishEventSync(topic string, event *models.E
 	k.logger.Debug(fmt.Sprintf("Publishing message with partition key: %s", partitionKey))
 
 	if err := k.publisher.Publish(topic, msg); err != nil {
-		return fmt.Errorf("failed to publish event to topic %s: %w", topic, err)
+		fmt.Println("Error publishing message:", err)
+		return MapError(err, "Kafka.PublishEventSync")
 	}
 
 	k.logger.Debug(fmt.Sprintf("Successfully published event to topic: %s", topic))
@@ -139,7 +140,7 @@ func (k *KafkaProducerRepository) PublishEvent(topic string, event *models.Event
 	// If we get here, all attempts failed
 	k.logger.Error(fmt.Sprintf("CRITICAL: Failed to publish event after %d attempts - EVENT LOST: %v",
 		k.maxRetries+1, err))
-	return err
+	return MapError(err, "Kafka.PublishEvent")
 }
 
 // PublishEvents publishes multiple events with individual retries
@@ -154,7 +155,7 @@ func (k *KafkaProducerRepository) PublishEvents(topic string, eventBatch *models
 	}
 
 	if len(errs) > 0 {
-		return fmt.Errorf("failed to publish %d/%d events", len(errs), len(eventBatch.Events))
+		return MapError(fmt.Errorf("failed to publish some events: %v", errs), "Kafka.PublishEvents")
 	}
 
 	k.logger.Info(fmt.Sprintf("Successfully published %d events to topic: %s", len(eventBatch.Events), topic))
@@ -164,5 +165,6 @@ func (k *KafkaProducerRepository) PublishEvents(topic string, eventBatch *models
 // Close closes the Kafka publisher
 func (k *KafkaProducerRepository) Close() error {
 	k.logger.Info("Closing Kafka producer repository")
-	return k.publisher.Close()
+	err := k.publisher.Close()
+	return MapError(err, "Kafka.Close")
 }

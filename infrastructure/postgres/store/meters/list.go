@@ -5,9 +5,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
+	"github.com/redcardinal-io/metering/infrastructure/postgres"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
 	"go.uber.org/zap"
 )
@@ -20,7 +20,7 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 	})
 	if err != nil {
 		p.logger.Error("Error listing meters: ", zap.Error(err))
-		return nil, errors.ErrDatabaseOperation
+		return nil, postgres.MapError(err, "Postgres.ListMeters")
 	}
 
 	meters := make([]models.Meter, 0, len(m))
@@ -43,7 +43,7 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 	count, err := p.q.CountMeters(ctx)
 	if err != nil {
 		p.logger.Error("Error counting meters: ", zap.Error(err))
-		return nil, errors.ErrDatabaseOperation
+		return nil, postgres.MapError(err, "Postgres.CountMeters")
 	}
 
 	result := pagination.FormatWith(page, int(count), meters)
@@ -63,7 +63,7 @@ func (p *PgMeterStoreRepository) ListMetersByEventType(
 	})
 	if err != nil {
 		p.logger.Error("Error listing meters by event type: ", zap.Error(err))
-		return nil, errors.ErrDatabaseOperation
+		return nil, postgres.MapError(err, "Postgres.ListMetersByEventType")
 	}
 
 	meters := make([]models.Meter, 0, len(m))
@@ -86,7 +86,7 @@ func (p *PgMeterStoreRepository) ListMetersByEventType(
 	count, err := p.q.CountMetersByEventType(ctx, pgtype.Text{String: eventType, Valid: true})
 	if err != nil {
 		p.logger.Error("Error counting meters by event type: ", zap.Error(err))
-		return nil, errors.ErrDatabaseOperation
+		return nil, postgres.MapError(err, "Postgres.CountMetersByEventType")
 	}
 
 	result := pagination.FormatWith(page, int(count), meters)

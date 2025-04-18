@@ -97,5 +97,6 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusNoContent).JSON(nil)
+	return ctx.
+		Status(fiber.StatusNoContent).JSON(models.NewHttpResponse[any](nil, "events published successfully", fiber.StatusNoContent))
 }
