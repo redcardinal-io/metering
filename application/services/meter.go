@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/redcardinal-io/metering/application/repositories"
 	"github.com/redcardinal-io/metering/domain/models"
@@ -13,6 +12,7 @@ type MeterService struct {
 	store repositories.MeterStoreRepository
 }
 
+// NewMeterService creates a new MeterService with the provided OLAP and meter store repositories.
 func NewMeterService(olap repositories.OlapRepository, store repositories.MeterStoreRepository) *MeterService {
 	return &MeterService{
 		olap:  olap,
@@ -21,26 +21,16 @@ func NewMeterService(olap repositories.OlapRepository, store repositories.MeterS
 }
 
 func (s *MeterService) CreateMeter(ctx context.Context, arg models.CreateMeterInput) (*models.Meter, error) {
-
-	// check if the meter already exists
-	m, err := s.store.GetMeterByIDorSlug(ctx, arg.MeterSlug)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get meter by ID or slug: %w", err)
-	}
-	if m != nil {
-		return nil, fmt.Errorf("meter with slug %s already exists", arg.MeterSlug)
-	}
-
 	// Call the repository to create the meter
-	err = s.olap.CreateMeter(ctx, arg)
+	err := s.olap.CreateMeter(ctx, arg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create meter: %w", err)
+		return nil, err
 	}
 
 	// Store the meter in the database
-	m, err = s.store.CreateMeter(ctx, arg)
+	m, err := s.store.CreateMeter(ctx, arg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to store meter: %w", err)
+		return nil, err
 	}
 
 	return m, nil
@@ -50,25 +40,16 @@ func (s *MeterService) GetMeter(ctx context.Context, IDorSlug string) (*models.M
 	// Call the repository to get the meter
 	m, err := s.store.GetMeterByIDorSlug(ctx, IDorSlug)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get meter: %w", err)
+		return nil, err
 	}
-	if m == nil {
-		return nil, fmt.Errorf("meter with ID %s not found", IDorSlug)
-	}
-
 	return m, nil
 }
 
 func (s *MeterService) QueryMeter(ctx context.Context, arg models.QueryMeterInput) (*models.QueryMeterOutput, error) {
 	m, err := s.store.GetMeterByIDorSlug(ctx, arg.MeterSlug)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get meter by ID or slug: %w", err)
+		return nil, err
 	}
-
 	result, err := s.olap.QueryMeter(ctx, arg, &m.Aggregation)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query meter: %w", err)
-	}
-
-	return result, nil
+	return result, err
 }
