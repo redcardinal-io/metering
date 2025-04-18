@@ -4,10 +4,9 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
+	"github.com/redcardinal-io/metering/infrastructure/postgres"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
 	"go.uber.org/zap"
 )
@@ -26,16 +25,13 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 
 	if err != nil {
 		p.logger.Error("failed to create meter", zap.Error(err))
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "23505" {
-			return nil, errors.ErrMeterAlreadyExists
-		}
-		return nil, errors.ErrDatabaseOperation
+		return nil, postgres.MapError(err, "Postgres.CreateMeter")
 	}
 
 	id, err := uuid.FromBytes(m.ID.Bytes[:])
 	if err != nil {
 		p.logger.Error("failed to parse UUID from bytes", zap.Error(err))
-		return nil, errors.ErrDatabaseOperation
+		return nil, postgres.MapError(err, "Postgres.ParseUUID")
 	}
 
 	meter := &models.Meter{

@@ -1,8 +1,13 @@
 package meters
 
 import (
+	"fmt"
+
 	"github.com/gofiber/fiber/v2"
+	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
+	"github.com/redcardinal-io/metering/interfaces/http/routes/constants"
+	"go.uber.org/zap"
 )
 
 type createMeterRequest struct {
@@ -18,19 +23,18 @@ type createMeterRequest struct {
 }
 
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
-
-	tenant_slug := ctx.Get("tenant-slug")
+	tenant_slug := ctx.Get(constants.TenantHeader)
 	if tenant_slug == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Tenant slug is required",
-		})
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EUNAUTHORIZED, fmt.Sprintf("header %s is required", constants.TenantHeader))
+		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	var req createMeterRequest
 	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request payload",
-		})
+		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
+		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	meter, err := h.meterSvc.CreateMeter(ctx.UserContext(), models.CreateMeterInput{
@@ -46,12 +50,11 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		TenantSlug:    tenant_slug,
 	})
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create meter",
-		})
+		h.logger.Error("failed to create meter", zap.Error(err))
+		errResp := domainerrors.NewErrorResponse(err)
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"meter": meter,
-	})
+	return ctx.
+		Status(fiber.StatusCreated).JSON(models.NewHttpResponse(meter, "meter created successfully", fiber.StatusCreated))
 }

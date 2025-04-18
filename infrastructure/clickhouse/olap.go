@@ -7,6 +7,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/jmoiron/sqlx"
 	"github.com/redcardinal-io/metering/application/repositories"
+	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
@@ -19,14 +20,15 @@ type ClickHouseOlap struct {
 	logger *logger.Logger
 }
 
+// ClickHouseOlapRepository creates a new ClickHouse OLAP repository instance with the provided logger.
 func ClickHouseOlapRepository(logger *logger.Logger) repositories.OlapRepository {
 	return &ClickHouseOlap{
 		logger: logger,
 	}
 }
 
-func (store *ClickHouseOlap) Connect(cfg *config.OlapConfig) error {
-	store.logger.Info("Connecting to ClickHouse", zap.String("host", cfg.Host), zap.String("port", cfg.Port), zap.String("database", cfg.Database))
+func (olap *ClickHouseOlap) Connect(cfg *config.OlapConfig) error {
+	olap.logger.Info("Connecting to ClickHouse", zap.String("host", cfg.Host), zap.String("port", cfg.Port), zap.String("database", cfg.Database))
 
 	conn := clickhouse.OpenDB(&clickhouse.Options{
 		Addr: []string{fmt.Sprintf("%s:%s", cfg.Host, cfg.Port)},
@@ -45,18 +47,17 @@ func (store *ClickHouseOlap) Connect(cfg *config.OlapConfig) error {
 		},
 	})
 
-	store.db = sqlx.NewDb(conn, "clickhouse")
+	olap.db = sqlx.NewDb(conn, "clickhouse")
 
-	if err := store.db.Ping(); err != nil {
-		store.logger.Error("Error pinging ClickHouse", zap.Error(err))
+	if err := olap.db.Ping(); err != nil {
 		return err
 	}
 
-	store.logger.Info("Connected to ClickHouse")
+	olap.logger.Info("Connected to ClickHouse")
 	return nil
 }
 
-func (store *ClickHouseOlap) CreateMeter(ctx context.Context, arg models.CreateMeterInput) error {
+func (olap *ClickHouseOlap) CreateMeter(ctx context.Context, arg models.CreateMeterInput) error {
 	createMeter := meters.CreateMeter{
 		Slug:          arg.MeterSlug,
 		TenantSlug:    arg.TenantSlug,
@@ -68,20 +69,23 @@ func (store *ClickHouseOlap) CreateMeter(ctx context.Context, arg models.CreateM
 	}
 
 	sql, args, err := createMeter.ToCreateSQL()
-	store.logger.Debug("Creating meter SQL", zap.String("sql", sql), zap.Any("args", args))
+	olap.logger.Debug("Creating meter SQL", zap.String("sql", sql), zap.Any("args", args))
 
 	if err != nil {
-		store.logger.Error("Error creating meter SQL", zap.Error(err))
-		return err
+		return domainerrors.New(err,
+			domainerrors.EOLAP,
+			"Error generating meter creation SQL",
+			domainerrors.
+				WithOperation("ClickHouse.CreateMeter"),
+		)
 	}
 
-	_, err = store.db.ExecContext(ctx, sql, args...)
+	_, err = olap.db.ExecContext(ctx, sql, args...)
 	if err != nil {
-		store.logger.Error("Error executing meter creation SQL", zap.Error(err))
-		return err
+		return MapError(err, "ClickHouse.CreateMeter")
 	}
 
-	store.logger.Info("Created meter", zap.String("meter", meters.GetMeterViewName(arg.TenantSlug, arg.MeterSlug)))
+	olap.logger.Info("Created meter", zap.String("meter", meters.GetMeterViewName(arg.TenantSlug, arg.MeterSlug)))
 	return nil
 }
 
@@ -102,15 +106,18 @@ func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMe
 
 	sql, args, err := queryMeter.ToSQL()
 	if err != nil {
-		olap.logger.Error("Error generating query SQL", zap.Error(err))
-		return nil, err
+		return nil, domainerrors.New(err,
+			domainerrors.EOLAP,
+			"Error generating meter query SQL",
+			domainerrors.
+				WithOperation("ClickHouse.QueryMeter"),
+		)
 	}
 	olap.logger.Debug("Querying meter SQL", zap.String("sql", sql), zap.Any("args", args))
 
 	rows, err := olap.db.QueryxContext(ctx, sql, args...)
 	if err != nil {
-		olap.logger.Error("Error executing query SQL", zap.Error(err))
-		return nil, err
+		return nil, MapError(err, "ClickHouse.QueryMeter")
 	}
 	defer rows.Close()
 
@@ -118,11 +125,12 @@ func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMe
 	for rows.Next() {
 		var row models.QueryMeterRow
 		if err := rows.StructScan(&row); err != nil {
-			olap.logger.Error("Error scanning row", zap.Error(err))
-			return nil, err
+			return nil, MapError(err, "ClickHouse.QueryMeter")
 		}
 		results = append(results, row)
 	}
+
+	olap.logger.Info("Queried meter", zap.String("meter", meters.GetMeterViewName(input.TenantSlug, input.MeterSlug)))
 
 	return &models.QueryMeterOutput{
 		WindowStart: queryMeter.From,
@@ -132,14 +140,14 @@ func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMe
 	}, nil
 }
 
-func (store *ClickHouseOlap) Close() error {
-	if store.db != nil {
-		return store.db.Close()
+func (olap *ClickHouseOlap) Close() error {
+	if olap.db != nil {
+		return MapError(olap.db.Close(), "ClickHouse.Close")
 	}
 	return nil
 }
 
-func (store *ClickHouseOlap) DeleteMeter(ctx context.Context, input models.DeleteMeterInput) error {
+func (olap *ClickHouseOlap) DeleteMeter(ctx context.Context, input models.DeleteMeterInput) error {
 	deleteMeter := meters.DeleteMeter{
 		TenantSlug: input.TenantSlug,
 		MeterSlug:  input.MeterSlug,
@@ -147,16 +155,15 @@ func (store *ClickHouseOlap) DeleteMeter(ctx context.Context, input models.Delet
 
 	sql, args := deleteMeter.ToSQL()
 
-	_, err := store.db.ExecContext(ctx, sql, args...)
+	_, err := olap.db.ExecContext(ctx, sql, args...)
 	if err != nil {
-		store.logger.Error("Error executing delete meter SQL", zap.Error(err))
-		return err
+		return MapError(err, "ClickHouse.DeleteMeter")
 	}
 
-	store.logger.Info("Deleted meter", zap.String("meter", meters.GetMeterViewName(input.TenantSlug, input.MeterSlug)))
+	olap.logger.Info("Deleted meter", zap.String("meter", meters.GetMeterViewName(input.TenantSlug, input.MeterSlug)))
 	return nil
 }
 
-func (store *ClickHouseOlap) GetDB() any {
-	return store.db
+func (olap *ClickHouseOlap) GetDB() any {
+	return olap.db
 }

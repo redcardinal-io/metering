@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/redcardinal-io/metering/domain/errors"
+	"github.com/redcardinal-io/metering/infrastructure/postgres"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +24,7 @@ func (p *PgMeterStoreRepository) DeleteMeterByIDorSlug(ctx context.Context, idOr
 	// Handle errors from either delete operation
 	if deleteErr != nil {
 		p.logger.Error("failed to delete meter", zap.Error(deleteErr))
-		return errors.ErrDatabaseOperation
+		return postgres.MapError(deleteErr, "Postgres.DeleteMeter")
 	}
 
 	return nil
