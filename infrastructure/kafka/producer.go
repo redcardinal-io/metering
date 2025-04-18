@@ -22,7 +22,9 @@ type KafkaProducerRepository struct {
 	retryBackoff time.Duration
 }
 
-// NewKafkaProducerRepository creates a new instance of KafkaProducerRepository
+// NewKafkaProducerRepository initializes and returns a KafkaProducerRepository configured with the provided Kafka settings.
+// It sets up broker addresses, message marshaling, SASL/TLS authentication, and retry parameters.
+// Returns the repository instance or a mapped error if initialization fails.
 func NewKafkaProducerRepository(logger *logger.Logger, config config.KafkaConfig) (repositories.ProducerRepository, error) {
 	watermillLogger := watermill.NewStdLogger(false, false)
 	// Parse brokers from bootstrap servers string

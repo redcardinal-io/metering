@@ -20,6 +20,7 @@ type ClickHouseOlap struct {
 	logger *logger.Logger
 }
 
+// ClickHouseOlapRepository creates a new ClickHouse OLAP repository instance with the provided logger.
 func ClickHouseOlapRepository(logger *logger.Logger) repositories.OlapRepository {
 	return &ClickHouseOlap{
 		logger: logger,

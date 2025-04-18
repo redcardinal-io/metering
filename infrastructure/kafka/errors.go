@@ -9,7 +9,8 @@ import (
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 )
 
-// MapError translates Kafka errors to domain errors
+// MapError converts a Kafka-related error into a structured domain error with an appropriate error code and message based on the error type and operation context.
+// Returns nil if the input error is nil. If the error matches known Sarama errors or common error patterns, it is mapped to a corresponding domain error; otherwise, a generic message broker error is returned.
 func MapError(err error, op string) error {
 	if err == nil {
 		return nil

@@ -12,6 +12,7 @@ type MeterService struct {
 	store repositories.MeterStoreRepository
 }
 
+// NewMeterService creates a new MeterService with the provided OLAP and meter store repositories.
 func NewMeterService(olap repositories.OlapRepository, store repositories.MeterStoreRepository) *MeterService {
 	return &MeterService{
 		olap:  olap,
