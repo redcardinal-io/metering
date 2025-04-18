@@ -296,6 +296,6 @@ func (e *ErrorResponse) ToJson() fiber.Map {
 }
 
 func NewErrorResponseWithOpts(err error, code ErrorCode, message string, opts ...ErrorOption) ErrorResponse {
-	appErr := New(err, code, "error occurred", opts...)
-	return NewErrorResponse(appErr)
+    appErr := New(err, code, message, opts...)
+    return NewErrorResponse(appErr)
 }
