@@ -121,10 +121,10 @@ func New(err error, code ErrorCode, message string, opts ...ErrorOption) *AppErr
 		message = err.Error()
 	}
 
-	data := make(map[string]any)
-	if appErr.Data != nil {
-		data = appErr.Data
-	}
+    data := make(map[string]any)
+    if appErr != nil && appErr.Data != nil {
+        data = appErr.Data
+    }
 
 	ae := &AppError{
 		Err:        err,
