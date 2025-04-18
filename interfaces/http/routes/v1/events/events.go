@@ -2,11 +2,15 @@ package events
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
+	"github.com/redcardinal-io/metering/interfaces/http/routes/constants"
+	"go.uber.org/zap"
 )
 
 type event struct {
@@ -34,19 +38,15 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 	var body publisEventRequestBody
 
 	if err := ctx.BodyParser(&body); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "Invalid request body",
-			"code":    fiber.StatusBadRequest,
-			"message": err.Error(),
-		})
+		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
+		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	if len(body.Events) == 0 {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "Empty event batch",
-			"code":    fiber.StatusBadRequest,
-			"message": "Event batch cannot be empty",
-		})
+		errResp := domainerrors.NewErrorResponseWithOpts(fmt.Errorf("cannot process empty event batch"), domainerrors.EINVALID, "empty event batch")
+		h.logger.Error("empty event batch", zap.Any("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	events := models.EventBatch{}
@@ -58,24 +58,19 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 			event.ID = id.String()
 		}
 		if event.Timestamp == "" {
-			event.Timestamp = time.Now().Format("2006-01-02 15:04:05")
+			event.Timestamp = time.Now().Format(constants.TimeFormat)
 		} else {
-			_, err := time.Parse("2006-01-02 15:04:05", event.Timestamp)
+			_, err := time.Parse(constants.TimeFormat, event.Timestamp)
 			if err != nil {
-				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"error":   "Invalid timestamp format",
-					"code":    fiber.StatusBadRequest,
-					"message": err.Error(),
-				})
+				errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid timestamp format")
+				return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 			}
 		}
 		properties, err := json.Marshal(event.Properties)
 		if err != nil {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error":   "Invalid properties format",
-				"code":    fiber.StatusBadRequest,
-				"message": err.Error(),
-			})
+			h.logger.Error("failed to parse properties", zap.Error(err))
+			errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse properties")
+			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 		}
 		events.Events = append(events.Events, &models.Event{
 			ID:           event.ID,
@@ -90,11 +85,9 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 
 	err := h.producer.PublishEvents(h.publishTopic, &events)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":   "Failed to publish event",
-			"code":    fiber.StatusInternalServerError,
-			"message": err.Error(),
-		})
+		h.logger.Error("failed to publish events", zap.Error(err))
+		errResp := domainerrors.NewErrorResponse(err)
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	return ctx.
