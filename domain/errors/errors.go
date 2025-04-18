@@ -93,7 +93,9 @@ var codeStatusCodes = map[ErrorCode]int{
 // ErrorOption is a function that configures an AppError
 type ErrorOption func(*AppError)
 
-// New creates a new application error
+// New constructs an AppError with the specified underlying error, error code, and user-facing message.
+// If the error is nil, it defaults to an internal server error. The status code is determined by the error code or inherited from an existing AppError. Optional configuration can be applied via ErrorOption functions.
+// Returns a pointer to the created AppError.
 func New(err error, code ErrorCode, message string, opts ...ErrorOption) *AppError {
 	if err == nil {
 		err = ErrInternalServer
@@ -143,35 +145,34 @@ func New(err error, code ErrorCode, message string, opts ...ErrorOption) *AppErr
 	return ae
 }
 
-// WithStatusCode sets the status code for an error
+// WithStatusCode returns an ErrorOption that sets the HTTP status code for an AppError.
 func WithStatusCode(statusCode int) ErrorOption {
 	return func(e *AppError) {
 		e.StatusCode = statusCode
 	}
 }
 
-// WithOperation sets the operation where the error occurred
+// WithOperation returns an ErrorOption that sets the operation context for an AppError.
 func WithOperation(op string) ErrorOption {
 	return func(e *AppError) {
 		e.Op = op
 	}
 }
 
-// WithData adds additional data to the error
+// WithData returns an ErrorOption that adds a key-value pair to the AppError's additional data.
 func WithData(key string, value any) ErrorOption {
 	return func(e *AppError) {
 		e.Data[key] = value
 	}
 }
 
-// WithInternal sets internal error details (not exposed to clients)
+// WithInternal returns an ErrorOption that sets the internal error details for an AppError. The internal details are intended for diagnostics and are not exposed to clients.
 func WithInternal(internal string) ErrorOption {
 	return func(e *AppError) {
 		e.Internal = internal
 	}
 }
 
-// GetErrorCode returns the error code from an AppError or an empty string
 func GetErrorCode(err error) string {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -180,7 +181,8 @@ func GetErrorCode(err error) string {
 	return ""
 }
 
-// GetStatusCode returns the appropriate HTTP status code for an error
+// GetStatusCode returns the HTTP status code associated with the given error.
+// If the error is an AppError, its StatusCode is used. If it matches a predefined standard error, the mapped status code is returned. Otherwise, it defaults to 500 (Internal Server Error).
 func GetStatusCode(err error) int {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -200,7 +202,7 @@ func GetStatusCode(err error) int {
 	return http.StatusInternalServerError
 }
 
-// GetMessage returns a user-friendly error message
+// GetMessage extracts a user-friendly message from an error, returning the message field if the error is an AppError, or the error's string representation otherwise.
 func GetMessage(err error) string {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
@@ -209,17 +211,17 @@ func GetMessage(err error) string {
 	return err.Error()
 }
 
-// Is provides compatibility with errors.Is
+// Is reports whether any error in err's chain matches target, providing compatibility with errors.Is.
 func Is(err, target error) bool {
 	return errors.Is(err, target)
 }
 
-// As provides compatibility with errors.As
+// As determines whether any error in the error chain matches the target type, using errors.As.
 func As(err error, target any) bool {
 	return errors.As(err, target)
 }
 
-// Wrap wraps an error with a message
+// Wrap returns a new error with the given message prepended to the original error. If err is nil, it returns nil.
 func Wrap(err error, message string) error {
 	if err == nil {
 		return nil
@@ -227,7 +229,7 @@ func Wrap(err error, message string) error {
 	return fmt.Errorf("%s: %w", message, err)
 }
 
-// WrapWithCode wraps an error with a message and code
+// WrapWithCode creates a new AppError by wrapping the given error with a specified error code and message. Returns nil if the input error is nil.
 func WrapWithCode(err error, code ErrorCode, message string) error {
 	if err == nil {
 		return nil
@@ -242,7 +244,7 @@ type ErrorResponse struct {
 	Details map[string]any `json:"details,omitempty"`
 }
 
-// NewErrorResponse creates a new error response from an error
+// NewErrorResponse constructs an ErrorResponse from the given error, extracting status, code, message, and details if the error is an AppError, or inferring them for standard errors.
 func NewErrorResponse(err error) ErrorResponse {
 	var appErr *AppError
 	if errors.As(err, &appErr) {
