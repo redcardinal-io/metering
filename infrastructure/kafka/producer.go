@@ -112,7 +112,7 @@ func (k *KafkaProducerRepository) publishEventSync(topic string, event *models.E
 	k.logger.Debug(fmt.Sprintf("Publishing message with partition key: %s", partitionKey))
 
 	if err := k.publisher.Publish(topic, msg); err != nil {
-		fmt.Println("Error publishing message:", err)
+		k.logger.Error(fmt.Sprintf("Error publishing message: %v", err))
 		return MapError(err, "Kafka.PublishEventSync")
 	}
 
