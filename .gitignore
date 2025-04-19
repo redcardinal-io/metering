@@ -22,7 +22,8 @@ go.work
 go.work.sum
 
 # env file
-.env
+*.env*
 volumes
 tmp
 *.log
+main

@@ -1,0 +1,8 @@
+volumes
+README.md
+docker-compose.yml
+*.lock
+*.nix
+tmp
+Dockerfile
+Dockerfile.migrate
