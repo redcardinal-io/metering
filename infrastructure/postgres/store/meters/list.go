@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 	"github.com/redcardinal-io/metering/infrastructure/postgres"
@@ -51,19 +50,19 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 	return &result, nil
 }
 
-func (p *PgMeterStoreRepository) ListMetersByEventType(
+func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 	ctx context.Context,
-	eventType string,
+	eventTypes []string,
 ) ([]*models.Meter, error) {
 
-	m, err := p.q.ListMetersByEventType(ctx, pgtype.Text{String: eventType, Valid: true})
+	metesrs, err := p.q.ListMetersByEventTypes(ctx, eventTypes)
 	if err != nil {
 		p.logger.Error("Error listing meters by event type: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListMetersByEventType")
 	}
 
-	meters := make([]*models.Meter, 0, len(m))
-	for _, meter := range m {
+	meters := make([]*models.Meter, 0, len(metesrs))
+	for _, meter := range metesrs {
 		id, _ := uuid.FromBytes(meter.ID.Bytes[:])
 		meters = append(meters, &models.Meter{
 			ID:            id,
