@@ -21,8 +21,8 @@ type Querier interface {
 	GetMeterBySlug(ctx context.Context, slug string) (Meter, error)
 	GetPropertiesByEventType(ctx context.Context, eventType pgtype.Text) ([]interface{}, error)
 	GetValuePropertiesByEventType(ctx context.Context, eventType pgtype.Text) ([]pgtype.Text, error)
+	ListMetersByEventType(ctx context.Context, eventType pgtype.Text) ([]Meter, error)
 	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)
-	ListMetersPaginatedByEventType(ctx context.Context, arg ListMetersPaginatedByEventTypeParams) ([]Meter, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -12,7 +12,7 @@ import (
 )
 
 type queryMeterRequest struct {
-	MeterSlug      string              `json:"meter_slug"`
+	MeterSlug      string              `json:"meter_slug" validate:"required"`
 	Organizations  []string            `json:"organizations"`
 	Users          []string            `json:"users"`
 	FilterGroupBy  map[string][]string `json:"filter_group_by"`
@@ -35,6 +35,12 @@ func (h *httpHandler) query(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
 		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
+	if err := h.validator.Struct(req); err != nil {
+		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid request body")
+		h.logger.Error("invalid request body", zap.Any("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 

@@ -54,22 +54,18 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 func (p *PgMeterStoreRepository) ListMetersByEventType(
 	ctx context.Context,
 	eventType string,
-	page pagination.Pagination) (*pagination.PaginationView[models.Meter], error) {
+) ([]*models.Meter, error) {
 
-	m, err := p.q.ListMetersPaginatedByEventType(ctx, gen.ListMetersPaginatedByEventTypeParams{
-		EventType: pgtype.Text{String: eventType, Valid: true},
-		Limit:     int32(page.Limit),
-		Offset:    int32(page.GetOffset()),
-	})
+	m, err := p.q.ListMetersByEventType(ctx, pgtype.Text{String: eventType, Valid: true})
 	if err != nil {
 		p.logger.Error("Error listing meters by event type: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListMetersByEventType")
 	}
 
-	meters := make([]models.Meter, 0, len(m))
+	meters := make([]*models.Meter, 0, len(m))
 	for _, meter := range m {
 		id, _ := uuid.FromBytes(meter.ID.Bytes[:])
-		meters = append(meters, models.Meter{
+		meters = append(meters, &models.Meter{
 			ID:            id,
 			Name:          meter.Name,
 			Slug:          meter.Slug,
@@ -83,12 +79,5 @@ func (p *PgMeterStoreRepository) ListMetersByEventType(
 		})
 	}
 
-	count, err := p.q.CountMetersByEventType(ctx, pgtype.Text{String: eventType, Valid: true})
-	if err != nil {
-		p.logger.Error("Error counting meters by event type: ", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.CountMetersByEventType")
-	}
-
-	result := pagination.FormatWith(page, int(count), meters)
-	return &result, nil
+	return meters, nil
 }

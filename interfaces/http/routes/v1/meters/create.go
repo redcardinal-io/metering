@@ -37,6 +37,13 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
+	// validate the request body
+	if err := h.validator.Struct(req); err != nil {
+		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid request body")
+		h.logger.Error("invalid request body", zap.Any("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	meter, err := h.meterSvc.CreateMeter(ctx.UserContext(), models.CreateMeterInput{
 		Name:          req.Name,
 		MeterSlug:     req.Slug,
