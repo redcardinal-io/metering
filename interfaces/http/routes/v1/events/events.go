@@ -28,6 +28,13 @@ type publisEventRequestBody struct {
 }
 
 func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
+	tenantSlug := ctx.Get(constants.TenantHeader)
+	if tenantSlug == "" {
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EUNAUTHORIZED, fmt.Sprintf("header %s is required", constants.TenantHeader))
+		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	var body publisEventRequestBody
 
 	if err := ctx.BodyParser(&body); err != nil {
