@@ -38,7 +38,6 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 	var body publisEventRequestBody
 
 	if err := ctx.BodyParser(&body); err != nil {
-		fmt.Println("error parsing body", err)
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
 		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
