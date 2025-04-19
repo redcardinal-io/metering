@@ -26,22 +26,27 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
 	if tenant_slug == "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EUNAUTHORIZED, fmt.Sprintf("header %s is required", constants.TenantHeader))
-		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	var req createMeterRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
-		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	// validate the request body
 	if err := h.validator.Struct(req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid request body")
-		h.logger.Error("invalid request body", zap.Any("error", errResp))
+		h.logger.Error("invalid request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
+	valueProperty := req.ValueProperty
+	if req.Aggregation == string(models.AggregationCount) {
+		valueProperty = ""
 	}
 
 	meter, err := h.meterSvc.CreateMeter(ctx.UserContext(), models.CreateMeterInput{
@@ -49,7 +54,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		MeterSlug:     req.Slug,
 		EventType:     req.EventType,
 		Description:   req.Description,
-		ValueProperty: req.ValueProperty,
+		ValueProperty: valueProperty,
 		Properties:    req.Properties,
 		Aggregation:   models.AggregationEnum(req.Aggregation),
 		CreatedBy:     req.CreatedBy,
@@ -57,7 +62,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		TenantSlug:    tenant_slug,
 	})
 	if err != nil {
-		h.logger.Error("failed to create meter", zap.Error(err))
+		h.logger.Error("failed to create meter", zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}

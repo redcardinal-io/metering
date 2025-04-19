@@ -47,8 +47,9 @@ func (p *ProducerService) ValidateEvent(event *models.Event) error {
 		return domainerrors.New(err, domainerrors.EINTERNAL, "failed to retrieve meters")
 	}
 
+	// If no meters are found for the event type, return nil
 	if len(meters) == 0 {
-		return domainerrors.New(fmt.Errorf("no meters found for event type: %s", event.Type), domainerrors.EINVALID, "invalid event type")
+		return nil
 	}
 
 	// Collect all required properties from meters
@@ -60,7 +61,7 @@ func (p *ProducerService) ValidateEvent(event *models.Event) error {
 	}
 
 	// Parse event properties
-	var eventProperties map[string]string
+	var eventProperties map[string]any
 	if err := json.Unmarshal([]byte(event.Properties), &eventProperties); err != nil {
 		return domainerrors.New(err, domainerrors.EINVALID, "invalid event properties format")
 	}
