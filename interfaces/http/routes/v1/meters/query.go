@@ -27,20 +27,20 @@ func (h *httpHandler) query(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	if tenantSlug == "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EUNAUTHORIZED, fmt.Sprintf("header %s is required", constants.TenantHeader))
-		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	var req queryMeterRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
-		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	if err := h.validator.Struct(req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid request body")
-		h.logger.Error("invalid request body", zap.Any("error", errResp))
+		h.logger.Error("invalid request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
@@ -58,7 +58,7 @@ func (h *httpHandler) query(ctx *fiber.Ctx) error {
 	})
 
 	if err != nil {
-		h.logger.Error("failed to query meter", zap.Error(err))
+		h.logger.Error("failed to query meter", zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}

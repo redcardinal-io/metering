@@ -20,15 +20,16 @@ func NewMeterService(olap repositories.OlapRepository, store repositories.MeterS
 	}
 }
 
+// TODO: Make this a transactional operation if any of the operation fail it should rollback
 func (s *MeterService) CreateMeter(ctx context.Context, arg models.CreateMeterInput) (*models.Meter, error) {
-	// Call the repository to create the meter
-	err := s.olap.CreateMeter(ctx, arg)
+	// Store the meter in the database
+	m, err := s.store.CreateMeter(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
 
-	// Store the meter in the database
-	m, err := s.store.CreateMeter(ctx, arg)
+	// Call the repository to create the meter
+	err = s.olap.CreateMeter(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
