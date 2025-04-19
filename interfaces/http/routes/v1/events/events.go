@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -24,7 +25,8 @@ type event struct {
 }
 
 type publisEventRequestBody struct {
-	Events []event `json:"events" validate:"required,dive"`
+	Events              []event `json:"events" validate:"required,dive"`
+	AllowPartialSuccess bool    `json:"allow_partial_success" validate:"omitempty" default:"true"`
 }
 
 func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
@@ -91,7 +93,7 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.producer.PublishEvents(h.publishTopic, &events)
+	res, err := h.producer.PublishEvents(context.Background(), h.publishTopic, &events, body.AllowPartialSuccess)
 	if err != nil {
 		h.logger.Error("failed to publish events", zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)
@@ -99,5 +101,5 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.
-		Status(fiber.StatusNoContent).JSON(models.NewHttpResponse[any](nil, "events published successfully", fiber.StatusNoContent))
+		Status(fiber.StatusNoContent).JSON(models.NewHttpResponse[any](res, "events published successfully", fiber.StatusNoContent))
 }

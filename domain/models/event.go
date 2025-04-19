@@ -67,3 +67,16 @@ func (e *Event) FromJSON(data []byte) error {
 type EventBatch struct {
 	Events []*Event `json:"events"`
 }
+
+// PublishEventsResult contains information about the batch processing result
+type PublishEventsResult struct {
+	SuccessCount int            // Number of events successfully published
+	FailedEvents []*FailedEvent // Details about failed events
+	Error        error          // Overall error, if any
+}
+
+// FailedEvent contains information about a single event that failed processing
+type FailedEvent struct {
+	Event *Event
+	Error error
+}
