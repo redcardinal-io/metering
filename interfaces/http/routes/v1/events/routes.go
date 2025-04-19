@@ -1,6 +1,7 @@
 package events
 
 import (
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redcardinal-io/metering/application/services"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
@@ -10,6 +11,7 @@ type httpHandler struct {
 	logger       *logger.Logger
 	publishTopic string
 	producer     *services.ProducerService
+	validator    *validator.Validate
 }
 
 type HttpHandlerParams struct {
@@ -19,10 +21,12 @@ type HttpHandlerParams struct {
 }
 
 func NewHTTPHandler(params HttpHandlerParams) *httpHandler {
+	validator := validator.New()
 	return &httpHandler{
 		logger:       params.Logger,
 		publishTopic: params.PublishTopic,
 		producer:     params.Producer,
+		validator:    validator,
 	}
 }
 

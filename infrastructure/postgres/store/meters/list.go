@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 	"github.com/redcardinal-io/metering/infrastructure/postgres"
@@ -51,25 +50,21 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 	return &result, nil
 }
 
-func (p *PgMeterStoreRepository) ListMetersByEventType(
+func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 	ctx context.Context,
-	eventType string,
-	page pagination.Pagination) (*pagination.PaginationView[models.Meter], error) {
+	eventTypes []string,
+) ([]*models.Meter, error) {
 
-	m, err := p.q.ListMetersPaginatedByEventType(ctx, gen.ListMetersPaginatedByEventTypeParams{
-		EventType: pgtype.Text{String: eventType, Valid: true},
-		Limit:     int32(page.Limit),
-		Offset:    int32(page.GetOffset()),
-	})
+	metesrs, err := p.q.ListMetersByEventTypes(ctx, eventTypes)
 	if err != nil {
 		p.logger.Error("Error listing meters by event type: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListMetersByEventType")
 	}
 
-	meters := make([]models.Meter, 0, len(m))
-	for _, meter := range m {
+	meters := make([]*models.Meter, 0, len(metesrs))
+	for _, meter := range metesrs {
 		id, _ := uuid.FromBytes(meter.ID.Bytes[:])
-		meters = append(meters, models.Meter{
+		meters = append(meters, &models.Meter{
 			ID:            id,
 			Name:          meter.Name,
 			Slug:          meter.Slug,
@@ -83,12 +78,5 @@ func (p *PgMeterStoreRepository) ListMetersByEventType(
 		})
 	}
 
-	count, err := p.q.CountMetersByEventType(ctx, pgtype.Text{String: eventType, Valid: true})
-	if err != nil {
-		p.logger.Error("Error counting meters by event type: ", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.CountMetersByEventType")
-	}
-
-	result := pagination.FormatWith(page, int(count), meters)
-	return &result, nil
+	return meters, nil
 }
