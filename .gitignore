@@ -22,7 +22,10 @@ go.work
 go.work.sum
 
 # env file
-.env
+*.env
+*.env.*
+!config.env.example
 volumes
 tmp
 *.log
+main

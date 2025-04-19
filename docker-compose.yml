@@ -1,7 +1,7 @@
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:25.2-alpine
-    container_name: clickhouse-0
+    container_name: clickhouse
     ports:
       - "9000:9000"
       - "8123:8123"
@@ -50,7 +50,7 @@ services:
       - redpanda
       - start
       - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
-      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
+      - --advertise-kafka-addr internal://redpanda:9092,external://redpanda:19092
       - --rpc-addr redpanda:33145
       - --advertise-rpc-addr redpanda:33145
       - --mode dev-container
@@ -89,3 +89,25 @@ services:
       - 8080:8080
     depends_on:
       - redpanda
+
+  rcmetering:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - .:/app
+    depends_on:
+      - rcmetering-migrate
+      - redpanda
+
+  rcmetering-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    env_file: .env.migrate
+    depends_on:
+      - postgres
+      - clickhouse
