@@ -231,20 +231,13 @@ func (q *Queries) GetValuePropertiesByEventType(ctx context.Context, eventType p
 	return items, nil
 }
 
-const listMetersPaginated = `-- name: ListMetersPaginated :many
+const listMetersByEventType = `-- name: ListMetersByEventType :many
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-ORDER BY created_at DESC
-LIMIT $1
-OFFSET $2
+WHERE event_type = $1
 `
 
-type ListMetersPaginatedParams struct {
-	Limit  int32
-	Offset int32
-}
-
-func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersPaginated, arg.Limit, arg.Offset)
+func (q *Queries) ListMetersByEventType(ctx context.Context, eventType pgtype.Text) ([]Meter, error) {
+	rows, err := q.db.Query(ctx, listMetersByEventType, eventType)
 	if err != nil {
 		return nil, err
 	}
@@ -274,21 +267,20 @@ func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginat
 	return items, nil
 }
 
-const listMetersPaginatedByEventType = `-- name: ListMetersPaginatedByEventType :many
+const listMetersPaginated = `-- name: ListMetersPaginated :many
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-WHERE event_type = $1 
-LIMIT $2
-OFFSET $3
+ORDER BY created_at DESC
+LIMIT $1
+OFFSET $2
 `
 
-type ListMetersPaginatedByEventTypeParams struct {
-	EventType pgtype.Text
-	Limit     int32
-	Offset    int32
+type ListMetersPaginatedParams struct {
+	Limit  int32
+	Offset int32
 }
 
-func (q *Queries) ListMetersPaginatedByEventType(ctx context.Context, arg ListMetersPaginatedByEventTypeParams) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersPaginatedByEventType, arg.EventType, arg.Limit, arg.Offset)
+func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error) {
+	rows, err := q.db.Query(ctx, listMetersPaginated, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

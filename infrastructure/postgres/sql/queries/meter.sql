@@ -27,11 +27,9 @@ ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2;
 
--- name: ListMetersPaginatedByEventType :many
+-- name: ListMetersByEventType :many
 SELECT * FROM meter
-WHERE event_type = $1 
-LIMIT $2
-OFFSET $3;
+WHERE event_type = $1;
 
 -- name: DeleteMeterByID :exec
 DELETE FROM meter
