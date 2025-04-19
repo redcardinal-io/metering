@@ -1,6 +1,7 @@
 package events
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -14,38 +15,46 @@ import (
 )
 
 type event struct {
-	// The event ID.
-	ID string `json:"id"`
-	// The event type.
-	Type string `json:"type"`
-	// The event source.
-	Source string `json:"source"`
-	// ID of the organization that user belongs to.
-	Organization string `json:"organization"`
-	// The ID of the user that owns the event.
-	User string `json:"user"`
-	// The event time.
-	Timestamp string `json:"timestamp"`
-	// The event data as a JSON string.
-	Properties map[string]any `json:"properties"`
+	ID           string         `json:"id" validate:"omitempty,uuid"`
+	Type         string         `json:"type" validate:"required"`
+	Source       string         `json:"source"`
+	Organization string         `json:"organization" validate:"required"`
+	User         string         `json:"user" validate:"required"`
+	Timestamp    string         `json:"timestamp"`
+	Properties   map[string]any `json:"properties"`
 }
 
 type publisEventRequestBody struct {
-	Events []event `json:"events"`
+	Events              []event `json:"events" validate:"required,dive"`
+	AllowPartialSuccess bool    `json:"allow_partial_success" validate:"omitempty" default:"true"`
 }
 
 func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
+	tenantSlug := ctx.Get(constants.TenantHeader)
+	if tenantSlug == "" {
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EUNAUTHORIZED, fmt.Sprintf("header %s is required", constants.TenantHeader))
+		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	var body publisEventRequestBody
 
 	if err := ctx.BodyParser(&body); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
-		h.logger.Error("failed to parse request body", zap.Any("error", errResp))
+		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
+	// Validate the request body
+	if err := h.validator.Struct(body); err != nil {
+		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid request body")
+		h.logger.Error("invalid request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	if len(body.Events) == 0 {
 		errResp := domainerrors.NewErrorResponseWithOpts(fmt.Errorf("cannot process empty event batch"), domainerrors.EINVALID, "empty event batch")
-		h.logger.Error("empty event batch", zap.Any("error", errResp))
+		h.logger.Error("empty event batch", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
@@ -63,12 +72,13 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 			_, err := time.Parse(constants.TimeFormat, event.Timestamp)
 			if err != nil {
 				errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid timestamp format")
+				h.logger.Error("invalid timestamp format", zap.Reflect("error", errResp))
 				return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 			}
 		}
 		properties, err := json.Marshal(event.Properties)
 		if err != nil {
-			h.logger.Error("failed to parse properties", zap.Error(err))
+			h.logger.Error("failed to parse properties", zap.Reflect("error", err))
 			errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse properties")
 			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 		}
@@ -83,13 +93,13 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.producer.PublishEvents(h.publishTopic, &events)
+	res, err := h.producer.PublishEvents(context.Background(), h.publishTopic, &events, body.AllowPartialSuccess)
 	if err != nil {
-		h.logger.Error("failed to publish events", zap.Error(err))
+		h.logger.Error("failed to publish events", zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	return ctx.
-		Status(fiber.StatusNoContent).JSON(models.NewHttpResponse[any](nil, "events published successfully", fiber.StatusNoContent))
+		Status(fiber.StatusOK).JSON(models.NewHttpResponse[any](res, "events published successfully", fiber.StatusOK))
 }

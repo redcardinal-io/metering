@@ -21,15 +21,19 @@ func NewMeterService(olap repositories.OlapRepository, store repositories.MeterS
 }
 
 func (s *MeterService) CreateMeter(ctx context.Context, arg models.CreateMeterInput) (*models.Meter, error) {
-	// Call the repository to create the meter
-	err := s.olap.CreateMeter(ctx, arg)
+	// Store the meter in the database
+	m, err := s.store.CreateMeter(ctx, arg)
 	if err != nil {
 		return nil, err
 	}
 
-	// Store the meter in the database
-	m, err := s.store.CreateMeter(ctx, arg)
+	// Call the repository to create the meter
+	err = s.olap.CreateMeter(ctx, arg)
 	if err != nil {
+		// delete the meter from the database if OLAP creation fails
+		if deleteErr := s.store.DeleteMeterByIDorSlug(ctx, m.Slug); deleteErr != nil {
+			return nil, deleteErr
+		}
 		return nil, err
 	}
 

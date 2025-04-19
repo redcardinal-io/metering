@@ -73,7 +73,7 @@ func ServeHttp() error {
 	meterStore := meters.NewPostgresMeterStoreRepository(store.GetDB(), logger)
 
 	// intialize services
-	producerService := services.NewProducerService(producer, logger)
+	producerService := services.NewProducerService(producer, meterStore)
 	meterService := services.NewMeterService(olap, meterStore)
 
 	// Register routes
