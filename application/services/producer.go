@@ -23,8 +23,12 @@ func NewProducerService(producer repositories.ProducerRepository, store reposito
 }
 
 func (p *ProducerService) PublishEvents(topic string, events *models.EventBatch) error {
+	meters, err := p.store.ListMetersByEventType(context.Background(), events.Events[0].Type)
+	if err != nil {
+		return err
+	}
 	for _, event := range events.Events {
-		if err := p.ValidateEvent(event); err != nil {
+		if err := p.ValidateEvent(event, meters); err != nil {
 			return err
 		}
 	}
@@ -32,24 +36,13 @@ func (p *ProducerService) PublishEvents(topic string, events *models.EventBatch)
 	return p.producer.PublishEvents(topic, events)
 }
 
-func (p *ProducerService) ValidateEvent(event *models.Event) error {
+func (p *ProducerService) ValidateEvent(event *models.Event, meters []*models.Meter) error {
 	if event == nil {
 		return domainerrors.New(fmt.Errorf("event cannot be nil"), domainerrors.EINVALID, "invalid event")
 	}
 
 	if event.Type == "" {
 		return domainerrors.New(fmt.Errorf("event type cannot be empty"), domainerrors.EINVALID, "invalid event type")
-	}
-
-	ctx := context.Background()
-	meters, err := p.store.ListMetersByEventType(ctx, event.Type)
-	if err != nil {
-		return domainerrors.New(err, domainerrors.EINTERNAL, "failed to retrieve meters")
-	}
-
-	// If no meters are found for the event type, return nil
-	if len(meters) == 0 {
-		return nil
 	}
 
 	// Collect all required properties from meters
