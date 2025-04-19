@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 
 	"github.com/redcardinal-io/metering/application/repositories"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
@@ -19,7 +18,6 @@ const (
 type ProducerService struct {
 	producer repositories.ProducerRepository
 	store    repositories.MeterStoreRepository
-	mu       sync.RWMutex // For thread safety
 }
 
 func NewProducerService(producer repositories.ProducerRepository, store repositories.MeterStoreRepository) *ProducerService {
@@ -64,20 +62,7 @@ func (p *ProducerService) PublishEvents(ctx context.Context, topic string, event
 
 	// Fetch meters for each event type
 	meters := make([]*models.Meter, 0)
-	p.mu.RLock()
-	for _, eventType := range eventTypes {
-		m, err := p.store.ListMetersByEventType(ctx, eventType)
-		if err != nil {
-			p.mu.RUnlock()
-			return nil, domainerrors.New(
-				fmt.Errorf("failed to fetch meters for event type %s: %w", eventType, err),
-				domainerrors.EINTERNAL,
-				"error retrieving meters",
-			)
-		}
-		meters = append(meters, m...)
-	}
-	p.mu.RUnlock()
+	meters, err := p.store.ListMetersByEventTypes(ctx, eventTypes)
 
 	// Process required properties by event type
 	properties := listPropertiesForEventType(meters)
@@ -141,9 +126,7 @@ func (p *ProducerService) PublishEvents(ctx context.Context, topic string, event
 	}
 
 	// Publish the valid events
-	p.mu.Lock()
-	err := p.producer.PublishEvents(topic, validBatch)
-	p.mu.Unlock()
+	err = p.producer.PublishEvents(topic, validBatch)
 	if err != nil {
 		return result, domainerrors.New(
 			fmt.Errorf("failed to publish events: %w", err),

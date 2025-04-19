@@ -231,13 +231,13 @@ func (q *Queries) GetValuePropertiesByEventType(ctx context.Context, eventType p
 	return items, nil
 }
 
-const listMetersByEventType = `-- name: ListMetersByEventType :many
+const listMetersByEventTypes = `-- name: ListMetersByEventTypes :many
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-WHERE event_type = $1
+WHERE event_type = ANY($1::text[])
 `
 
-func (q *Queries) ListMetersByEventType(ctx context.Context, eventType pgtype.Text) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersByEventType, eventType)
+func (q *Queries) ListMetersByEventTypes(ctx context.Context, dollar_1 []string) ([]Meter, error) {
+	rows, err := q.db.Query(ctx, listMetersByEventTypes, dollar_1)
 	if err != nil {
 		return nil, err
 	}
