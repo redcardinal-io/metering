@@ -14,6 +14,7 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/meters"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
+	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/events"
 	meterRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/meters"
 	"go.uber.org/zap"
@@ -81,7 +82,7 @@ func ServeHttp() error {
 	routes.RegisterRoutes(app)
 
 	// register v1 routes
-	v1 := app.Group("/v1")
+	v1 := app.Group("/v1").Use(middleware.CheckTenantMiddleware())
 	// events routes
 	eventsRoutes := events.NewHTTPHandler(events.HttpHandlerParams{
 		PublishTopic: config.Kafka.KafkaRawEventsTopic,
