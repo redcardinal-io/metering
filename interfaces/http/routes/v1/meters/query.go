@@ -38,8 +38,6 @@ func (h *httpHandler) query(ctx *fiber.Ctx) error {
 
 	result, err := h.meterSvc.QueryMeter(ctx.UserContext(), models.QueryMeterInput{
 		MeterSlug:      req.MeterSlug,
-		Organizations:  req.Organizations,
-		Users:          req.Users,
 		FilterGroupBy:  req.FilterGroupBy,
 		From:           req.From,
 		To:             req.To,
