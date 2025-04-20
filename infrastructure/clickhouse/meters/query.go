@@ -13,8 +13,6 @@ type QueryMeter struct {
 	TenantSlug     string                 // Unique identifier for the tenant
 	MeterSlug      string                 // Unique identifier for the meter
 	Aggregation    models.AggregationEnum // Type of aggregation to apply (sum, count, etc.)
-	Organizations  []string               // List of organization IDs to filter by
-	Users          []string               // List of user IDs to filter by
 	FilterGroupBy  map[string][]string    // Custom dimensions to filter and group by
 	From           *time.Time             // Start time of the query range
 	To             *time.Time             // End time of the query range
@@ -81,20 +79,6 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 	// Build the query using sqlbuilder
 	builder := sqlbuilder.ClickHouse.NewSelectBuilder()
 	builder.From(viewName)
-
-	// Add organization filter if any
-	if len(q.Organizations) > 0 {
-		for _, org := range q.Organizations {
-			builder.Where(builder.Equal("organization", org))
-		}
-	}
-
-	// Add user filter if any
-	if len(q.Users) > 0 {
-		for _, user := range q.Users {
-			builder.Where(builder.Equal("user", user))
-		}
-	}
 
 	// Add group by columns
 	for _, column := range q.GroupBy {

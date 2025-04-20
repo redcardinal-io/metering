@@ -12,8 +12,6 @@ import (
 
 type queryMeterRequest struct {
 	MeterSlug      string              `json:"meter_slug" validate:"required"`
-	Organizations  []string            `json:"organizations"`
-	Users          []string            `json:"users"`
 	FilterGroupBy  map[string][]string `json:"filter_group_by"`
 	From           *time.Time          `json:"from"`
 	To             *time.Time          `json:"to"`
