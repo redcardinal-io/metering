@@ -80,7 +80,6 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 
 	// Build the query using sqlbuilder
 	builder := sqlbuilder.ClickHouse.NewSelectBuilder()
-	builder.Select(selectColumns...)
 	builder.From(viewName)
 
 	// Add organization filter if any
@@ -128,6 +127,7 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 	if len(groupByColumns) > 0 {
 		builder.GroupBy(groupByColumns...)
 	}
+	builder.Select(selectColumns...)
 
 	sql, args := builder.Build()
 
