@@ -94,8 +94,6 @@ func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMe
 	queryMeter := meters.QueryMeter{
 		TenantSlug:     input.TenantSlug,
 		MeterSlug:      input.MeterSlug,
-		Organizations:  input.Organizations,
-		Users:          input.Users,
 		FilterGroupBy:  input.FilterGroupBy,
 		From:           input.From,
 		To:             input.To,
