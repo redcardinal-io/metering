@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
-	"github.com/redcardinal-io/metering/interfaces/http/routes/constants"
+	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"go.uber.org/zap"
 )
 
@@ -30,13 +30,6 @@ type publisEventRequestBody struct {
 }
 
 func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
-	tenantSlug := ctx.Get(constants.TenantHeader)
-	if tenantSlug == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EUNAUTHORIZED, fmt.Sprintf("header %s is required", constants.TenantHeader))
-		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
-		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
-	}
-
 	var body publisEventRequestBody
 
 	if err := ctx.BodyParser(&body); err != nil {
