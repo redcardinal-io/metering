@@ -24,14 +24,14 @@ type event struct {
 	Properties   map[string]any `json:"properties"`
 }
 
-type publisEventRequestBody struct {
+type publishEventRequestBody struct {
 	Events              []event `json:"events" validate:"required,dive"`
 	AllowPartialSuccess *bool   `json:"allow_partial_success" validate:"omitempty"`
 }
 
 func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
-	var body publisEventRequestBody
 
+	var body publishEventRequestBody
 	if err := ctx.BodyParser(&body); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
 		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))

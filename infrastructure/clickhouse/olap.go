@@ -3,6 +3,7 @@ package clickhouse
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/jmoiron/sqlx"
@@ -132,9 +133,12 @@ func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMe
 
 	olap.logger.Info("Queried meter", zap.String("meter", meters.GetMeterViewName(input.TenantSlug, input.MeterSlug)))
 
+	// Adjust the window start and end times based on the results
+	windowStart, windowEnd := getQueryWindowFromResults(results, input.From, input.To)
+
 	return &models.QueryMeterOutput{
-		WindowStart: queryMeter.From,
-		WindowEnd:   queryMeter.To,
+		WindowStart: windowStart,
+		WindowEnd:   windowEnd,
 		WindowSize:  queryMeter.WindowSize,
 		Data:        results,
 	}, nil
@@ -166,4 +170,22 @@ func (olap *ClickHouseOlap) DeleteMeter(ctx context.Context, input models.Delete
 
 func (olap *ClickHouseOlap) GetDB() any {
 	return olap.db
+}
+
+func getQueryWindowFromResults(results []models.QueryMeterRow, From *time.Time, To *time.Time) (*time.Time, *time.Time) {
+	if len(results) == 0 {
+		return From, To
+	}
+
+	windowStart := results[0].WindowStart
+	windowEnd := results[len(results)-1].WindowEnd
+
+	if From != nil && windowStart.Before(*From) {
+		windowStart = *From
+	}
+	if To != nil && windowEnd.After(*To) {
+		windowEnd = *To
+	}
+
+	return &windowStart, &windowEnd
 }
