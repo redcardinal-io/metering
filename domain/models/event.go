@@ -70,13 +70,13 @@ type EventBatch struct {
 
 // PublishEventsResult contains information about the batch processing result
 type PublishEventsResult struct {
-	SuccessCount int            // Number of events successfully published
-	FailedEvents []*FailedEvent // Details about failed events
-	Error        error          // Overall error, if any
+	SuccessCount int            `json:"success_count"`
+	FailedEvents []*FailedEvent `json:"failed_events"`
+	Error        error          `json:"error"`
 }
 
 // FailedEvent contains information about a single event that failed processing
 type FailedEvent struct {
-	Event *Event
-	Error error
+	Event *Event `json:"event"` // The event that failed
+	Error error  `json:"error"` // The error that occurred
 }

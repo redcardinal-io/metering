@@ -68,8 +68,6 @@ func ValidateAggregation(value string) bool {
 type QueryMeterInput struct {
 	TenantSlug     string
 	MeterSlug      string
-	Organizations  []string
-	Users          []string
 	FilterGroupBy  map[string][]string
 	From           *time.Time
 	To             *time.Time

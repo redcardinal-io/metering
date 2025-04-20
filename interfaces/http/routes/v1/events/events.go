@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
-	"github.com/redcardinal-io/metering/interfaces/http/routes/constants"
+	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"go.uber.org/zap"
 )
 
@@ -24,21 +24,14 @@ type event struct {
 	Properties   map[string]any `json:"properties"`
 }
 
-type publisEventRequestBody struct {
+type publishEventRequestBody struct {
 	Events              []event `json:"events" validate:"required,dive"`
-	AllowPartialSuccess bool    `json:"allow_partial_success" validate:"omitempty" default:"true"`
+	AllowPartialSuccess *bool   `json:"allow_partial_success" validate:"omitempty"`
 }
 
 func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
-	tenantSlug := ctx.Get(constants.TenantHeader)
-	if tenantSlug == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EUNAUTHORIZED, fmt.Sprintf("header %s is required", constants.TenantHeader))
-		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
-		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
-	}
 
-	var body publisEventRequestBody
-
+	var body publishEventRequestBody
 	if err := ctx.BodyParser(&body); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
 		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
@@ -56,6 +49,14 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 		errResp := domainerrors.NewErrorResponseWithOpts(fmt.Errorf("cannot process empty event batch"), domainerrors.EINVALID, "empty event batch")
 		h.logger.Error("empty event batch", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
+	// default to true if not provided
+	var allowPartialSuccess bool
+	if body.AllowPartialSuccess == nil {
+		allowPartialSuccess = true
+	} else {
+		allowPartialSuccess = *body.AllowPartialSuccess
 	}
 
 	events := models.EventBatch{}
@@ -93,7 +94,7 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 		})
 	}
 
-	res, err := h.producer.PublishEvents(context.Background(), h.publishTopic, &events, body.AllowPartialSuccess)
+	res, err := h.producer.PublishEvents(context.Background(), h.publishTopic, &events, allowPartialSuccess)
 	if err != nil {
 		h.logger.Error("failed to publish events", zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)
