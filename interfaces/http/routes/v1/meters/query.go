@@ -1,13 +1,12 @@
 package meters
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
-	"github.com/redcardinal-io/metering/interfaces/http/routes/constants"
+	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"go.uber.org/zap"
 )
 
@@ -25,11 +24,6 @@ type queryMeterRequest struct {
 
 func (h *httpHandler) query(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
-	if tenantSlug == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EUNAUTHORIZED, fmt.Sprintf("header %s is required", constants.TenantHeader))
-		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
-		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
-	}
 
 	var req queryMeterRequest
 	if err := ctx.BodyParser(&req); err != nil {
