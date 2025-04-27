@@ -2,9 +2,6 @@ package pagination
 
 import (
 	"encoding/json"
-	"errors"
-	"net/http"
-	"strconv"
 )
 
 // DefaultLimit is the default limit for pagination, set to 20 items per page
@@ -16,6 +13,7 @@ type Pagination struct {
 	Limit       int               `json:"limit"`
 	SearchQuery string            `json:"search_query,omitempty"`
 	Queries     map[string]string `json:"queries,omitempty"`
+	Sort        string            `json:"sort,omitempty"`
 }
 
 // PaginationView represents a paginated view of results
@@ -88,43 +86,4 @@ func NewPaginationView[T any](page, limit, total int, results []T) PaginationVie
 		Limit:   limit,
 		Total:   total,
 	}
-}
-
-func GetPaginationFromReq(r *http.Request) (*Pagination, error) {
-	pagination := &Pagination{}
-	var err error
-	page := r.URL.Query().Get("page")
-	if page == "" {
-		pagination.Page = 1
-	} else {
-		pagination.Page, err = strconv.Atoi(page)
-		if err != nil {
-			return nil, errors.New("Invalid page parameter")
-		}
-	}
-
-	limit := r.URL.Query().Get("limit")
-	if limit == "" {
-		pagination.Limit = 20
-	} else {
-		pagination.Limit, err = strconv.Atoi(limit)
-		if err != nil {
-			return nil, errors.New("Invalid limit parameter")
-		}
-	}
-
-	pagination.SearchQuery = r.URL.Query().Get("search_query")
-	pagination.Queries = map[string]string{}
-
-	sort := r.URL.Query().Get("sort")
-	if sort != "" {
-		if sort != "asc" && sort != "desc" {
-			return nil, errors.New("Invalid sort parameter")
-		}
-		pagination.Queries["sort"] = sort
-	} else {
-		pagination.Queries["sort"] = "desc"
-	}
-
-	return pagination, nil
 }

@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (h *httpHandler) deleteByIDorSlug(ctx *fiber.Ctx) error {
+func (h *httpHandler) getByIDorSlug(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	idOrSlug := ctx.Params("idOrSlug")
 
@@ -22,13 +22,13 @@ func (h *httpHandler) deleteByIDorSlug(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
-	err := h.meterSvc.DeleteMeter(c, idOrSlug)
+	meter, err := h.meterSvc.GetMeterIDorSlug(c, idOrSlug)
 	if err != nil {
-		h.logger.Error("failed to delete meter", zap.String("idOrSlug", idOrSlug), zap.Reflect("error", err))
+		h.logger.Error("failed to get meter", zap.String("idOrSlug", idOrSlug), zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	return ctx.
-		Status(fiber.StatusNoContent).JSON(models.NewHttpResponse[any](nil, "meter deleted successfully", fiber.StatusNoContent))
+		Status(fiber.StatusOK).JSON(models.NewHttpResponse(meter, "meter retrieved successfully", fiber.StatusOK))
 }
