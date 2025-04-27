@@ -69,7 +69,7 @@ ORDER BY property;
 
 -- name: UpdateMeterByID :one
 UPDATE meter
-SET name = coalesce($1, name),
+SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
     description = coalesce($2, description)
 WHERE id = $3
 AND tenant_slug = $4
@@ -77,7 +77,7 @@ RETURNING *;
 
 -- name: UpdateMeterBySlug :one
 UPDATE meter
-SET name = coalesce($1, name),
+SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
     description = coalesce($2, description)
 WHERE slug = $3
 AND tenant_slug = $4

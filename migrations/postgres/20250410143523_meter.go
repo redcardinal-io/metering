@@ -43,6 +43,7 @@ func upMeter(ctx context.Context, tx *sql.Tx) error {
 			
 			create index if not exists idx_meter_slug on meter(slug);
 			create index if not exists idx_meter_event_type on meter(event_type);
+			create index if not exists idx_meter_tenant_slug on meter(tenant_slug);
 		end;
 		$$;
 	`)

@@ -60,15 +60,20 @@ func (s *MeterService) QueryMeter(ctx context.Context, arg models.QueryMeterInpu
 }
 
 // TODO: implement recovery if store deletion fails
-func (s *MeterService) DeleteMeter(ctx context.Context, IDorSlug string) error {
+func (s *MeterService) DeleteMeter(ctx context.Context, iDorSlug string) error {
 
-	// Call the OLAP repository to delete the meter
-	err := s.olap.DeleteMeter(ctx, IDorSlug)
+	meter, err := s.store.GetMeterByIDorSlug(ctx, iDorSlug)
 	if err != nil {
 		return err
 	}
 
-	err = s.store.DeleteMeterByIDorSlug(ctx, IDorSlug)
+	// Call the OLAP repository to delete the meter
+	err = s.olap.DeleteMeter(ctx, meter.Slug)
+	if err != nil {
+		return err
+	}
+
+	err = s.store.DeleteMeterByIDorSlug(ctx, iDorSlug)
 	if err != nil {
 		return err
 	}
