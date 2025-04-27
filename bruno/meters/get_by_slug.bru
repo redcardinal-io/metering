@@ -1,0 +1,15 @@
+meta {
+  name: get_by_slug
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/v1/meters/api_requests
+  body: none
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
