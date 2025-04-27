@@ -75,7 +75,7 @@ func FormatWith[T any](p Pagination, total int, results []T) PaginationView[T] {
 	}
 }
 
-// NewPaginationView creates a new PaginationView instance
+// NewPaginationView returns a PaginationView containing the specified page, limit, total count, and results.
 func NewPaginationView[T any](page, limit, total int, results []T) PaginationView[T] {
 	return PaginationView[T]{
 		Results: results,

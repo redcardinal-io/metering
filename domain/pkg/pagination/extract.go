@@ -20,7 +20,9 @@ var ReservedQueryParams = map[string]bool{
 	"sort":         true,
 }
 
-// ExtractPaginationFromContext extracts pagination parameters from a Fiber context
+// ExtractPaginationFromContext retrieves pagination and filtering parameters from the Fiber context's query string.
+// 
+// It parses "page" and "limit" as integers, applying default values and validation. The "search_query" and "sort" parameters are extracted as strings, with "sort" restricted to "asc" or "desc" (defaulting to "desc"). All other non-reserved query parameters are collected as filter queries. Returns a Pagination struct containing the extracted values.
 func ExtractPaginationFromContext(ctx *fiber.Ctx) Pagination {
 	// Parse pagination parameters from query string
 	page, err := strconv.Atoi(ctx.Query("page", strconv.Itoa(DefaultPage)))

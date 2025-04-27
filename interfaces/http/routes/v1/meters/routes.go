@@ -13,6 +13,7 @@ type httpHandler struct {
 	validator *validator.Validate
 }
 
+// NewHTTPHandler creates and returns a new httpHandler for meter-related HTTP endpoints.
 func NewHTTPHandler(logger *logger.Logger, meterSvc *services.MeterService) *httpHandler {
 	validator := validator.New()
 	return &httpHandler{
