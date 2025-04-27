@@ -94,7 +94,7 @@ func TestCreateMeter(t *testing.T) {
 		assert.Equal(t, input.Description, meter.Description)
 		assert.Equal(t, input.Properties, meter.Properties)
 		assert.Equal(t, input.Aggregation, meter.Aggregation)
-		assert.Equal(t, input.CreatedBy, meter.CreatedBy)
+		assert.Equal(t, input.CreatedBy, meter.TenantSlug)
 		assert.False(t, meter.CreatedAt.IsZero())
 	})
 
@@ -286,7 +286,7 @@ func TestGetMeterByIDorSlug(t *testing.T) {
 		assert.Equal(t, input.Description, meter.Description)
 		assert.Equal(t, input.Properties, meter.Properties)
 		assert.Equal(t, input.Aggregation, meter.Aggregation)
-		assert.Equal(t, input.CreatedBy, meter.CreatedBy)
+		assert.Equal(t, input.CreatedBy, meter.TenantSlug)
 		assert.False(t, meter.CreatedAt.IsZero())
 	})
 
@@ -311,7 +311,7 @@ func TestGetMeterByIDorSlug(t *testing.T) {
 		assert.Equal(t, input.Description, meter.Description)
 		assert.Equal(t, input.Properties, meter.Properties)
 		assert.Equal(t, input.Aggregation, meter.Aggregation)
-		assert.Equal(t, input.CreatedBy, meter.CreatedBy)
+		assert.Equal(t, input.CreatedBy, meter.TenantSlug)
 		assert.False(t, meter.CreatedAt.IsZero())
 	})
 

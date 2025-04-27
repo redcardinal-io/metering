@@ -11,6 +11,7 @@ import (
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
+	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
 	"github.com/redcardinal-io/metering/infrastructure/clickhouse/meters"
 	"go.uber.org/zap"
@@ -59,9 +60,10 @@ func (olap *ClickHouseOlap) Connect(cfg *config.OlapConfig) error {
 }
 
 func (olap *ClickHouseOlap) CreateMeter(ctx context.Context, arg models.CreateMeterInput) error {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	createMeter := meters.CreateMeter{
 		Slug:          arg.MeterSlug,
-		TenantSlug:    arg.TenantSlug,
+		TenantSlug:    tenantSlug,
 		ValueProperty: arg.ValueProperty,
 		Populate:      arg.Populate,
 		Properties:    arg.Properties,
@@ -86,13 +88,14 @@ func (olap *ClickHouseOlap) CreateMeter(ctx context.Context, arg models.CreateMe
 		return MapError(err, "ClickHouse.CreateMeter")
 	}
 
-	olap.logger.Info("Created meter", zap.String("meter", meters.GetMeterViewName(arg.TenantSlug, arg.MeterSlug)))
+	olap.logger.Info("Created meter", zap.String("meter", meters.GetMeterViewName(tenantSlug, arg.MeterSlug)))
 	return nil
 }
 
 func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMeterInput, agg *models.AggregationEnum) (*models.QueryMeterOutput, error) {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	queryMeter := meters.QueryMeter{
-		TenantSlug:     input.TenantSlug,
+		TenantSlug:     tenantSlug,
 		MeterSlug:      input.MeterSlug,
 		FilterGroupBy:  input.FilterGroupBy,
 		From:           input.From,
@@ -124,7 +127,7 @@ func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMe
 	if err != nil {
 		return nil, MapError(err, "ClickHouse.QueryMeter")
 	}
-	olap.logger.Debug("Queried meter", zap.String("meter", meters.GetMeterViewName(input.TenantSlug, input.MeterSlug)))
+	olap.logger.Debug("Queried meter", zap.String("meter", meters.GetMeterViewName(tenantSlug, input.MeterSlug)))
 
 	// Adjust the window start and end times based on the results
 	windowStart, windowEnd := getQueryWindowFromResults(results, input.From, input.To)
@@ -144,10 +147,12 @@ func (olap *ClickHouseOlap) Close() error {
 	return nil
 }
 
-func (olap *ClickHouseOlap) DeleteMeter(ctx context.Context, input models.DeleteMeterInput) error {
+func (olap *ClickHouseOlap) DeleteMeter(ctx context.Context, meterSlug string) error {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
+
 	deleteMeter := meters.DeleteMeter{
-		TenantSlug: input.TenantSlug,
-		MeterSlug:  input.MeterSlug,
+		TenantSlug: tenantSlug,
+		MeterSlug:  meterSlug,
 	}
 
 	sql, args := deleteMeter.ToSQL()
@@ -157,7 +162,7 @@ func (olap *ClickHouseOlap) DeleteMeter(ctx context.Context, input models.Delete
 		return MapError(err, "ClickHouse.DeleteMeter")
 	}
 
-	olap.logger.Info("Deleted meter", zap.String("meter", meters.GetMeterViewName(input.TenantSlug, input.MeterSlug)))
+	olap.logger.Info("Deleted meter", zap.String("meter", meters.GetMeterViewName(tenantSlug, meterSlug)))
 	return nil
 }
 

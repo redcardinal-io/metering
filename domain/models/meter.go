@@ -29,20 +29,18 @@ type Meter struct {
 	Properties    []string        `json:"properties"`
 	Aggregation   AggregationEnum `json:"aggregation"`
 	CreatedAt     time.Time       `json:"created_at"`
-	CreatedBy     string          `json:"created_by"`
+	TenantSlug    string          `json:"tenant_slug"`
 }
 
 // CreateMeterInput represents the input for creating a new meter
 type CreateMeterInput struct {
 	Name          string
 	MeterSlug     string
-	TenantSlug    string
 	EventType     string
 	Description   string
 	ValueProperty string
 	Properties    []string
 	Aggregation   AggregationEnum
-	CreatedBy     string
 	Populate      bool
 }
 
@@ -66,7 +64,6 @@ func ValidateAggregation(value string) bool {
 }
 
 type QueryMeterInput struct {
-	TenantSlug     string
 	MeterSlug      string
 	FilterGroupBy  map[string][]string
 	From           *time.Time
@@ -90,7 +87,7 @@ type QueryMeterRow struct {
 	GroupBy     map[string]string `json:"group_by,omitempty"`
 }
 
-type DeleteMeterInput struct {
-	TenantSlug string
-	MeterSlug  string
+type UpdateMeterInput struct {
+	Name        string
+	Description string
 }

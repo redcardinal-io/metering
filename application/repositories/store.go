@@ -20,4 +20,5 @@ type MeterStoreRepository interface {
 	ListMeters(ctx context.Context, pagination pagination.Pagination) (*pagination.PaginationView[models.Meter], error)
 	ListMetersByEventTypes(ctx context.Context, eventTypes []string) ([]*models.Meter, error)
 	DeleteMeterByIDorSlug(ctx context.Context, idOrSlug string) error
+	UpdateMeterByIDorSlug(ctx context.Context, idOrSlug string, arg models.UpdateMeterInput) (*models.Meter, error)
 }

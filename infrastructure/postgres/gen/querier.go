@@ -11,18 +11,19 @@ import (
 )
 
 type Querier interface {
-	CountMeters(ctx context.Context) (int64, error)
-	CountMetersByEventType(ctx context.Context, eventType pgtype.Text) (int64, error)
+	CountMeters(ctx context.Context, tenantSlug string) (int64, error)
+	CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error)
 	CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error)
-	DeleteMeterByID(ctx context.Context, id pgtype.UUID) error
-	DeleteMeterBySlug(ctx context.Context, slug string) error
-	GetEventTypes(ctx context.Context) ([]pgtype.Text, error)
-	GetMeterByID(ctx context.Context, id pgtype.UUID) (Meter, error)
-	GetMeterBySlug(ctx context.Context, slug string) (Meter, error)
-	GetPropertiesByEventType(ctx context.Context, eventType pgtype.Text) ([]interface{}, error)
-	GetValuePropertiesByEventType(ctx context.Context, eventType pgtype.Text) ([]pgtype.Text, error)
-	ListMetersByEventTypes(ctx context.Context, dollar_1 []string) ([]Meter, error)
+	DeleteMeterByID(ctx context.Context, arg DeleteMeterByIDParams) error
+	DeleteMeterBySlug(ctx context.Context, arg DeleteMeterBySlugParams) error
+	GetMeterByID(ctx context.Context, arg GetMeterByIDParams) (Meter, error)
+	GetMeterBySlug(ctx context.Context, arg GetMeterBySlugParams) (Meter, error)
+	GetPropertiesByEventType(ctx context.Context, arg GetPropertiesByEventTypeParams) ([]interface{}, error)
+	GetValuePropertiesByEventType(ctx context.Context, arg GetValuePropertiesByEventTypeParams) ([]pgtype.Text, error)
+	ListMetersByEventTypes(ctx context.Context, arg ListMetersByEventTypesParams) ([]Meter, error)
 	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)
+	UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error)
+	UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error)
 }
 
 var _ Querier = (*Queries)(nil)

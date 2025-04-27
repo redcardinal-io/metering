@@ -12,11 +12,12 @@ import (
 )
 
 const countMeters = `-- name: CountMeters :one
-SELECT count(*) FROM meter
+SELECT count(*) FROM meter 
+WHERE tenant_slug = $1
 `
 
-func (q *Queries) CountMeters(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, countMeters)
+func (q *Queries) CountMeters(ctx context.Context, tenantSlug string) (int64, error) {
+	row := q.db.QueryRow(ctx, countMeters, tenantSlug)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -25,10 +26,16 @@ func (q *Queries) CountMeters(ctx context.Context) (int64, error) {
 const countMetersByEventType = `-- name: CountMetersByEventType :one
 SELECT count(*) FROM meter
 WHERE event_type = $1
+AND tenant_slug = $2
 `
 
-func (q *Queries) CountMetersByEventType(ctx context.Context, eventType pgtype.Text) (int64, error) {
-	row := q.db.QueryRow(ctx, countMetersByEventType, eventType)
+type CountMetersByEventTypeParams struct {
+	EventType  pgtype.Text
+	TenantSlug string
+}
+
+func (q *Queries) CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countMetersByEventType, arg.EventType, arg.TenantSlug)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -43,10 +50,10 @@ INSERT INTO meter (
     value_property,
     properties,
     aggregation,
-    created_by
+    tenant_slug
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by
+) RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug
 `
 
 type CreateMeterParams struct {
@@ -57,7 +64,7 @@ type CreateMeterParams struct {
 	ValueProperty pgtype.Text
 	Properties    []string
 	Aggregation   AggregationEnum
-	CreatedBy     string
+	TenantSlug    string
 }
 
 func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error) {
@@ -69,7 +76,7 @@ func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter
 		arg.ValueProperty,
 		arg.Properties,
 		arg.Aggregation,
-		arg.CreatedBy,
+		arg.TenantSlug,
 	)
 	var i Meter
 	err := row.Scan(
@@ -82,63 +89,56 @@ func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter
 		&i.Properties,
 		&i.Aggregation,
 		&i.CreatedAt,
-		&i.CreatedBy,
+		&i.TenantSlug,
 	)
 	return i, err
 }
 
 const deleteMeterByID = `-- name: DeleteMeterByID :exec
 DELETE FROM meter
-WHERE id = $1
+WHERE id = $1 
+AND tenant_slug = $2
 `
 
-func (q *Queries) DeleteMeterByID(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteMeterByID, id)
+type DeleteMeterByIDParams struct {
+	ID         pgtype.UUID
+	TenantSlug string
+}
+
+func (q *Queries) DeleteMeterByID(ctx context.Context, arg DeleteMeterByIDParams) error {
+	_, err := q.db.Exec(ctx, deleteMeterByID, arg.ID, arg.TenantSlug)
 	return err
 }
 
 const deleteMeterBySlug = `-- name: DeleteMeterBySlug :exec
 DELETE FROM meter
 WHERE slug = $1
+AND tenant_slug = $2
 `
 
-func (q *Queries) DeleteMeterBySlug(ctx context.Context, slug string) error {
-	_, err := q.db.Exec(ctx, deleteMeterBySlug, slug)
+type DeleteMeterBySlugParams struct {
+	Slug       string
+	TenantSlug string
+}
+
+func (q *Queries) DeleteMeterBySlug(ctx context.Context, arg DeleteMeterBySlugParams) error {
+	_, err := q.db.Exec(ctx, deleteMeterBySlug, arg.Slug, arg.TenantSlug)
 	return err
 }
 
-const getEventTypes = `-- name: GetEventTypes :many
-SELECT DISTINCT event_type FROM meter
-ORDER BY event_type
+const getMeterByID = `-- name: GetMeterByID :one
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+WHERE id = $1
+AND tenant_slug = $2
 `
 
-func (q *Queries) GetEventTypes(ctx context.Context) ([]pgtype.Text, error) {
-	rows, err := q.db.Query(ctx, getEventTypes)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []pgtype.Text
-	for rows.Next() {
-		var event_type pgtype.Text
-		if err := rows.Scan(&event_type); err != nil {
-			return nil, err
-		}
-		items = append(items, event_type)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+type GetMeterByIDParams struct {
+	ID         pgtype.UUID
+	TenantSlug string
 }
 
-const getMeterByID = `-- name: GetMeterByID :one
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
-WHERE id = $1
-`
-
-func (q *Queries) GetMeterByID(ctx context.Context, id pgtype.UUID) (Meter, error) {
-	row := q.db.QueryRow(ctx, getMeterByID, id)
+func (q *Queries) GetMeterByID(ctx context.Context, arg GetMeterByIDParams) (Meter, error) {
+	row := q.db.QueryRow(ctx, getMeterByID, arg.ID, arg.TenantSlug)
 	var i Meter
 	err := row.Scan(
 		&i.ID,
@@ -150,18 +150,24 @@ func (q *Queries) GetMeterByID(ctx context.Context, id pgtype.UUID) (Meter, erro
 		&i.Properties,
 		&i.Aggregation,
 		&i.CreatedAt,
-		&i.CreatedBy,
+		&i.TenantSlug,
 	)
 	return i, err
 }
 
 const getMeterBySlug = `-- name: GetMeterBySlug :one
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
 WHERE slug = $1
+AND tenant_slug = $2
 `
 
-func (q *Queries) GetMeterBySlug(ctx context.Context, slug string) (Meter, error) {
-	row := q.db.QueryRow(ctx, getMeterBySlug, slug)
+type GetMeterBySlugParams struct {
+	Slug       string
+	TenantSlug string
+}
+
+func (q *Queries) GetMeterBySlug(ctx context.Context, arg GetMeterBySlugParams) (Meter, error) {
+	row := q.db.QueryRow(ctx, getMeterBySlug, arg.Slug, arg.TenantSlug)
 	var i Meter
 	err := row.Scan(
 		&i.ID,
@@ -173,7 +179,7 @@ func (q *Queries) GetMeterBySlug(ctx context.Context, slug string) (Meter, error
 		&i.Properties,
 		&i.Aggregation,
 		&i.CreatedAt,
-		&i.CreatedBy,
+		&i.TenantSlug,
 	)
 	return i, err
 }
@@ -182,11 +188,17 @@ const getPropertiesByEventType = `-- name: GetPropertiesByEventType :many
 SELECT DISTINCT unnest(properties) as property 
 FROM meter
 WHERE event_type = $1
+AND tenant_slug = $2
 ORDER BY property
 `
 
-func (q *Queries) GetPropertiesByEventType(ctx context.Context, eventType pgtype.Text) ([]interface{}, error) {
-	rows, err := q.db.Query(ctx, getPropertiesByEventType, eventType)
+type GetPropertiesByEventTypeParams struct {
+	EventType  pgtype.Text
+	TenantSlug string
+}
+
+func (q *Queries) GetPropertiesByEventType(ctx context.Context, arg GetPropertiesByEventTypeParams) ([]interface{}, error) {
+	rows, err := q.db.Query(ctx, getPropertiesByEventType, arg.EventType, arg.TenantSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -208,11 +220,17 @@ func (q *Queries) GetPropertiesByEventType(ctx context.Context, eventType pgtype
 const getValuePropertiesByEventType = `-- name: GetValuePropertiesByEventType :many
 SELECT DISTINCT value_property FROM meter
 WHERE event_type = $1 AND value_property IS NOT NULL
+AND tenant_slug = $2
 ORDER BY value_property
 `
 
-func (q *Queries) GetValuePropertiesByEventType(ctx context.Context, eventType pgtype.Text) ([]pgtype.Text, error) {
-	rows, err := q.db.Query(ctx, getValuePropertiesByEventType, eventType)
+type GetValuePropertiesByEventTypeParams struct {
+	EventType  pgtype.Text
+	TenantSlug string
+}
+
+func (q *Queries) GetValuePropertiesByEventType(ctx context.Context, arg GetValuePropertiesByEventTypeParams) ([]pgtype.Text, error) {
+	rows, err := q.db.Query(ctx, getValuePropertiesByEventType, arg.EventType, arg.TenantSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -232,12 +250,18 @@ func (q *Queries) GetValuePropertiesByEventType(ctx context.Context, eventType p
 }
 
 const listMetersByEventTypes = `-- name: ListMetersByEventTypes :many
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
 WHERE event_type = ANY($1::text[])
+AND tenant_slug = $2
 `
 
-func (q *Queries) ListMetersByEventTypes(ctx context.Context, dollar_1 []string) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersByEventTypes, dollar_1)
+type ListMetersByEventTypesParams struct {
+	Column1    []string
+	TenantSlug string
+}
+
+func (q *Queries) ListMetersByEventTypes(ctx context.Context, arg ListMetersByEventTypesParams) ([]Meter, error) {
+	rows, err := q.db.Query(ctx, listMetersByEventTypes, arg.Column1, arg.TenantSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -255,7 +279,7 @@ func (q *Queries) ListMetersByEventTypes(ctx context.Context, dollar_1 []string)
 			&i.Properties,
 			&i.Aggregation,
 			&i.CreatedAt,
-			&i.CreatedBy,
+			&i.TenantSlug,
 		); err != nil {
 			return nil, err
 		}
@@ -268,19 +292,21 @@ func (q *Queries) ListMetersByEventTypes(ctx context.Context, dollar_1 []string)
 }
 
 const listMetersPaginated = `-- name: ListMetersPaginated :many
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, created_by FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+WHERE tenant_slug = $1
 ORDER BY created_at DESC
-LIMIT $1
-OFFSET $2
+LIMIT $2
+OFFSET $3
 `
 
 type ListMetersPaginatedParams struct {
-	Limit  int32
-	Offset int32
+	TenantSlug string
+	Limit      int32
+	Offset     int32
 }
 
 func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error) {
-	rows, err := q.db.Query(ctx, listMetersPaginated, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listMetersPaginated, arg.TenantSlug, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -298,7 +324,7 @@ func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginat
 			&i.Properties,
 			&i.Aggregation,
 			&i.CreatedAt,
-			&i.CreatedBy,
+			&i.TenantSlug,
 		); err != nil {
 			return nil, err
 		}
@@ -308,4 +334,82 @@ func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginat
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateMeterByID = `-- name: UpdateMeterByID :one
+UPDATE meter
+SET name = coalesce($1, name),
+    description = coalesce($2, description)
+WHERE id = $3
+AND tenant_slug = $4
+RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug
+`
+
+type UpdateMeterByIDParams struct {
+	Name        string
+	Description pgtype.Text
+	ID          pgtype.UUID
+	TenantSlug  string
+}
+
+func (q *Queries) UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error) {
+	row := q.db.QueryRow(ctx, updateMeterByID,
+		arg.Name,
+		arg.Description,
+		arg.ID,
+		arg.TenantSlug,
+	)
+	var i Meter
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.EventType,
+		&i.Description,
+		&i.ValueProperty,
+		&i.Properties,
+		&i.Aggregation,
+		&i.CreatedAt,
+		&i.TenantSlug,
+	)
+	return i, err
+}
+
+const updateMeterBySlug = `-- name: UpdateMeterBySlug :one
+UPDATE meter
+SET name = coalesce($1, name),
+    description = coalesce($2, description)
+WHERE slug = $3
+AND tenant_slug = $4
+RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug
+`
+
+type UpdateMeterBySlugParams struct {
+	Name        string
+	Description pgtype.Text
+	Slug        string
+	TenantSlug  string
+}
+
+func (q *Queries) UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error) {
+	row := q.db.QueryRow(ctx, updateMeterBySlug,
+		arg.Name,
+		arg.Description,
+		arg.Slug,
+		arg.TenantSlug,
+	)
+	var i Meter
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.EventType,
+		&i.Description,
+		&i.ValueProperty,
+		&i.Properties,
+		&i.Aggregation,
+		&i.CreatedAt,
+		&i.TenantSlug,
+	)
+	return i, err
 }
