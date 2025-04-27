@@ -6,12 +6,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/redcardinal-io/metering/domain/models"
+	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"github.com/redcardinal-io/metering/infrastructure/postgres"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
 	"go.uber.org/zap"
 )
 
 func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.CreateMeterInput) (*models.Meter, error) {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	m, err := p.q.CreateMeter(ctx, gen.CreateMeterParams{
 		Slug:          arg.MeterSlug,
 		Name:          arg.Name,
@@ -20,7 +22,7 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 		ValueProperty: pgtype.Text{String: arg.ValueProperty, Valid: arg.ValueProperty != ""},
 		Properties:    arg.Properties,
 		Aggregation:   gen.AggregationEnum(arg.Aggregation),
-		CreatedBy:     arg.CreatedBy,
+		TenantSlug:    tenantSlug,
 	})
 
 	if err != nil {
@@ -44,7 +46,7 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 		Properties:    m.Properties,
 		Aggregation:   models.AggregationEnum(m.Aggregation),
 		CreatedAt:     m.CreatedAt.Time,
-		CreatedBy:     m.CreatedBy,
+		TenantSlug:    m.TenantSlug,
 	}
 
 	return meter, nil

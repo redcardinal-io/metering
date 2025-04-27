@@ -17,5 +17,5 @@ create table "meter" (
     properties text[] not null,
     aggregation aggregation_enum not null,
     created_at timestamp with time zone not null default current_timestamp,
-    created_by varchar not null
+    tenant_slug varchar not null
 );
