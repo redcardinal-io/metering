@@ -338,7 +338,7 @@ func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginat
 
 const updateMeterByID = `-- name: UpdateMeterByID :one
 UPDATE meter
-SET name = coalesce($1, name),
+SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
     description = coalesce($2, description)
 WHERE id = $3
 AND tenant_slug = $4
@@ -346,7 +346,7 @@ RETURNING id, name, slug, event_type, description, value_property, properties, a
 `
 
 type UpdateMeterByIDParams struct {
-	Name        string
+	Column1     string
 	Description pgtype.Text
 	ID          pgtype.UUID
 	TenantSlug  string
@@ -354,7 +354,7 @@ type UpdateMeterByIDParams struct {
 
 func (q *Queries) UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error) {
 	row := q.db.QueryRow(ctx, updateMeterByID,
-		arg.Name,
+		arg.Column1,
 		arg.Description,
 		arg.ID,
 		arg.TenantSlug,
@@ -377,7 +377,7 @@ func (q *Queries) UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams
 
 const updateMeterBySlug = `-- name: UpdateMeterBySlug :one
 UPDATE meter
-SET name = coalesce($1, name),
+SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
     description = coalesce($2, description)
 WHERE slug = $3
 AND tenant_slug = $4
@@ -385,7 +385,7 @@ RETURNING id, name, slug, event_type, description, value_property, properties, a
 `
 
 type UpdateMeterBySlugParams struct {
-	Name        string
+	Column1     string
 	Description pgtype.Text
 	Slug        string
 	TenantSlug  string
@@ -393,7 +393,7 @@ type UpdateMeterBySlugParams struct {
 
 func (q *Queries) UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error) {
 	row := q.db.QueryRow(ctx, updateMeterBySlug,
-		arg.Name,
+		arg.Column1,
 		arg.Description,
 		arg.Slug,
 		arg.TenantSlug,

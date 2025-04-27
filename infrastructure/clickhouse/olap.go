@@ -156,6 +156,7 @@ func (olap *ClickHouseOlap) DeleteMeter(ctx context.Context, meterSlug string) e
 	}
 
 	sql, args := deleteMeter.ToSQL()
+	olap.logger.Debug("Deleting meter SQL", zap.String("sql", sql), zap.Any("args", args))
 
 	_, err := olap.db.ExecContext(ctx, sql, args...)
 	if err != nil {

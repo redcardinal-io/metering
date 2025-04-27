@@ -11,8 +11,8 @@ import (
 )
 
 type updateMeterRequest struct {
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
+	Name        string `json:"name,omitempty" validate:"omitempty,min=3,max=100"`
+	Description string `json:"description,omitempty" validate:"omitempty,min=3,max=255"`
 }
 
 func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
@@ -36,6 +36,11 @@ func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 	if err := h.validator.Struct(req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid request body")
 		h.logger.Error("invalid request body", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+	if req.Name == "" && req.Description == "" {
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "at least one field (name or description) is required")
+		h.logger.Error("at least one field (name or description) is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
