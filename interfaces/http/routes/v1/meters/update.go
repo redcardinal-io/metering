@@ -11,10 +11,8 @@ import (
 )
 
 type updateMeterRequest struct {
-	Name        string   `json:"name,omitempty"`
-	Description string   `json:"description,omitempty"`
-	Properties  []string `json:"properties,omitempty"`
-	UpdatedBy   string   `json:"updated_by" validate:"required"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {

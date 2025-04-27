@@ -2,7 +2,6 @@ package meters
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
@@ -14,17 +13,6 @@ import (
 
 func (h *httpHandler) list(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
-
-	// Parse pagination parameters from query string
-	page, err := strconv.Atoi(ctx.Query("page", "1"))
-	if err != nil || page < 1 {
-		page = 1
-	}
-
-	perPage, err := strconv.Atoi(ctx.Query("per_page", "10"))
-	if err != nil || perPage < 1 {
-		perPage = 10
-	}
 
 	// Create pagination input
 	paginationInput := pagination.ExtractPaginationFromContext(ctx)

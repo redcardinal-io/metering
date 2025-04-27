@@ -13,6 +13,7 @@ import (
 )
 
 func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination.Pagination) (*pagination.PaginationView[models.Meter], error) {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	m, err := p.q.ListMetersPaginated(ctx, gen.ListMetersPaginatedParams{
 		Limit:      int32(page.Limit),
 		Offset:     int32(page.GetOffset()),
@@ -41,7 +42,7 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 		})
 	}
 
-	count, err := p.q.CountMeters(ctx, ctx.Value(constants.TenantSlugKey).(string))
+	count, err := p.q.CountMeters(ctx, tenantSlug)
 	if err != nil {
 		p.logger.Error("Error counting meters: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.CountMeters")
@@ -56,10 +57,11 @@ func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 	ctx context.Context,
 	eventTypes []string,
 ) ([]*models.Meter, error) {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 
 	metesrs, err := p.q.ListMetersByEventTypes(ctx, gen.ListMetersByEventTypesParams{
 		Column1:    eventTypes,
-		TenantSlug: ctx.Value(constants.TenantSlugKey).(string),
+		TenantSlug: tenantSlug,
 	})
 	if err != nil {
 		p.logger.Error("Error listing meters by event type: ", zap.Error(err))

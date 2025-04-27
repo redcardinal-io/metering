@@ -12,7 +12,7 @@ import (
 )
 
 func (p *PgMeterStoreRepository) GetMeterByIDorSlug(ctx context.Context, idOrSlug string) (*models.Meter, error) {
-	tenant_slug := ctx.Value(constants.TenantSlugKey).(string)
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	// Try to parse as UUID first
 	id, err := uuid.Parse(idOrSlug)
 	var detailsErr error
@@ -21,13 +21,13 @@ func (p *PgMeterStoreRepository) GetMeterByIDorSlug(ctx context.Context, idOrSlu
 		// Valid UUID, get details by ID
 		m, detailsErr = p.q.GetMeterByID(ctx, gen.GetMeterByIDParams{
 			ID:         pgtype.UUID{Bytes: id, Valid: true},
-			TenantSlug: tenant_slug,
+			TenantSlug: tenantSlug,
 		})
 	} else {
 		// Not a UUID, get details by slug
 		m, detailsErr = p.q.GetMeterBySlug(ctx, gen.GetMeterBySlugParams{
 			Slug:       idOrSlug,
-			TenantSlug: tenant_slug,
+			TenantSlug: tenantSlug,
 		})
 	}
 
