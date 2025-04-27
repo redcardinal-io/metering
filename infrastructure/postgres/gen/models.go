@@ -67,5 +67,5 @@ type Meter struct {
 	Properties    []string
 	Aggregation   AggregationEnum
 	CreatedAt     pgtype.Timestamptz
-	CreatedBy     string
+	TenantSlug    string
 }
