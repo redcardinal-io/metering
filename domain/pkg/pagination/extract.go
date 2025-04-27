@@ -9,8 +9,8 @@ import (
 // DefaultPage is the default page number if not specified
 const DefaultPage = 1
 
-// DefaultPerPage is the default number of items per page if not specified
-const DefaultPerPage = 10
+// DefaultLimit is the default number of items per page if not specified
+const DefaultLimit = 20
 
 // Reserved query parameter names that are used specifically for pagination
 var ReservedQueryParams = map[string]bool{
@@ -28,13 +28,16 @@ func ExtractPaginationFromContext(ctx *fiber.Ctx) Pagination {
 		page = DefaultPage
 	}
 
-	limit, err := strconv.Atoi(ctx.Query("limit", strconv.Itoa(DefaultPerPage)))
-	if err != nil || limit < 1 {
-		limit = DefaultPerPage
+	limit, err := strconv.Atoi(ctx.Query("limit", strconv.Itoa(DefaultLimit)))
+	if err != nil || limit < 1 || limit > 100 {
+		limit = DefaultLimit
 	}
 
 	searchQuery := ctx.Query("search_query", "")
 	sort := ctx.Query("sort", "desc")
+	if sort != "asc" && sort != "desc" {
+		sort = "desc"
+	}
 
 	// Extract filter queries (non-pagination parameters)
 	allQueries := ctx.Queries()

@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 )
 
-// DefaultLimit is the default limit for pagination, set to 20 items per page
-const DefaultLimit = 20
-
 // Pagination represents pagination parameters and search options
 type Pagination struct {
 	Page        int               `json:"page"`

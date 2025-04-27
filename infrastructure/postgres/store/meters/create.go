@@ -13,7 +13,7 @@ import (
 )
 
 func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.CreateMeterInput) (*models.Meter, error) {
-	tenant_slug := ctx.Value(constants.TenantSlugKey).(string)
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	m, err := p.q.CreateMeter(ctx, gen.CreateMeterParams{
 		Slug:          arg.MeterSlug,
 		Name:          arg.Name,
@@ -22,7 +22,7 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 		ValueProperty: pgtype.Text{String: arg.ValueProperty, Valid: arg.ValueProperty != ""},
 		Properties:    arg.Properties,
 		Aggregation:   gen.AggregationEnum(arg.Aggregation),
-		TenantSlug:    tenant_slug,
+		TenantSlug:    tenantSlug,
 	})
 
 	if err != nil {

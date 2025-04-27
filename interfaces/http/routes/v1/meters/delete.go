@@ -5,7 +5,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
-	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"go.uber.org/zap"
 )
@@ -30,5 +29,5 @@ func (h *httpHandler) deleteByIDorSlug(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.
-		Status(fiber.StatusNoContent).JSON(models.NewHttpResponse[any](nil, "meter deleted successfully", fiber.StatusNoContent))
+		SendStatus(fiber.StatusNoContent)
 }
