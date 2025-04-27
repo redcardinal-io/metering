@@ -203,7 +203,7 @@ func isEmptyValue(value any) bool {
 	}
 }
 
-// listPropertiesForEventType collects required properties for each event type
+// listPropertiesForEventType returns a map of event types to their unique required property names aggregated from the provided meters.
 func listPropertiesForEventType(meters []*models.Meter) map[string][]string {
 	properties := make(map[string]map[string]struct{})
 

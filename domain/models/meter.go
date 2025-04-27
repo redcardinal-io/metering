@@ -52,7 +52,7 @@ const (
 	WindowSizeDay    WindowSize = "day"
 )
 
-// ValidateAggregation checks if a string is a valid aggregation enum value
+// ValidateAggregation returns true if the provided string is a valid aggregation type.
 func ValidateAggregation(value string) bool {
 	switch AggregationEnum(value) {
 	case AggregationCount, AggregationSum, AggregationAvg,
