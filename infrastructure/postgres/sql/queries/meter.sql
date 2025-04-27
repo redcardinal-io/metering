@@ -60,3 +60,9 @@ SELECT DISTINCT unnest(properties) as property
 FROM meter
 WHERE event_type = $1
 ORDER BY property;
+
+-- name: UpdateMeter :one
+UPDATE meter 
+SET name = coalesce($2, name),
+    description = coalesce($3, description),
+WHERE id = $1

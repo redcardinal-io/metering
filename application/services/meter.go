@@ -57,3 +57,5 @@ func (s *MeterService) QueryMeter(ctx context.Context, arg models.QueryMeterInpu
 	result, err := s.olap.QueryMeter(ctx, arg, &m.Aggregation)
 	return result, err
 }
+
+func (s *MeterService) ListMeters(ctx context.Context)
