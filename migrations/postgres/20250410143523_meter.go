@@ -11,6 +11,7 @@ func init() {
 	goose.AddMigrationContext(upMeter, downMeter)
 }
 
+// upMeter applies the database migration to create the aggregation_enum type and the meter table with associated indexes if they do not already exist.
 func upMeter(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
 		do $$
