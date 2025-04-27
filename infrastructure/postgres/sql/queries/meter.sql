@@ -7,56 +7,78 @@ INSERT INTO meter (
     value_property,
     properties,
     aggregation,
-    created_by
+    tenant_slug
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8
 ) RETURNING *;
 
 -- name: GetMeterByID :one
 SELECT * FROM meter
-WHERE id = $1;
+WHERE id = $1
+AND tenant_slug = $2;
 
 -- name: GetMeterBySlug :one
 SELECT * FROM meter
-WHERE slug = $1;
+WHERE slug = $1
+AND tenant_slug = $2;
 
 
 -- name: ListMetersPaginated :many
 SELECT * FROM meter
+WHERE tenant_slug = $1
 ORDER BY created_at DESC
-LIMIT $1
-OFFSET $2;
+LIMIT $2
+OFFSET $3;
 
 -- name: ListMetersByEventTypes :many
 SELECT * FROM meter
-WHERE event_type = ANY($1::text[]);
+WHERE event_type = ANY($1::text[])
+AND tenant_slug = $2;
 
 -- name: DeleteMeterByID :exec
 DELETE FROM meter
-WHERE id = $1;
+WHERE id = $1 
+AND tenant_slug = $2;
 
 -- name: DeleteMeterBySlug :exec
 DELETE FROM meter
-WHERE slug = $1;
+WHERE slug = $1
+AND tenant_slug = $2;
 
 -- name: CountMeters :one
-SELECT count(*) FROM meter;
+SELECT count(*) FROM meter 
+WHERE tenant_slug = $1;
 
 -- name: CountMetersByEventType :one
 SELECT count(*) FROM meter
-WHERE event_type = $1;
-
--- name: GetEventTypes :many
-SELECT DISTINCT event_type FROM meter
-ORDER BY event_type;
+WHERE event_type = $1
+AND tenant_slug = $2;
 
 -- name: GetValuePropertiesByEventType :many
 SELECT DISTINCT value_property FROM meter
 WHERE event_type = $1 AND value_property IS NOT NULL
+AND tenant_slug = $2
 ORDER BY value_property;
 
 -- name: GetPropertiesByEventType :many
 SELECT DISTINCT unnest(properties) as property 
 FROM meter
 WHERE event_type = $1
+AND tenant_slug = $2
 ORDER BY property;
+
+-- name: UpdateMeterByID :one
+UPDATE meter
+SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
+    description = coalesce($2, description)
+WHERE id = $3
+AND tenant_slug = $4
+RETURNING *;
+
+-- name: UpdateMeterBySlug :one
+UPDATE meter
+SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
+    description = coalesce($2, description)
+WHERE slug = $3
+AND tenant_slug = $4
+RETURNING *;
