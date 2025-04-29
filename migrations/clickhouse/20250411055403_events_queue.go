@@ -35,7 +35,7 @@ func upEventsQueue(ctx context.Context, tx *sql.Tx) error {
     		source String not null,
     		organization String not null,
     		user String not null,
-    		timestamp DateTime not null,
+    		timestamp String not null,
     		properties String not null
 		)
 		engine = Kafka()
