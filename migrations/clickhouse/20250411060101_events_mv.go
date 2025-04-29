@@ -22,7 +22,7 @@ func upEventsMv(ctx context.Context, tx *sql.Tx) error {
     		source,
     		organization,
     		user,
-    		timestamp,
+        parseDateTimeBestEffort(replaceOne(timestamp, 'Z', '')) AS timestamp,
     		properties,
     		now() as ingested_at
 		from rc_events_queue;

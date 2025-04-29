@@ -68,7 +68,7 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 			event.ID = id.String()
 		}
 		if event.Timestamp == "" {
-			event.Timestamp = time.Now().Format(constants.TimeFormat)
+			event.Timestamp = time.Now().UTC().Format(constants.TimeFormat)
 		} else {
 			_, err := time.Parse(constants.TimeFormat, event.Timestamp)
 			if err != nil {
