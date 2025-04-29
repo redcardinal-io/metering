@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,6 +12,7 @@ import (
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
+	"github.com/redcardinal-io/metering/domain/pkg/timeutil"
 	"go.uber.org/zap"
 )
 
@@ -68,15 +70,19 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 			event.ID = id.String()
 		}
 		if event.Timestamp == "" {
-			event.Timestamp = time.Now().Format(constants.TimeFormat)
+			event.Timestamp = time.Now().UTC().Format(constants.TimeFormat)
 		} else {
-			_, err := time.Parse(constants.TimeFormat, event.Timestamp)
+			timestamp, err := time.Parse(constants.TimeFormat, event.Timestamp)
 			if err != nil {
 				errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid timestamp format")
 				h.logger.Error("invalid timestamp format", zap.Reflect("error", errResp))
 				return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 			}
+
+			event.Timestamp = timeutil.FormatTimeUTC(&timestamp, "")
 		}
+
+		event.Timestamp = strings.Replace(event.Timestamp, "Z", "", -1)
 		properties, err := json.Marshal(event.Properties)
 		if err != nil {
 			h.logger.Error("failed to parse properties", zap.Reflect("error", err))
@@ -94,7 +100,9 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 		})
 	}
 
-	res, err := h.producer.PublishEvents(context.Background(), h.publishTopic, &events, allowPartialSuccess)
+	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, ctx.Get(constants.TenantHeader))
+
+	res, err := h.producer.PublishEvents(c, h.publishTopic, &events, allowPartialSuccess)
 	if err != nil {
 		h.logger.Error("failed to publish events", zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)

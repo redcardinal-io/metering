@@ -1,5 +1,9 @@
 package constants
 
+import (
+	"time"
+)
+
 const TenantHeader = "X-Tenant-Slug"
-const TimeFormat = "2006-01-02 15:04:05"
+const TimeFormat = time.RFC3339 // ISO 8601 standard with UTC timezone
 const TenantSlugKey = "tenant_slug"

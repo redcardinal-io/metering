@@ -129,8 +129,8 @@ func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMe
 	}
 	olap.logger.Debug("Queried meter", zap.String("meter", meters.GetMeterViewName(tenantSlug, input.MeterSlug)))
 
-	// Adjust the window start and end times based on the results
-	windowStart, windowEnd := getQueryWindowFromResults(results, input.From, input.To)
+	// Determine the actual time range of the query results
+	windowStart, windowEnd := determineQueryTimeRange(results, input.From, input.To)
 
 	return &models.QueryMeterOutput{
 		WindowStart: windowStart,
@@ -171,14 +171,26 @@ func (olap *ClickHouseOlap) GetDB() any {
 	return olap.db
 }
 
-func getQueryWindowFromResults(results []models.QueryMeterRow, From *time.Time, To *time.Time) (*time.Time, *time.Time) {
+func determineQueryTimeRange(results []models.QueryMeterRow, From *time.Time, To *time.Time) (*time.Time, *time.Time) {
 	if len(results) == 0 {
 		return From, To
 	}
 
+	// Initialize with the first row values
 	windowStart := results[0].WindowStart
-	windowEnd := results[len(results)-1].WindowEnd
+	windowEnd := results[0].WindowEnd
 
+	// Compare all rows to find earliest start and latest end
+	for _, row := range results {
+		if row.WindowStart.Before(windowStart) {
+			windowStart = row.WindowStart
+		}
+		if row.WindowEnd.After(windowEnd) {
+			windowEnd = row.WindowEnd
+		}
+	}
+
+	// Apply From/To bounds if they exist
 	if From != nil && windowStart.Before(*From) {
 		windowStart = *From
 	}

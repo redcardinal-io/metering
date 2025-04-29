@@ -22,9 +22,8 @@ func upEventsMv(ctx context.Context, tx *sql.Tx) error {
     		source,
     		organization,
     		user,
-    		timestamp,
-    		properties,
-    		now() as ingested_at
+        toDateTime(timestamp) AS timestamp,
+    		properties
 		from rc_events_queue;
 	`)
 	return err

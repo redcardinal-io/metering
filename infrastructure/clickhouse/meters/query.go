@@ -94,8 +94,14 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 		}
 
 		safeCol := sqlbuilder.Escape(column)
-		for _, value := range values {
-			builder.Where(builder.Equal(safeCol, value))
+		if len(values) > 1 {
+			filterArgs := make([]interface{}, len(values))
+			for i, v := range values {
+				filterArgs[i] = v
+			}
+			builder.Where(builder.In(safeCol, filterArgs...))
+		} else {
+			builder.Where(builder.Equal(safeCol, values[0]))
 		}
 	}
 
