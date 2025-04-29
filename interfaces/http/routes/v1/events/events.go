@@ -12,6 +12,7 @@ import (
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
+	"github.com/redcardinal-io/metering/domain/pkg/timeutil"
 	"go.uber.org/zap"
 )
 
@@ -78,7 +79,7 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 				return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 			}
 
-			event.Timestamp = timestamp.UTC().Format(constants.TimeFormat)
+			event.Timestamp = timeutil.FormatTimeUTC(&timestamp, "")
 		}
 
 		event.Timestamp = strings.Replace(event.Timestamp, "Z", "", -1)
