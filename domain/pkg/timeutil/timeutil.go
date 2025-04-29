@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func formatTimeUTC(t *time.Time, defaultValue string) string {
+func FormatTimeUTC(t *time.Time, defaultValue string) string {
 	if t == nil {
 		return defaultValue
 	}
