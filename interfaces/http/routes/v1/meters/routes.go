@@ -13,6 +13,7 @@ type httpHandler struct {
 	validator *validator.Validate
 }
 
+// NewHTTPHandler creates and returns a new httpHandler for meter-related HTTP endpoints.
 func NewHTTPHandler(logger *logger.Logger, meterSvc *services.MeterService) *httpHandler {
 	validator := validator.New()
 	return &httpHandler{
@@ -23,6 +24,16 @@ func NewHTTPHandler(logger *logger.Logger, meterSvc *services.MeterService) *htt
 }
 
 func (h *httpHandler) RegisterRoutes(r fiber.Router) {
-	r.Post("/meters", h.create)
-	r.Post("/meters/query", h.query)
+	// Group all meter routes
+	meters := r.Group("/meters")
+
+	// Meter collection routes
+	meters.Post("/", h.create)
+	meters.Post("/query", h.query)
+	meters.Get("/", h.list)
+
+	// Single meter routes with idOrSlug parameter
+	meters.Get("/:idOrSlug", h.getByIDorSlug)
+	meters.Put("/:idOrSlug", h.updateByIDorSlug)
+	meters.Delete("/:idOrSlug", h.deleteByIDorSlug)
 }

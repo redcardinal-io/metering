@@ -1,6 +1,7 @@
 package meters
 
 import (
+	"context"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -36,7 +37,8 @@ func (h *httpHandler) query(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	result, err := h.meterSvc.QueryMeter(ctx.UserContext(), models.QueryMeterInput{
+	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
+	result, err := h.meterSvc.QueryMeter(c, models.QueryMeterInput{
 		MeterSlug:      req.MeterSlug,
 		FilterGroupBy:  req.FilterGroupBy,
 		From:           req.From,
@@ -44,7 +46,6 @@ func (h *httpHandler) query(ctx *fiber.Ctx) error {
 		GroupBy:        req.GroupBy,
 		WindowSize:     req.WindowSize,
 		WindowTimeZone: req.WindowTimeZone,
-		TenantSlug:     tenantSlug,
 	})
 
 	if err != nil {

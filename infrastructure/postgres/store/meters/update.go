@@ -11,29 +11,31 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
 )
 
-func (p *PgMeterStoreRepository) GetMeterByIDorSlug(ctx context.Context, idOrSlug string) (*models.Meter, error) {
+func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOrSlug string, arg models.UpdateMeterInput) (*models.Meter, error) {
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	// Try to parse as UUID first
 	id, err := uuid.Parse(idOrSlug)
-	var detailsErr error
+	var updateErr error
 	var m gen.Meter
 	if err == nil {
-		// Valid UUID, get details by ID
-		m, detailsErr = p.q.GetMeterByID(ctx, gen.GetMeterByIDParams{
-			ID:         pgtype.UUID{Bytes: id, Valid: true},
-			TenantSlug: tenantSlug,
+		m, updateErr = s.q.UpdateMeterByID(ctx, gen.UpdateMeterByIDParams{
+			Column1:     arg.Name,
+			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
+			TenantSlug:  tenantSlug,
+			ID:          pgtype.UUID{Bytes: id, Valid: true},
 		})
 	} else {
-		// Not a UUID, get details by slug
-		m, detailsErr = p.q.GetMeterBySlug(ctx, gen.GetMeterBySlugParams{
-			Slug:       idOrSlug,
-			TenantSlug: tenantSlug,
+		// Not a UUID, update by slug
+		m, updateErr = s.q.UpdateMeterBySlug(ctx, gen.UpdateMeterBySlugParams{
+			Column1:     arg.Name,
+			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
+			TenantSlug:  tenantSlug,
+			Slug:        idOrSlug,
 		})
 	}
 
-	// Handle errors from either get operation
-	if detailsErr != nil {
-		return nil, postgres.MapError(detailsErr, "Postgres.GetMeterByIDorSlug")
+	if updateErr != nil {
+		return nil, postgres.MapError(updateErr, "Postgres.UpdateMeterByIDorSlug")
 	}
 
 	uuid, err := uuid.FromBytes(m.ID.Bytes[:])
@@ -41,6 +43,7 @@ func (p *PgMeterStoreRepository) GetMeterByIDorSlug(ctx context.Context, idOrSlu
 		return nil, postgres.MapError(err, "Postgres.ParseUUID")
 	}
 
+	// Valid UUID, delete by ID
 	return &models.Meter{
 		ID:            uuid,
 		Name:          m.Name,

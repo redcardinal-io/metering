@@ -5,6 +5,7 @@ import (
 
 	"github.com/redcardinal-io/metering/application/repositories"
 	"github.com/redcardinal-io/metering/domain/models"
+	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 )
 
 type MeterService struct {
@@ -40,7 +41,7 @@ func (s *MeterService) CreateMeter(ctx context.Context, arg models.CreateMeterIn
 	return m, nil
 }
 
-func (s *MeterService) GetMeter(ctx context.Context, IDorSlug string) (*models.Meter, error) {
+func (s *MeterService) GetMeterIDorSlug(ctx context.Context, IDorSlug string) (*models.Meter, error) {
 	// Call the repository to get the meter
 	m, err := s.store.GetMeterByIDorSlug(ctx, IDorSlug)
 	if err != nil {
@@ -56,4 +57,46 @@ func (s *MeterService) QueryMeter(ctx context.Context, arg models.QueryMeterInpu
 	}
 	result, err := s.olap.QueryMeter(ctx, arg, &m.Aggregation)
 	return result, err
+}
+
+// TODO: implement recovery if store deletion fails
+func (s *MeterService) DeleteMeter(ctx context.Context, iDorSlug string) error {
+
+	meter, err := s.store.GetMeterByIDorSlug(ctx, iDorSlug)
+	if err != nil {
+		return err
+	}
+
+	// Call the OLAP repository to delete the meter
+	err = s.olap.DeleteMeter(ctx, meter.Slug)
+	if err != nil {
+		return err
+	}
+
+	err = s.store.DeleteMeterByIDorSlug(ctx, iDorSlug)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *MeterService) UpdateMeter(ctx context.Context, IDorSlug string, arg models.UpdateMeterInput) (*models.Meter, error) {
+	// Call the store repository to update the meter
+	m, err := s.store.UpdateMeterByIDorSlug(ctx, IDorSlug, arg)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+func (s *MeterService) ListMeters(ctx context.Context, pagination pagination.Pagination) (*pagination.PaginationView[models.Meter], error) {
+	// Call the store repository to list the meters
+	m, err := s.store.ListMeters(ctx, pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }
