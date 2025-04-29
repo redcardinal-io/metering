@@ -1,6 +1,8 @@
 package meters
 
 import (
+	"context"
+
 	"github.com/gofiber/fiber/v2"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
@@ -41,7 +43,9 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		valueProperty = ""
 	}
 
-	meter, err := h.meterSvc.CreateMeter(ctx.UserContext(), models.CreateMeterInput{
+	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
+
+	meter, err := h.meterSvc.CreateMeter(c, models.CreateMeterInput{
 		Name:          req.Name,
 		MeterSlug:     req.Slug,
 		EventType:     req.EventType,
@@ -49,9 +53,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		ValueProperty: valueProperty,
 		Properties:    req.Properties,
 		Aggregation:   models.AggregationEnum(req.Aggregation),
-		CreatedBy:     req.CreatedBy,
 		Populate:      req.Populate,
-		TenantSlug:    tenant_slug,
 	})
 	if err != nil {
 		h.logger.Error("failed to create meter", zap.Reflect("error", err))

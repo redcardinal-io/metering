@@ -1,0 +1,22 @@
+meta {
+  name: update
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{base_url}}/v1/meters/a0542df2-2ddd-43c2-8855-4053eef8a1e8
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "name": "updated name",
+    "description":"updated description"
+  }
+}

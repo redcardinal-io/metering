@@ -6,3 +6,4 @@ import (
 
 const TenantHeader = "X-Tenant-Slug"
 const TimeFormat = time.RFC3339 // ISO 8601 standard with UTC timezone
+const TenantSlugKey = "tenant_slug"

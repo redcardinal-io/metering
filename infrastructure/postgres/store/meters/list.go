@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/domain/models"
+	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 	"github.com/redcardinal-io/metering/infrastructure/postgres"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
@@ -12,11 +13,13 @@ import (
 )
 
 func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination.Pagination) (*pagination.PaginationView[models.Meter], error) {
-
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	m, err := p.q.ListMetersPaginated(ctx, gen.ListMetersPaginatedParams{
-		Limit:  int32(page.Limit),
-		Offset: int32(page.GetOffset()),
+		Limit:      int32(page.Limit),
+		Offset:     int32(page.GetOffset()),
+		TenantSlug: ctx.Value(constants.TenantSlugKey).(string),
 	})
+
 	if err != nil {
 		p.logger.Error("Error listing meters: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListMeters")
@@ -35,11 +38,11 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 			Properties:    meter.Properties,
 			Aggregation:   models.AggregationEnum(meter.Aggregation),
 			CreatedAt:     meter.CreatedAt.Time,
-			CreatedBy:     meter.CreatedBy,
+			TenantSlug:    meter.TenantSlug,
 		})
 	}
 
-	count, err := p.q.CountMeters(ctx)
+	count, err := p.q.CountMeters(ctx, tenantSlug)
 	if err != nil {
 		p.logger.Error("Error counting meters: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.CountMeters")
@@ -54,8 +57,12 @@ func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 	ctx context.Context,
 	eventTypes []string,
 ) ([]*models.Meter, error) {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 
-	metesrs, err := p.q.ListMetersByEventTypes(ctx, eventTypes)
+	metesrs, err := p.q.ListMetersByEventTypes(ctx, gen.ListMetersByEventTypesParams{
+		Column1:    eventTypes,
+		TenantSlug: tenantSlug,
+	})
 	if err != nil {
 		p.logger.Error("Error listing meters by event type: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListMetersByEventType")
@@ -74,7 +81,7 @@ func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 			Properties:    meter.Properties,
 			Aggregation:   models.AggregationEnum(meter.Aggregation),
 			CreatedAt:     meter.CreatedAt.Time,
-			CreatedBy:     meter.CreatedBy,
+			TenantSlug:    meter.TenantSlug,
 		})
 	}
 

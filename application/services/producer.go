@@ -56,10 +56,6 @@ func (p *ProducerService) PublishEvents(ctx context.Context, topic string, event
 		eventTypes = append(eventTypes, eventType)
 	}
 
-	if len(eventTypes) == 0 {
-		return &models.PublishEventsResult{SuccessCount: 0}, nil
-	}
-
 	// Fetch meters for each event type
 	meters := make([]*models.Meter, 0)
 	meters, err := p.store.ListMetersByEventTypes(ctx, eventTypes)
@@ -207,16 +203,12 @@ func isEmptyValue(value any) bool {
 	}
 }
 
-// listPropertiesForEventType collects required properties for each event type
+// listPropertiesForEventType returns a map of event types to their unique required property names aggregated from the provided meters.
 func listPropertiesForEventType(meters []*models.Meter) map[string][]string {
 	properties := make(map[string]map[string]struct{})
 
 	// First pass: collect unique properties by event type using maps
 	for _, meter := range meters {
-		if meter == nil || meter.EventType == "" {
-			continue
-		}
-
 		if _, exists := properties[meter.EventType]; !exists {
 			properties[meter.EventType] = make(map[string]struct{})
 		}
