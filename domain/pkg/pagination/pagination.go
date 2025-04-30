@@ -2,7 +2,53 @@ package pagination
 
 import (
 	"encoding/json"
+	"errors"
+	"net/http"
+	"strconv"
 )
+
+// GetPaginationFromReq extracts pagination info from an HTTP request
+func GetPaginationFromReq(r *http.Request) (*Pagination, error) {
+	query := r.URL.Query()
+
+	page := 1
+	if p := query.Get("page"); p != "" {
+		var err error
+		page, err = strconv.Atoi(p)
+		if err != nil || page < 1 {
+			return nil, errors.New("invalid page parameter")
+		}
+	}
+
+	limit := DefaultLimit
+	if l := query.Get("limit"); l != "" {
+		var err error
+		limit, err = strconv.Atoi(l)
+		if err != nil || limit < 1 {
+			return nil, errors.New("invalid limit parameter")
+		}
+	}
+
+	searchQuery := query.Get("search_query")
+	sort := query.Get("sort")
+	if sort == "" {
+		sort = "desc"
+	}
+
+	// Optional strict sort validation
+	if sort != "asc" && sort != "desc" {
+		return nil, errors.New("invalid sort parameter")
+	}
+
+	return &Pagination{
+		Page:        page,
+		Limit:       limit,
+		SearchQuery: searchQuery,
+		Queries: map[string]string{
+			"sort": sort,
+		},
+	}, nil
+}
 
 // Pagination represents pagination parameters and search options
 type Pagination struct {
