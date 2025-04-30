@@ -24,7 +24,7 @@ func GetPaginationFromReq(r *http.Request) (*Pagination, error) {
 	if l := query.Get("limit"); l != "" {
 		var err error
 		limit, err = strconv.Atoi(l)
-		if err != nil || limit < 1 {
+		if err != nil || limit < 1 || limit > 100 {
 			return nil, errors.New("invalid limit parameter")
 		}
 	}
@@ -44,6 +44,7 @@ func GetPaginationFromReq(r *http.Request) (*Pagination, error) {
 		Page:        page,
 		Limit:       limit,
 		SearchQuery: searchQuery,
+		Sort:        sort,
 		Queries: map[string]string{
 			"sort": sort,
 		},
