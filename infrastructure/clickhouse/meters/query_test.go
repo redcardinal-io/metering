@@ -1,7 +1,6 @@
 package meters
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -207,7 +206,6 @@ func TestQueryMeterToSQL(t *testing.T) {
 			wantErr: false,
 			checkResult: func(t *testing.T, sql string, args []any) {
 				sql = normalizeSQL(sql)
-				fmt.Println(sql)
 				// Check for the filter expressions - should contain path and referrer filters
 				assert.True(t, strings.Contains(sql, "path IN (?, ?)") || strings.Contains(sql, "\"path\" IN (?, ?)"),
 					"SQL should contain path filter condition")
