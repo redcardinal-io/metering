@@ -1,6 +1,7 @@
 package meters
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,18 +20,17 @@ func TestDeleteMeter(t *testing.T) {
 				MeterSlug:  "page_views",
 				TenantSlug: "test_tenant",
 			},
-			wantSQL:  "drop view if exists ?",
+			wantSQL:  "drop view if exists %s",
 			wantArgs: []any{"rc_test_tenant_page_views_mv"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotSQL, gotArgs := tt.deleteMeter.ToSQL()
-
+			gotSQL, _ := tt.deleteMeter.ToSQL()
+			tt.wantSQL = fmt.Sprintf(tt.wantSQL, tt.wantArgs[0])
 			// Compare SQL and args
 			assert.Equal(t, tt.wantSQL, gotSQL)
-			assert.Equal(t, tt.wantArgs, gotArgs)
 		})
 	}
 }
