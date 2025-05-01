@@ -2,6 +2,8 @@ package pagination
 
 import (
 	"encoding/json"
+	"github.com/gofiber/fiber/v2"
+	"io"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -290,25 +292,24 @@ func TestNewPaginationView(t *testing.T) {
 	}
 }
 
-func TestGetPaginationFromReq(t *testing.T) {
+func TestExtractPaginationFromContext(t *testing.T) {
+	app := fiber.New()
+
 	tests := []struct {
 		name        string
 		queryParams map[string]string
-		expected    *Pagination
-		expectError bool
+		expected    Pagination
 	}{
 		{
 			name:        "Default Values",
 			queryParams: map[string]string{},
-			expected: &Pagination{
-				Page:        1,
-				Limit:       20,
+			expected: Pagination{
+				Page:        DefaultPage,
+				Limit:       DefaultLimit,
 				SearchQuery: "",
-				Queries: map[string]string{
-					"sort": "desc",
-				},
+				Queries:     make(map[string]string),
+				Sort:        "desc",
 			},
-			expectError: false,
 		},
 		{
 			name: "Valid Parameters",
@@ -317,74 +318,151 @@ func TestGetPaginationFromReq(t *testing.T) {
 				"limit":        "15",
 				"search_query": "test query",
 				"sort":         "asc",
+				"status":       "active", // Custom filter parameter
 			},
-			expected: &Pagination{
+			expected: Pagination{
 				Page:        2,
 				Limit:       15,
 				SearchQuery: "test query",
 				Queries: map[string]string{
-					"sort": "asc",
+					"status": "active",
 				},
+				Sort: "asc",
 			},
-			expectError: false,
 		},
 		{
 			name: "Invalid Page",
 			queryParams: map[string]string{
 				"page": "invalid",
 			},
-			expectError: true,
+			expected: Pagination{
+				Page:        DefaultPage,
+				Limit:       DefaultLimit,
+				SearchQuery: "",
+				Queries:     make(map[string]string),
+				Sort:        "desc",
+			},
 		},
 		{
 			name: "Invalid Limit",
 			queryParams: map[string]string{
 				"limit": "invalid",
 			},
-			expectError: true,
+			expected: Pagination{
+				Page:        DefaultPage,
+				Limit:       DefaultLimit,
+				SearchQuery: "",
+				Queries:     make(map[string]string),
+				Sort:        "desc",
+			},
+		},
+		{
+			name: "Limit Out of Range",
+			queryParams: map[string]string{
+				"limit": "150", // Exceeds maximum of 100
+			},
+			expected: Pagination{
+				Page:        DefaultPage,
+				Limit:       DefaultLimit,
+				SearchQuery: "",
+				Queries:     make(map[string]string),
+				Sort:        "desc",
+			},
 		},
 		{
 			name: "Invalid Sort",
 			queryParams: map[string]string{
 				"sort": "invalid",
 			},
-			expectError: true,
+			expected: Pagination{
+				Page:        DefaultPage,
+				Limit:       DefaultLimit,
+				SearchQuery: "",
+				Queries:     make(map[string]string),
+				Sort:        "desc",
+			},
+		},
+		{
+			name: "Multiple Custom Filters",
+			queryParams: map[string]string{
+				"status":       "active",
+				"category":     "tech",
+				"page":         "3",
+				"limit":        "25",
+				"search_query": "test",
+			},
+			expected: Pagination{
+				Page:        3,
+				Limit:       25,
+				SearchQuery: "test",
+				Queries: map[string]string{
+					"status":   "active",
+					"category": "tech",
+				},
+				Sort: "desc",
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create request with query parameters
-			req := &http.Request{
-				URL: &url.URL{
-					RawQuery: buildQueryString(tt.queryParams),
-				},
-			}
+			// Create a test endpoint to extract pagination
+			app.Get("/test", func(c *fiber.Ctx) error {
+				pagination := ExtractPaginationFromContext(c)
+				return c.JSON(pagination)
+			})
 
-			p, err := GetPaginationFromReq(req)
-
-			if tt.expectError {
-				if err == nil {
-					t.Error("Expected error, but got none")
+			// Build query string
+			query := ""
+			for key, value := range tt.queryParams {
+				if query != "" {
+					query += "&"
 				}
-				return
+				query += key + "=" + url.QueryEscape(value)
 			}
 
+			// Create test request
+			req, _ := http.NewRequest("GET", "/test?"+query, nil)
+			resp, err := app.Test(req)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
+				t.Fatalf("Failed to test request: %v", err)
 			}
 
-			if p.Page != tt.expected.Page {
-				t.Errorf("Expected Page %d, got %d", tt.expected.Page, p.Page)
+			// Read response body
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatalf("Failed to read response body: %v", err)
 			}
-			if p.Limit != tt.expected.Limit {
-				t.Errorf("Expected Limit %d, got %d", tt.expected.Limit, p.Limit)
+
+			// Parse response into pagination
+			var pagination Pagination
+			if err := json.Unmarshal(body, &pagination); err != nil {
+				t.Fatalf("Failed to parse response body: %v", err)
 			}
-			if p.SearchQuery != tt.expected.SearchQuery {
-				t.Errorf("Expected SearchQuery %s, got %s", tt.expected.SearchQuery, p.SearchQuery)
+
+			// Assert pagination values
+			if pagination.Page != tt.expected.Page {
+				t.Errorf("Expected Page %d, got %d", tt.expected.Page, pagination.Page)
 			}
-			if !reflect.DeepEqual(p.Queries, tt.expected.Queries) {
-				t.Errorf("Expected Queries %v, got %v", tt.expected.Queries, p.Queries)
+			if pagination.Limit != tt.expected.Limit {
+				t.Errorf("Expected Limit %d, got %d", tt.expected.Limit, pagination.Limit)
+			}
+			if pagination.SearchQuery != tt.expected.SearchQuery {
+				t.Errorf("Expected SearchQuery %s, got %s", tt.expected.SearchQuery, pagination.SearchQuery)
+			}
+			if pagination.Sort != tt.expected.Sort {
+				t.Errorf("Expected Sort %s, got %s", tt.expected.Sort, pagination.Sort)
+			}
+
+			// Check if filter queries match
+			if len(pagination.Queries) != len(tt.expected.Queries) {
+				t.Errorf("Expected %d filter queries, got %d", len(tt.expected.Queries), len(pagination.Queries))
+			}
+
+			for key, expectedValue := range tt.expected.Queries {
+				if actualValue, exists := pagination.Queries[key]; !exists || actualValue != expectedValue {
+					t.Errorf("Expected filter query %s=%s, got %s", key, expectedValue, actualValue)
+				}
 			}
 		})
 	}
