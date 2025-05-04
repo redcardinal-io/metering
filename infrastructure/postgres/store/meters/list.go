@@ -41,6 +41,8 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 			Base: models.Base{
 				CreatedAt: meter.CreatedAt,
 				CreatedBy: meter.CreatedBy,
+				UpdatedBy: meter.UpdatedBy,
+				UpdatedAt: meter.UpdatedAt,
 			},
 		})
 	}
@@ -87,6 +89,8 @@ func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 			Base: models.Base{
 				CreatedAt: meter.CreatedAt,
 				CreatedBy: meter.CreatedBy,
+				UpdatedBy: meter.UpdatedBy,
+				UpdatedAt: meter.UpdatedAt,
 			},
 		})
 	}

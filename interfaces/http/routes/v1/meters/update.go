@@ -13,6 +13,7 @@ import (
 type updateMeterRequest struct {
 	Name        string `json:"name,omitempty" validate:"omitempty,min=3,max=100"`
 	Description string `json:"description,omitempty" validate:"omitempty,min=3,max=255"`
+	UpdatedBy   string `json:"updated_by,omitempty" validate:"omitempty,min=3,max=255"`
 }
 
 func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
@@ -44,11 +45,18 @@ func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
+	if req.UpdatedBy == "" {
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "updated_by is required")
+		h.logger.Error("updated_by is required", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
 	meter, err := h.meterSvc.UpdateMeter(c, idOrSlug, models.UpdateMeterInput{
 		Name:        req.Name,
 		Description: req.Description,
+		UpdatedBy:   req.UpdatedBy,
 	})
 	if err != nil {
 		h.logger.Error("failed to update meter", zap.String("idOrSlug", idOrSlug), zap.Reflect("error", err))

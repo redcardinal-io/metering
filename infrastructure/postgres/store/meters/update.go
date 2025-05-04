@@ -23,6 +23,7 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
 			TenantSlug:  tenantSlug,
 			ID:          pgtype.UUID{Bytes: id, Valid: true},
+			UpdatedBy:   arg.UpdatedBy,
 		})
 	} else {
 		// Not a UUID, update by slug
@@ -31,6 +32,7 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
 			TenantSlug:  tenantSlug,
 			Slug:        idOrSlug,
+			UpdatedBy:   arg.UpdatedBy,
 		})
 	}
 
@@ -53,7 +55,12 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 		Description:   m.Description.String,
 		Properties:    m.Properties,
 		Aggregation:   models.AggregationEnum(m.Aggregation),
-		CreatedAt:     m.CreatedAt.Time,
 		TenantSlug:    m.TenantSlug,
+		Base: models.Base{
+			CreatedAt: m.CreatedAt,
+			UpdatedBy: m.UpdatedBy,
+			UpdatedAt: m.UpdatedAt,
+			CreatedBy: m.CreatedBy,
+		},
 	}, nil
 }

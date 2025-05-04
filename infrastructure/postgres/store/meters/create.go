@@ -50,6 +50,8 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 		Base: models.Base{
 			CreatedAt: m.CreatedAt,
 			CreatedBy: m.CreatedBy,
+			UpdatedBy: m.UpdatedBy,
+			UpdatedAt: m.UpdatedAt,
 		},
 	}
 

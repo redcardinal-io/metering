@@ -60,6 +60,13 @@ func (p *ProducerService) PublishEvents(ctx context.Context, topic string, event
 	meters := make([]*models.Meter, 0)
 	meters, err := p.store.ListMetersByEventTypes(ctx, eventTypes)
 
+	if len(meters) == 0 {
+		return nil, domainerrors.New(
+			fmt.Errorf("No Meters found for given Event Types"),
+			domainerrors.EINVALID,
+			"No Meters found for given Event Types",
+		)
+	}
 	// Process required properties by event type
 	properties := listPropertiesForEventType(meters)
 

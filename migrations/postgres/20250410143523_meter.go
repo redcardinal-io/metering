@@ -38,10 +38,10 @@ func upMeter(ctx context.Context, tx *sql.Tx) error {
 				value_property varchar,
 				properties text[] not null,
 				aggregation aggregation_enum not null,
-				tenant_slug varchar not null
+				tenant_slug varchar not null,
         created_at timestamp with time zone not null default current_timestamp,
         updated_at timestamp with time zone not null default current_timestamp,
-        deleted_at timestamp,
+        deleted_at timestamp with time zone default null,
         created_by varchar not null,
         updated_by varchar not null
 			);
