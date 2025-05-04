@@ -91,4 +91,5 @@ type QueryMeterRow struct {
 type UpdateMeterInput struct {
 	Name        string
 	Description string
+	UpdatedBy   string
 }
