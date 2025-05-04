@@ -7,7 +7,7 @@ package gen
 import (
 	"database/sql/driver"
 	"fmt"
-
+	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -66,6 +66,6 @@ type Meter struct {
 	ValueProperty pgtype.Text
 	Properties    []string
 	Aggregation   AggregationEnum
-	CreatedAt     pgtype.Timestamptz
 	TenantSlug    string
+  models.Base
 }

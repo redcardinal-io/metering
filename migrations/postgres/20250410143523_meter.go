@@ -38,8 +38,12 @@ func upMeter(ctx context.Context, tx *sql.Tx) error {
 				value_property varchar,
 				properties text[] not null,
 				aggregation aggregation_enum not null,
-				created_at timestamp with time zone not null default current_timestamp,
 				tenant_slug varchar not null
+        created_at timestamp with time zone not null default current_timestamp,
+        updated_at timestamp with time zone not null default current_timestamp,
+        deleted_at timestamp,
+        created_by varchar not null,
+        updated_by varchar not null
 			);
 			
 			create index if not exists idx_meter_slug on meter(slug);

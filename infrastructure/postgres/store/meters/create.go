@@ -23,6 +23,7 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 		Properties:    arg.Properties,
 		Aggregation:   gen.AggregationEnum(arg.Aggregation),
 		TenantSlug:    tenantSlug,
+		CreatedBy:     arg.CreatedBy,
 	})
 
 	if err != nil {
@@ -45,8 +46,11 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 		Description:   m.Description.String,
 		Properties:    m.Properties,
 		Aggregation:   models.AggregationEnum(m.Aggregation),
-		CreatedAt:     m.CreatedAt.Time,
 		TenantSlug:    m.TenantSlug,
+		Base: models.Base{
+			CreatedAt: m.CreatedAt,
+			CreatedBy: m.CreatedBy,
+		},
 	}
 
 	return meter, nil

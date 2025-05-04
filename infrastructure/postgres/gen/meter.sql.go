@@ -50,10 +50,12 @@ INSERT INTO meter (
     value_property,
     properties,
     aggregation,
-    tenant_slug
+    tenant_slug,
+    created_by,
+    updated_by
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+) RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug, created_by
 `
 
 type CreateMeterParams struct {
@@ -65,6 +67,7 @@ type CreateMeterParams struct {
 	Properties    []string
 	Aggregation   AggregationEnum
 	TenantSlug    string
+  CreatedBy     string
 }
 
 func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error) {
@@ -77,6 +80,8 @@ func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter
 		arg.Properties,
 		arg.Aggregation,
 		arg.TenantSlug,
+    arg.CreatedBy,
+    arg.CreatedBy,
 	)
 	var i Meter
 	err := row.Scan(
@@ -90,6 +95,7 @@ func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter
 		&i.Aggregation,
 		&i.CreatedAt,
 		&i.TenantSlug,
+    &i.CreatedBy,
 	)
 	return i, err
 }
@@ -127,9 +133,10 @@ func (q *Queries) DeleteMeterBySlug(ctx context.Context, arg DeleteMeterBySlugPa
 }
 
 const getMeterByID = `-- name: GetMeterByID :one
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug, created_by FROM meter
 WHERE id = $1
 AND tenant_slug = $2
+AND deleted_at IS NULL
 `
 
 type GetMeterByIDParams struct {
@@ -151,14 +158,16 @@ func (q *Queries) GetMeterByID(ctx context.Context, arg GetMeterByIDParams) (Met
 		&i.Aggregation,
 		&i.CreatedAt,
 		&i.TenantSlug,
+    &i.CreatedBy,
 	)
 	return i, err
 }
 
 const getMeterBySlug = `-- name: GetMeterBySlug :one
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug, created_by FROM meter
 WHERE slug = $1
 AND tenant_slug = $2
+AND deleted_at IS NULL
 `
 
 type GetMeterBySlugParams struct {
@@ -180,6 +189,7 @@ func (q *Queries) GetMeterBySlug(ctx context.Context, arg GetMeterBySlugParams) 
 		&i.Aggregation,
 		&i.CreatedAt,
 		&i.TenantSlug,
+    &i.CreatedBy,
 	)
 	return i, err
 }
@@ -250,9 +260,10 @@ func (q *Queries) GetValuePropertiesByEventType(ctx context.Context, arg GetValu
 }
 
 const listMetersByEventTypes = `-- name: ListMetersByEventTypes :many
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug, created_by FROM meter
 WHERE event_type = ANY($1::text[])
 AND tenant_slug = $2
+AND deleted_at IS NULL
 `
 
 type ListMetersByEventTypesParams struct {
@@ -280,6 +291,7 @@ func (q *Queries) ListMetersByEventTypes(ctx context.Context, arg ListMetersByEv
 			&i.Aggregation,
 			&i.CreatedAt,
 			&i.TenantSlug,
+      &i.CreatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -292,8 +304,9 @@ func (q *Queries) ListMetersByEventTypes(ctx context.Context, arg ListMetersByEv
 }
 
 const listMetersPaginated = `-- name: ListMetersPaginated :many
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug, created_by FROM meter
 WHERE tenant_slug = $1
+AND deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3
@@ -325,6 +338,7 @@ func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginat
 			&i.Aggregation,
 			&i.CreatedAt,
 			&i.TenantSlug,
+      &i.CreatedBy,
 		); err != nil {
 			return nil, err
 		}
