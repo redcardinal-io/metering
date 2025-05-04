@@ -54,6 +54,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		Properties:    req.Properties,
 		Aggregation:   models.AggregationEnum(req.Aggregation),
 		Populate:      req.Populate,
+		CreatedBy:     req.CreatedBy,
 	})
 	if err != nil {
 		h.logger.Error("failed to create meter", zap.Reflect("error", err))

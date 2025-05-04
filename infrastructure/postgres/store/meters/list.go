@@ -37,8 +37,11 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 			Description:   meter.Description.String,
 			Properties:    meter.Properties,
 			Aggregation:   models.AggregationEnum(meter.Aggregation),
-			CreatedAt:     meter.CreatedAt.Time,
 			TenantSlug:    meter.TenantSlug,
+			Base: models.Base{
+				CreatedAt: meter.CreatedAt,
+				CreatedBy: meter.CreatedBy,
+			},
 		})
 	}
 
@@ -80,8 +83,11 @@ func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 			Description:   meter.Description.String,
 			Properties:    meter.Properties,
 			Aggregation:   models.AggregationEnum(meter.Aggregation),
-			CreatedAt:     meter.CreatedAt.Time,
 			TenantSlug:    meter.TenantSlug,
+			Base: models.Base{
+				CreatedAt: meter.CreatedAt,
+				CreatedBy: meter.CreatedBy,
+			},
 		})
 	}
 

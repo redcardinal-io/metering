@@ -50,7 +50,10 @@ func (p *PgMeterStoreRepository) GetMeterByIDorSlug(ctx context.Context, idOrSlu
 		Description:   m.Description.String,
 		Properties:    m.Properties,
 		Aggregation:   models.AggregationEnum(m.Aggregation),
-		CreatedAt:     m.CreatedAt.Time,
 		TenantSlug:    m.TenantSlug,
+		Base: models.Base{
+			CreatedAt: m.CreatedAt,
+			CreatedBy: m.CreatedBy,
+		},
 	}, nil
 }

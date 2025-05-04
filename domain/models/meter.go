@@ -28,8 +28,8 @@ type Meter struct {
 	ValueProperty string          `json:"value_property,omitempty"`
 	Properties    []string        `json:"properties"`
 	Aggregation   AggregationEnum `json:"aggregation"`
-	CreatedAt     time.Time       `json:"created_at"`
 	TenantSlug    string          `json:"tenant_slug"`
+	Base
 }
 
 // CreateMeterInput represents the input for creating a new meter
@@ -42,6 +42,7 @@ type CreateMeterInput struct {
 	Properties    []string
 	Aggregation   AggregationEnum
 	Populate      bool
+	CreatedBy     string
 }
 
 type WindowSize string
