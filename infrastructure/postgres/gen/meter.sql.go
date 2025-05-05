@@ -14,7 +14,6 @@ import (
 const countMeters = `-- name: CountMeters :one
 SELECT count(*) FROM meter 
 WHERE tenant_slug = $1
-and deleted_at IS NULL
 `
 
 func (q *Queries) CountMeters(ctx context.Context, tenantSlug string) (int64, error) {
@@ -28,7 +27,6 @@ const countMetersByEventType = `-- name: CountMetersByEventType :one
 SELECT count(*) FROM meter
 WHERE event_type = $1
 AND tenant_slug = $2
-AND deleted_at IS NULL
 `
 
 type CountMetersByEventTypeParams struct {
@@ -106,8 +104,7 @@ func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter
 }
 
 const deleteMeterByID = `-- name: DeleteMeterByID :exec
-UPDATE meter
-SET deleted_at = CURRENT_TIMESTAMP 
+DELETE FROM meter
 WHERE id = $1 
 AND tenant_slug = $2
 `
@@ -123,8 +120,7 @@ func (q *Queries) DeleteMeterByID(ctx context.Context, arg DeleteMeterByIDParams
 }
 
 const deleteMeterBySlug = `-- name: DeleteMeterBySlug :exec
-UPDATE meter
-SET deleted_at = CURRENT_TIMESTAMP
+DELETE FROM meter
 WHERE slug = $1
 AND tenant_slug = $2
 `
@@ -143,7 +139,6 @@ const getMeterByID = `-- name: GetMeterByID :one
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by FROM meter
 WHERE id = $1
 AND tenant_slug = $2
-AND deleted_at IS NULL
 `
 
 type GetMeterByIDParams struct {
@@ -176,7 +171,6 @@ const getMeterBySlug = `-- name: GetMeterBySlug :one
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by FROM meter
 WHERE slug = $1
 AND tenant_slug = $2
-AND deleted_at IS NULL
 `
 
 type GetMeterBySlugParams struct {
@@ -274,7 +268,6 @@ const listMetersByEventTypes = `-- name: ListMetersByEventTypes :many
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by FROM meter
 WHERE event_type = ANY($1::text[])
 AND tenant_slug = $2
-AND deleted_at IS NULL
 `
 
 type ListMetersByEventTypesParams struct {
@@ -319,7 +312,6 @@ func (q *Queries) ListMetersByEventTypes(ctx context.Context, arg ListMetersByEv
 const listMetersPaginated = `-- name: ListMetersPaginated :many
 SELECT id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by FROM meter
 WHERE tenant_slug = $1
-AND deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3
