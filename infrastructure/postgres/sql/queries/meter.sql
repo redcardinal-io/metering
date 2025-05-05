@@ -71,20 +71,18 @@ ORDER BY property;
 
 -- name: UpdateMeterByID :one
 UPDATE meter
-SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
-    description = coalesce($2, description),
-    updated_by = $5,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $3
-AND tenant_slug = $4
+SET name = coalesce(sqlc.narg('name'), name),
+    description = coalesce($1, description),
+    updated_by = $4
+WHERE id = $2
+AND tenant_slug = $3
 RETURNING *;
 
 -- name: UpdateMeterBySlug :one
 UPDATE meter
-SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
-    description = coalesce($2, description),
-    updated_by = $5,
-    updated_at = CURRENT_TIMESTAMP
-WHERE slug = $3
+SET name = coalesce(sqlc.narg('name'), name),
+    description = coalesce($1, description),
+    updated_by = $3
+WHERE slug = $2
 AND tenant_slug = $4
 RETURNING *;

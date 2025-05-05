@@ -359,30 +359,29 @@ func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginat
 
 const updateMeterByID = `-- name: UpdateMeterByID :one
 UPDATE meter
-SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
-    description = coalesce($2, description),
-    updated_by = $5,
-    updated_at = CURRENT_TIMESTAMP
-WHERE id = $3
-AND tenant_slug = $4
+SET name = coalesce($5, name),
+    description = coalesce($1, description),
+    updated_by = $4
+WHERE id = $2
+AND tenant_slug = $3
 RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateMeterByIDParams struct {
-	Column1     string
 	Description pgtype.Text
 	ID          pgtype.UUID
 	TenantSlug  string
 	UpdatedBy   string
+	Name        pgtype.Text
 }
 
 func (q *Queries) UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error) {
 	row := q.db.QueryRow(ctx, updateMeterByID,
-		arg.Column1,
 		arg.Description,
 		arg.ID,
 		arg.TenantSlug,
 		arg.UpdatedBy,
+		arg.Name,
 	)
 	var i Meter
 	err := row.Scan(
@@ -405,30 +404,29 @@ func (q *Queries) UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams
 
 const updateMeterBySlug = `-- name: UpdateMeterBySlug :one
 UPDATE meter
-SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
-    description = coalesce($2, description),
-    updated_by = $5,
-    updated_at = CURRENT_TIMESTAMP
-WHERE slug = $3
+SET name = coalesce($5, name),
+    description = coalesce($1, description),
+    updated_by = $3
+WHERE slug = $2
 AND tenant_slug = $4
 RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateMeterBySlugParams struct {
-	Column1     string
 	Description pgtype.Text
 	Slug        string
-	TenantSlug  string
 	UpdatedBy   string
+	TenantSlug  string
+	Name        pgtype.Text
 }
 
 func (q *Queries) UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error) {
 	row := q.db.QueryRow(ctx, updateMeterBySlug,
-		arg.Column1,
 		arg.Description,
 		arg.Slug,
-		arg.TenantSlug,
 		arg.UpdatedBy,
+		arg.TenantSlug,
+		arg.Name,
 	)
 	var i Meter
 	err := row.Scan(
