@@ -30,7 +30,7 @@ AND tenant_slug = $2
 `
 
 type CountMetersByEventTypeParams struct {
-	EventType  pgtype.Text
+	EventType  string
 	TenantSlug string
 }
 
@@ -50,21 +50,25 @@ INSERT INTO meter (
     value_property,
     properties,
     aggregation,
-    tenant_slug
+    tenant_slug,
+    created_by,
+    updated_by
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
-) RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
+) RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by
 `
 
 type CreateMeterParams struct {
 	Name          string
 	Slug          string
-	EventType     pgtype.Text
+	EventType     string
 	Description   pgtype.Text
 	ValueProperty pgtype.Text
 	Properties    []string
 	Aggregation   AggregationEnum
 	TenantSlug    string
+	CreatedBy     string
+	UpdatedBy     string
 }
 
 func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error) {
@@ -77,6 +81,8 @@ func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter
 		arg.Properties,
 		arg.Aggregation,
 		arg.TenantSlug,
+		arg.CreatedBy,
+		arg.UpdatedBy,
 	)
 	var i Meter
 	err := row.Scan(
@@ -88,8 +94,11 @@ func (q *Queries) CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter
 		&i.ValueProperty,
 		&i.Properties,
 		&i.Aggregation,
-		&i.CreatedAt,
 		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -127,7 +136,7 @@ func (q *Queries) DeleteMeterBySlug(ctx context.Context, arg DeleteMeterBySlugPa
 }
 
 const getMeterByID = `-- name: GetMeterByID :one
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by FROM meter
 WHERE id = $1
 AND tenant_slug = $2
 `
@@ -149,14 +158,17 @@ func (q *Queries) GetMeterByID(ctx context.Context, arg GetMeterByIDParams) (Met
 		&i.ValueProperty,
 		&i.Properties,
 		&i.Aggregation,
-		&i.CreatedAt,
 		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
 
 const getMeterBySlug = `-- name: GetMeterBySlug :one
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by FROM meter
 WHERE slug = $1
 AND tenant_slug = $2
 `
@@ -178,8 +190,11 @@ func (q *Queries) GetMeterBySlug(ctx context.Context, arg GetMeterBySlugParams) 
 		&i.ValueProperty,
 		&i.Properties,
 		&i.Aggregation,
-		&i.CreatedAt,
 		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
@@ -193,7 +208,7 @@ ORDER BY property
 `
 
 type GetPropertiesByEventTypeParams struct {
-	EventType  pgtype.Text
+	EventType  string
 	TenantSlug string
 }
 
@@ -225,7 +240,7 @@ ORDER BY value_property
 `
 
 type GetValuePropertiesByEventTypeParams struct {
-	EventType  pgtype.Text
+	EventType  string
 	TenantSlug string
 }
 
@@ -250,7 +265,7 @@ func (q *Queries) GetValuePropertiesByEventType(ctx context.Context, arg GetValu
 }
 
 const listMetersByEventTypes = `-- name: ListMetersByEventTypes :many
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by FROM meter
 WHERE event_type = ANY($1::text[])
 AND tenant_slug = $2
 `
@@ -278,8 +293,11 @@ func (q *Queries) ListMetersByEventTypes(ctx context.Context, arg ListMetersByEv
 			&i.ValueProperty,
 			&i.Properties,
 			&i.Aggregation,
-			&i.CreatedAt,
 			&i.TenantSlug,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -292,7 +310,7 @@ func (q *Queries) ListMetersByEventTypes(ctx context.Context, arg ListMetersByEv
 }
 
 const listMetersPaginated = `-- name: ListMetersPaginated :many
-SELECT id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug FROM meter
+SELECT id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by FROM meter
 WHERE tenant_slug = $1
 ORDER BY created_at DESC
 LIMIT $2
@@ -323,8 +341,11 @@ func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginat
 			&i.ValueProperty,
 			&i.Properties,
 			&i.Aggregation,
-			&i.CreatedAt,
 			&i.TenantSlug,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -338,26 +359,29 @@ func (q *Queries) ListMetersPaginated(ctx context.Context, arg ListMetersPaginat
 
 const updateMeterByID = `-- name: UpdateMeterByID :one
 UPDATE meter
-SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
-    description = coalesce($2, description)
-WHERE id = $3
-AND tenant_slug = $4
-RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug
+SET name = coalesce($5, name),
+    description = coalesce($1, description),
+    updated_by = $4
+WHERE id = $2
+AND tenant_slug = $3
+RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateMeterByIDParams struct {
-	Column1     string
 	Description pgtype.Text
 	ID          pgtype.UUID
 	TenantSlug  string
+	UpdatedBy   string
+	Name        pgtype.Text
 }
 
 func (q *Queries) UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error) {
 	row := q.db.QueryRow(ctx, updateMeterByID,
-		arg.Column1,
 		arg.Description,
 		arg.ID,
 		arg.TenantSlug,
+		arg.UpdatedBy,
+		arg.Name,
 	)
 	var i Meter
 	err := row.Scan(
@@ -369,34 +393,40 @@ func (q *Queries) UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams
 		&i.ValueProperty,
 		&i.Properties,
 		&i.Aggregation,
-		&i.CreatedAt,
 		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }
 
 const updateMeterBySlug = `-- name: UpdateMeterBySlug :one
 UPDATE meter
-SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
-    description = coalesce($2, description)
-WHERE slug = $3
+SET name = coalesce($5, name),
+    description = coalesce($1, description),
+    updated_by = $3
+WHERE slug = $2
 AND tenant_slug = $4
-RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, created_at, tenant_slug
+RETURNING id, name, slug, event_type, description, value_property, properties, aggregation, tenant_slug, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateMeterBySlugParams struct {
-	Column1     string
 	Description pgtype.Text
 	Slug        string
+	UpdatedBy   string
 	TenantSlug  string
+	Name        pgtype.Text
 }
 
 func (q *Queries) UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error) {
 	row := q.db.QueryRow(ctx, updateMeterBySlug,
-		arg.Column1,
 		arg.Description,
 		arg.Slug,
+		arg.UpdatedBy,
 		arg.TenantSlug,
+		arg.Name,
 	)
 	var i Meter
 	err := row.Scan(
@@ -408,8 +438,11 @@ func (q *Queries) UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugPa
 		&i.ValueProperty,
 		&i.Properties,
 		&i.Aggregation,
-		&i.CreatedAt,
 		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
 	)
 	return i, err
 }

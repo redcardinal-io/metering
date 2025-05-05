@@ -42,15 +42,20 @@ func (p *PgMeterStoreRepository) GetMeterByIDorSlug(ctx context.Context, idOrSlu
 	}
 
 	return &models.Meter{
-		ID:            uuid,
 		Name:          m.Name,
 		Slug:          m.Slug,
 		ValueProperty: m.ValueProperty.String,
-		EventType:     m.EventType.String,
+		EventType:     m.EventType,
 		Description:   m.Description.String,
 		Properties:    m.Properties,
 		Aggregation:   models.AggregationEnum(m.Aggregation),
-		CreatedAt:     m.CreatedAt.Time,
 		TenantSlug:    m.TenantSlug,
+		Base: models.Base{
+			ID:        uuid,
+			CreatedAt: m.CreatedAt,
+			CreatedBy: m.CreatedBy,
+			UpdatedBy: m.UpdatedBy,
+			UpdatedAt: m.UpdatedAt,
+		},
 	}, nil
 }

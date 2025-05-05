@@ -60,6 +60,21 @@ func (p *ProducerService) PublishEvents(ctx context.Context, topic string, event
 	meters := make([]*models.Meter, 0)
 	meters, err := p.store.ListMetersByEventTypes(ctx, eventTypes)
 
+	if err != nil {
+		return nil, domainerrors.New(
+			fmt.Errorf("failed to fetch meters: %w", err),
+			domainerrors.EINTERNAL,
+			"meter fetching error",
+		)
+	}
+
+	if len(meters) == 0 {
+		return nil, domainerrors.New(
+			fmt.Errorf("No Meters found for given Event Types"),
+			domainerrors.EINVALID,
+			"No Meters found for given Event Types",
+		)
+	}
 	// Process required properties by event type
 	properties := listPropertiesForEventType(meters)
 
@@ -218,6 +233,9 @@ func listPropertiesForEventType(meters []*models.Meter) map[string][]string {
 			for _, prop := range meter.Properties {
 				properties[meter.EventType][prop] = struct{}{}
 			}
+		}
+		if meter.ValueProperty != "" {
+			properties[meter.EventType][meter.ValueProperty] = struct{}{}
 		}
 	}
 

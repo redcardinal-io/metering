@@ -2,6 +2,7 @@ package meters
 
 import (
 	"context"
+	"errors"
 
 	"github.com/gofiber/fiber/v2"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
@@ -41,6 +42,10 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	valueProperty := req.ValueProperty
 	if req.Aggregation == string(models.AggregationCount) {
 		valueProperty = ""
+	} else if valueProperty == "" {
+		errResp := domainerrors.NewErrorResponseWithOpts(errors.New("value_property is required"), domainerrors.EINVALID, "value_property is required")
+		h.logger.Error("value_property is required", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
@@ -54,6 +59,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		Properties:    req.Properties,
 		Aggregation:   models.AggregationEnum(req.Aggregation),
 		Populate:      req.Populate,
+		CreatedBy:     req.CreatedBy,
 	})
 	if err != nil {
 		h.logger.Error("failed to create meter", zap.Reflect("error", err))
