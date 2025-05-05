@@ -61,7 +61,7 @@ type Meter struct {
 	ID            pgtype.UUID
 	Name          string
 	Slug          string
-	EventType     pgtype.Text
+	EventType     string
 	Description   pgtype.Text
 	ValueProperty pgtype.Text
 	Properties    []string

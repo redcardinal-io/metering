@@ -45,7 +45,7 @@ func (p *PgMeterStoreRepository) GetMeterByIDorSlug(ctx context.Context, idOrSlu
 		Name:          m.Name,
 		Slug:          m.Slug,
 		ValueProperty: m.ValueProperty.String,
-		EventType:     m.EventType.String,
+		EventType:     m.EventType,
 		Description:   m.Description.String,
 		Properties:    m.Properties,
 		Aggregation:   models.AggregationEnum(m.Aggregation),
