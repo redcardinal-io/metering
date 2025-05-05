@@ -17,12 +17,14 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 	m, err := p.q.CreateMeter(ctx, gen.CreateMeterParams{
 		Slug:          arg.MeterSlug,
 		Name:          arg.Name,
-		EventType:     pgtype.Text{String: arg.EventType, Valid: true},
+		EventType:     arg.EventType,
 		Description:   pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
 		ValueProperty: pgtype.Text{String: arg.ValueProperty, Valid: arg.ValueProperty != ""},
 		Properties:    arg.Properties,
 		Aggregation:   gen.AggregationEnum(arg.Aggregation),
 		TenantSlug:    tenantSlug,
+		CreatedBy:     arg.CreatedBy,
+		UpdatedBy:     arg.CreatedBy,
 	})
 
 	if err != nil {
@@ -37,16 +39,21 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 	}
 
 	meter := &models.Meter{
-		ID:            id,
 		Name:          m.Name,
 		Slug:          m.Slug,
 		ValueProperty: m.ValueProperty.String,
-		EventType:     m.EventType.String,
+		EventType:     m.EventType,
 		Description:   m.Description.String,
 		Properties:    m.Properties,
 		Aggregation:   models.AggregationEnum(m.Aggregation),
-		CreatedAt:     m.CreatedAt.Time,
 		TenantSlug:    m.TenantSlug,
+		Base: models.Base{
+			ID:        id,
+			CreatedAt: m.CreatedAt,
+			CreatedBy: m.CreatedBy,
+			UpdatedBy: m.UpdatedBy,
+			UpdatedAt: m.UpdatedAt,
+		},
 	}
 
 	return meter, nil
