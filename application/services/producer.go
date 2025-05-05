@@ -234,6 +234,9 @@ func listPropertiesForEventType(meters []*models.Meter) map[string][]string {
 				properties[meter.EventType][prop] = struct{}{}
 			}
 		}
+		if meter.ValueProperty != "" {
+			properties[meter.EventType][meter.ValueProperty] = struct{}{}
+		}
 	}
 
 	// Second pass: convert maps to slices
