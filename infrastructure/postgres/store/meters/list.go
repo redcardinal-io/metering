@@ -29,7 +29,6 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 	for _, meter := range m {
 		id, _ := uuid.FromBytes(meter.ID.Bytes[:])
 		meters = append(meters, models.Meter{
-			ID:            id,
 			Name:          meter.Name,
 			Slug:          meter.Slug,
 			ValueProperty: meter.ValueProperty.String,
@@ -39,6 +38,7 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 			Aggregation:   models.AggregationEnum(meter.Aggregation),
 			TenantSlug:    meter.TenantSlug,
 			Base: models.Base{
+				ID:        id,
 				CreatedAt: meter.CreatedAt,
 				CreatedBy: meter.CreatedBy,
 				UpdatedBy: meter.UpdatedBy,
@@ -77,7 +77,6 @@ func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 	for _, meter := range metesrs {
 		id, _ := uuid.FromBytes(meter.ID.Bytes[:])
 		meters = append(meters, &models.Meter{
-			ID:            id,
 			Name:          meter.Name,
 			Slug:          meter.Slug,
 			ValueProperty: meter.ValueProperty.String,
@@ -87,6 +86,7 @@ func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 			Aggregation:   models.AggregationEnum(meter.Aggregation),
 			TenantSlug:    meter.TenantSlug,
 			Base: models.Base{
+				ID:        id,
 				CreatedAt: meter.CreatedAt,
 				CreatedBy: meter.CreatedBy,
 				UpdatedBy: meter.UpdatedBy,

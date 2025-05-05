@@ -47,7 +47,6 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 
 	// Valid UUID, delete by ID
 	return &models.Meter{
-		ID:            uuid,
 		Name:          m.Name,
 		Slug:          m.Slug,
 		ValueProperty: m.ValueProperty.String,
@@ -57,6 +56,7 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 		Aggregation:   models.AggregationEnum(m.Aggregation),
 		TenantSlug:    m.TenantSlug,
 		Base: models.Base{
+			ID:        uuid,
 			CreatedAt: m.CreatedAt,
 			UpdatedBy: m.UpdatedBy,
 			UpdatedAt: m.UpdatedAt,

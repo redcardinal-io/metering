@@ -38,7 +38,6 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 	}
 
 	meter := &models.Meter{
-		ID:            id,
 		Name:          m.Name,
 		Slug:          m.Slug,
 		ValueProperty: m.ValueProperty.String,
@@ -48,6 +47,7 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 		Aggregation:   models.AggregationEnum(m.Aggregation),
 		TenantSlug:    m.TenantSlug,
 		Base: models.Base{
+			ID:        id,
 			CreatedAt: m.CreatedAt,
 			CreatedBy: m.CreatedBy,
 			UpdatedBy: m.UpdatedBy,

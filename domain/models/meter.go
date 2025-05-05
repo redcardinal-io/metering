@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // AggregationEnum represents the possible aggregation types for a meter
@@ -20,7 +18,6 @@ const (
 
 // Meter represents a meter entity from the database
 type Meter struct {
-	ID            uuid.UUID       `json:"id"`
 	Name          string          `json:"name"`
 	Slug          string          `json:"slug"`
 	EventType     string          `json:"event_type"`
