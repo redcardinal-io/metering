@@ -11,7 +11,7 @@ create table "meter" (
     id uuid primary key default uuid_generate_v4 () ,
     name varchar not null,
     slug varchar unique not null,
-    event_type varchar,
+    event_type varchar not null,
     description text,
     value_property varchar,
     properties text[] not null,
