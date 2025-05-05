@@ -18,6 +18,7 @@ const (
 
 // Meter represents a meter entity from the database
 type Meter struct {
+	Base
 	Name          string          `json:"name"`
 	Slug          string          `json:"slug"`
 	EventType     string          `json:"event_type"`
@@ -26,7 +27,6 @@ type Meter struct {
 	Properties    []string        `json:"properties"`
 	Aggregation   AggregationEnum `json:"aggregation"`
 	TenantSlug    string          `json:"tenant_slug"`
-	Base
 }
 
 // CreateMeterInput represents the input for creating a new meter

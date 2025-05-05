@@ -50,7 +50,7 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 		Name:          m.Name,
 		Slug:          m.Slug,
 		ValueProperty: m.ValueProperty.String,
-		EventType:     m.EventType.String,
+		EventType:     m.EventType,
 		Description:   m.Description.String,
 		Properties:    m.Properties,
 		Aggregation:   models.AggregationEnum(m.Aggregation),

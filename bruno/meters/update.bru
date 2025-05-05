@@ -5,7 +5,7 @@ meta {
 }
 
 put {
-  url: {{base_url}}/v1/meters/a0542df2-2ddd-43c2-8855-4053eef8a1e8
+  url: {{base_url}}/v1/meters/fc6211ae-dcf8-4d69-bf40-e574758dd958
   body: json
   auth: inherit
 }
@@ -17,6 +17,7 @@ headers {
 body:json {
   {
     "name": "updated name",
-    "description":"updated description"
+    "description":"updated description",
+    "updated_by":"test user"
   }
 }
