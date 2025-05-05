@@ -17,19 +17,16 @@ INSERT INTO meter (
 -- name: GetMeterByID :one
 SELECT * FROM meter
 WHERE id = $1
-AND tenant_slug = $2
-AND deleted_at IS NULL;
+AND tenant_slug = $2;
 
 -- name: GetMeterBySlug :one
 SELECT * FROM meter
 WHERE slug = $1
-AND tenant_slug = $2
-AND deleted_at IS NULL;
+AND tenant_slug = $2;
 
 -- name: ListMetersPaginated :many
 SELECT * FROM meter
 WHERE tenant_slug = $1
-AND deleted_at IS NULL
 ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3;
@@ -37,32 +34,27 @@ OFFSET $3;
 -- name: ListMetersByEventTypes :many
 SELECT * FROM meter
 WHERE event_type = ANY($1::text[])
-AND tenant_slug = $2
-AND deleted_at IS NULL;
+AND tenant_slug = $2;
 
 
 -- name: DeleteMeterByID :exec
-UPDATE meter
-SET deleted_at = CURRENT_TIMESTAMP 
+DELETE FROM meter
 WHERE id = $1 
 AND tenant_slug = $2;
 
 -- name: DeleteMeterBySlug :exec
-UPDATE meter
-SET deleted_at = CURRENT_TIMESTAMP
+DELETE FROM meter
 WHERE slug = $1
 AND tenant_slug = $2;
 
 -- name: CountMeters :one
 SELECT count(*) FROM meter 
-WHERE tenant_slug = $1
-and deleted_at IS NULL;
+WHERE tenant_slug = $1;
 
 -- name: CountMetersByEventType :one
 SELECT count(*) FROM meter
 WHERE event_type = $1
-AND tenant_slug = $2
-AND deleted_at IS NULL;
+AND tenant_slug = $2;
 
 -- name: GetValuePropertiesByEventType :many
 SELECT DISTINCT value_property FROM meter
