@@ -2,8 +2,6 @@ package models
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // AggregationEnum represents the possible aggregation types for a meter
@@ -20,7 +18,7 @@ const (
 
 // Meter represents a meter entity from the database
 type Meter struct {
-	ID            uuid.UUID       `json:"id"`
+	Base
 	Name          string          `json:"name"`
 	Slug          string          `json:"slug"`
 	EventType     string          `json:"event_type"`
@@ -28,7 +26,6 @@ type Meter struct {
 	ValueProperty string          `json:"value_property,omitempty"`
 	Properties    []string        `json:"properties"`
 	Aggregation   AggregationEnum `json:"aggregation"`
-	CreatedAt     time.Time       `json:"created_at"`
 	TenantSlug    string          `json:"tenant_slug"`
 }
 
@@ -42,6 +39,7 @@ type CreateMeterInput struct {
 	Properties    []string
 	Aggregation   AggregationEnum
 	Populate      bool
+	CreatedBy     string
 }
 
 type WindowSize string
@@ -90,4 +88,5 @@ type QueryMeterRow struct {
 type UpdateMeterInput struct {
 	Name        string
 	Description string
+	UpdatedBy   string
 }

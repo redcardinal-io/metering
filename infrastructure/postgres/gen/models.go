@@ -61,11 +61,14 @@ type Meter struct {
 	ID            pgtype.UUID
 	Name          string
 	Slug          string
-	EventType     pgtype.Text
+	EventType     string
 	Description   pgtype.Text
 	ValueProperty pgtype.Text
 	Properties    []string
 	Aggregation   AggregationEnum
-	CreatedAt     pgtype.Timestamptz
 	TenantSlug    string
+	CreatedAt     pgtype.Timestamptz
+	UpdatedAt     pgtype.Timestamptz
+	CreatedBy     string
+	UpdatedBy     string
 }
