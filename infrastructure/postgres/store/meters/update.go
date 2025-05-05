@@ -19,18 +19,20 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 	var m gen.Meter
 	if err == nil {
 		m, updateErr = s.q.UpdateMeterByID(ctx, gen.UpdateMeterByIDParams{
-			Column1:     arg.Name,
+			Name:        pgtype.Text{String: arg.Name, Valid: arg.Name != ""},
 			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
 			TenantSlug:  tenantSlug,
 			ID:          pgtype.UUID{Bytes: id, Valid: true},
+			UpdatedBy:   arg.UpdatedBy,
 		})
 	} else {
 		// Not a UUID, update by slug
 		m, updateErr = s.q.UpdateMeterBySlug(ctx, gen.UpdateMeterBySlugParams{
-			Column1:     arg.Name,
+			Name:        pgtype.Text{String: arg.Name, Valid: arg.Name != ""},
 			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
 			TenantSlug:  tenantSlug,
 			Slug:        idOrSlug,
+			UpdatedBy:   arg.UpdatedBy,
 		})
 	}
 
@@ -45,15 +47,20 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 
 	// Valid UUID, delete by ID
 	return &models.Meter{
-		ID:            uuid,
 		Name:          m.Name,
 		Slug:          m.Slug,
 		ValueProperty: m.ValueProperty.String,
-		EventType:     m.EventType.String,
+		EventType:     m.EventType,
 		Description:   m.Description.String,
 		Properties:    m.Properties,
 		Aggregation:   models.AggregationEnum(m.Aggregation),
-		CreatedAt:     m.CreatedAt.Time,
 		TenantSlug:    m.TenantSlug,
+		Base: models.Base{
+			ID:        uuid,
+			CreatedAt: m.CreatedAt,
+			UpdatedBy: m.UpdatedBy,
+			UpdatedAt: m.UpdatedAt,
+			CreatedBy: m.CreatedBy,
+		},
 	}, nil
 }

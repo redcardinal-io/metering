@@ -7,9 +7,11 @@ INSERT INTO meter (
     value_property,
     properties,
     aggregation,
-    tenant_slug
+    tenant_slug,
+    created_by,
+    updated_by
 ) VALUES (
-    $1, $2, $3, $4, $5, $6, $7, $8
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
 ) RETURNING *;
 
 -- name: GetMeterByID :one
@@ -22,7 +24,6 @@ SELECT * FROM meter
 WHERE slug = $1
 AND tenant_slug = $2;
 
-
 -- name: ListMetersPaginated :many
 SELECT * FROM meter
 WHERE tenant_slug = $1
@@ -34,6 +35,7 @@ OFFSET $3;
 SELECT * FROM meter
 WHERE event_type = ANY($1::text[])
 AND tenant_slug = $2;
+
 
 -- name: DeleteMeterByID :exec
 DELETE FROM meter
@@ -69,16 +71,18 @@ ORDER BY property;
 
 -- name: UpdateMeterByID :one
 UPDATE meter
-SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
-    description = coalesce($2, description)
-WHERE id = $3
-AND tenant_slug = $4
+SET name = coalesce(sqlc.narg('name'), name),
+    description = coalesce($1, description),
+    updated_by = $4
+WHERE id = $2
+AND tenant_slug = $3
 RETURNING *;
 
 -- name: UpdateMeterBySlug :one
 UPDATE meter
-SET name = CASE WHEN $1::text = '' THEN name ELSE $1::text END,
-    description = coalesce($2, description)
-WHERE slug = $3
+SET name = coalesce(sqlc.narg('name'), name),
+    description = coalesce($1, description),
+    updated_by = $3
+WHERE slug = $2
 AND tenant_slug = $4
 RETURNING *;
