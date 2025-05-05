@@ -75,6 +75,14 @@ func (p *ProducerService) PublishEvents(ctx context.Context, topic string, event
 			"No Meters found for given Event Types",
 		)
 	}
+
+	// Filter events without meter
+
+	meterForEventTypeExists := make(map[string]bool)
+	for _, meter := range meters {
+		meterForEventTypeExists[meter.EventType] = true
+	}
+
 	// Process required properties by event type
 	properties := listPropertiesForEventType(meters)
 
@@ -103,7 +111,16 @@ func (p *ProducerService) PublishEvents(ctx context.Context, topic string, event
 			})
 			continue
 		}
-
+		if !meterForEventTypeExists[event.Type] {
+			result.FailedEvents = append(result.FailedEvents, &models.FailedEvent{
+				Event: nil,
+				Error: domainerrors.New(
+					fmt.Errorf("event cannot be nil"),
+					domainerrors.EINVALID,
+					"invalid event",
+				),
+			})
+		}
 		// Validate the event
 		err := p.ValidateEvent(event, properties[event.Type])
 		if err != nil {
