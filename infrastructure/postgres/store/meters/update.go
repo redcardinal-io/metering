@@ -19,7 +19,7 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 	var m gen.Meter
 	if err == nil {
 		m, updateErr = s.q.UpdateMeterByID(ctx, gen.UpdateMeterByIDParams{
-			Column1:     arg.Name,
+			Name:        pgtype.Text{String: arg.Name, Valid: arg.Name != ""},
 			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
 			TenantSlug:  tenantSlug,
 			ID:          pgtype.UUID{Bytes: id, Valid: true},
@@ -28,7 +28,7 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 	} else {
 		// Not a UUID, update by slug
 		m, updateErr = s.q.UpdateMeterBySlug(ctx, gen.UpdateMeterBySlugParams{
-			Column1:     arg.Name,
+			Name:        pgtype.Text{String: arg.Name, Valid: arg.Name != ""},
 			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
 			TenantSlug:  tenantSlug,
 			Slug:        idOrSlug,
