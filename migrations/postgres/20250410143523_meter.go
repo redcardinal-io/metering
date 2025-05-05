@@ -41,7 +41,8 @@ func upMeter(ctx context.Context, tx *sql.Tx) error {
 				created_at timestamp with time zone not null default current_timestamp,
 				tenant_slug varchar not null
 			);
-			
+		  
+      perform goose_manage_updated_at('meter');
 			create index if not exists idx_meter_slug on meter(slug);
 			create index if not exists idx_meter_event_type on meter(event_type);
 			create index if not exists idx_meter_tenant_slug on meter(tenant_slug);
