@@ -58,22 +58,29 @@ func (p *ProducerService) PublishEvents(ctx context.Context, topic string, event
 
 	if len(valResult.validEvents) == 0 {
 		if len(result.FailedEvents) > 0 && allowPartialSuccess {
-			return result, domainerrors.New(
+			return nil, domainerrors.New(
 				fmt.Errorf("all %d events failed validation", len(events.Events)),
 				domainerrors.EINVALID,
 				"all events failed validation",
+				domainerrors.WithOperation("PublishEvents"),
 			)
 		}
-		return result, nil
+		return nil, domainerrors.New(
+			fmt.Errorf("no valid events found in the batch"),
+			domainerrors.EINVALID,
+			"no valid events",
+			domainerrors.WithOperation("Producer.PublishEvents"),
+		)
 	}
 
 	validBatch := &models.EventBatch{Events: valResult.validEvents}
 	err = p.producer.PublishEvents(topic, validBatch)
 	if err != nil {
-		return result, domainerrors.New(
+		return nil, domainerrors.New(
 			fmt.Errorf("failed to publish valid events: %w", err),
 			domainerrors.EINTERNAL,
 			"event publishing failed",
+			domainerrors.WithOperation("Producer.PublishEvents"),
 		)
 	}
 
@@ -87,6 +94,7 @@ func validateBatchSize(events *models.EventBatch) error {
 			fmt.Errorf("batch size (%d) exceeds maximum limit of %d events", len(events.Events), MaxBatchSize),
 			domainerrors.EINVALID,
 			"batch size too large",
+			domainerrors.WithOperation("Producer.validateBatchSize"),
 		)
 	}
 	return nil
@@ -105,6 +113,7 @@ func (p *ProducerService) fetchAndPrepareMeterConfig(ctx context.Context, events
 			fmt.Errorf("no valid event types found in the batch"),
 			domainerrors.EINVALID,
 			"no valid event types",
+			domainerrors.WithOperation("Producer.fetchAndPrepareMeterConfig"),
 		)
 	}
 
@@ -119,6 +128,7 @@ func (p *ProducerService) fetchAndPrepareMeterConfig(ctx context.Context, events
 			fmt.Errorf("failed to fetch meters for event types %v: %w", eventTypes, err),
 			domainerrors.EINTERNAL,
 			"meter fetching error",
+			domainerrors.WithOperation("Producer.fetchAndPrepareMeterConfig"),
 		)
 	}
 
@@ -172,14 +182,19 @@ func (p *ProducerService) validateEventsAgainstConfig(events *models.EventBatch,
 		var validationErr error
 
 		if event == nil {
-			validationErr = domainerrors.New(fmt.Errorf("event is nil"), domainerrors.EINVALID, "nil event in batch")
+			validationErr = domainerrors.New(fmt.Errorf("event is nil"), domainerrors.EINVALID, "nil event in batch",
+				domainerrors.WithOperation("Producer.validateEventsAgainstConfig"),
+			)
 		} else if event.Type == "" {
-			validationErr = domainerrors.New(fmt.Errorf("event type is empty"), domainerrors.EINVALID, "missing event type")
+			validationErr = domainerrors.New(fmt.Errorf("event type is empty"), domainerrors.EINVALID, "missing event type",
+				domainerrors.WithOperation("Producer.validateEventsAgainstConfig"),
+			)
 		} else if !config.exists[event.Type] {
 			validationErr = domainerrors.New(
 				fmt.Errorf("no meter configured for event type: %s", event.Type),
 				domainerrors.EINVALID,
 				"missing meter configuration",
+				domainerrors.WithOperation("Producer.validateEventsAgainstConfig"),
 			)
 		} else {
 			requiredProps := config.requiredProperties[event.Type]
@@ -216,6 +231,7 @@ func (p *ProducerService) validateEventProperties(event *models.Event, requiredP
 				fmt.Errorf("failed to unmarshal event properties for event ID %s (type %s): %w", event.ID, event.Type, err),
 				domainerrors.EINVALID,
 				"invalid event properties format",
+				domainerrors.WithOperation("Producer.validateEventProperties"),
 			)
 		}
 	}
@@ -233,6 +249,7 @@ func (p *ProducerService) validateEventProperties(event *models.Event, requiredP
 			fmt.Errorf("event ID %s (type %s) missing or empty required properties: %v", event.ID, event.Type, missingProps),
 			domainerrors.EINVALID,
 			"missing required event properties",
+			domainerrors.WithOperation("Producer.validateEventProperties"),
 		)
 	}
 
