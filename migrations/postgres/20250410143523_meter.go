@@ -46,7 +46,8 @@ func upMeter(ctx context.Context, tx *sql.Tx) error {
 
         unique (tenant_slug, slug)
 			);
-			
+		  
+      perform goose_manage_updated_at('meter');
 			create index if not exists idx_meter_slug on meter(slug);
 			create index if not exists idx_meter_event_type on meter(event_type);
 			create index if not exists idx_meter_tenant_slug on meter(tenant_slug);

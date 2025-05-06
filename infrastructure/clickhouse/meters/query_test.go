@@ -66,8 +66,8 @@ func TestQueryMeterToSQL(t *testing.T) {
 			wantErr: false,
 			checkResult: func(t *testing.T, sql string, args []any) {
 				sql = normalizeSQL(sql)
-				assert.Contains(t, sql, "tumbleStart(windowstart, toIntervalMinute(1), UTC) AS windowstart")
-				assert.Contains(t, sql, "tumbleEnd(windowend, toIntervalMinute(1), UTC) AS windowend")
+				assert.Contains(t, sql, "tumbleStart(windowstart, toIntervalMinute(1), 'UTC') AS windowstart")
+				assert.Contains(t, sql, "tumbleEnd(windowend, toIntervalMinute(1), 'UTC') AS windowend")
 				assert.Contains(t, sql, "GROUP BY windowstart, windowend")
 			},
 		},
@@ -85,8 +85,8 @@ func TestQueryMeterToSQL(t *testing.T) {
 			wantErr: false,
 			checkResult: func(t *testing.T, sql string, args []any) {
 				sql = normalizeSQL(sql)
-				assert.Contains(t, sql, "tumbleStart(windowstart, toIntervalHour(1), UTC) AS windowstart")
-				assert.Contains(t, sql, "tumbleEnd(windowend, toIntervalHour(1), UTC) AS windowend")
+				assert.Contains(t, sql, "tumbleStart(windowstart, toIntervalHour(1), 'UTC') AS windowstart")
+				assert.Contains(t, sql, "tumbleEnd(windowend, toIntervalHour(1), 'UTC') AS windowend")
 				assert.Contains(t, sql, "GROUP BY windowstart, windowend")
 			},
 		},
@@ -104,8 +104,8 @@ func TestQueryMeterToSQL(t *testing.T) {
 			wantErr: false,
 			checkResult: func(t *testing.T, sql string, args []any) {
 				sql = normalizeSQL(sql)
-				assert.Contains(t, sql, "tumbleStart(windowstart, toIntervalDay(1), UTC) AS windowstart")
-				assert.Contains(t, sql, "tumbleEnd(windowend, toIntervalDay(1), UTC) AS windowend")
+				assert.Contains(t, sql, "tumbleStart(windowstart, toIntervalDay(1), 'UTC') AS windowstart")
+				assert.Contains(t, sql, "tumbleEnd(windowend, toIntervalDay(1), 'UTC') AS windowend")
 				assert.Contains(t, sql, "GROUP BY windowstart, windowend")
 			},
 		},
@@ -190,80 +190,6 @@ func TestQueryMeterToSQL(t *testing.T) {
 			},
 		},
 		{
-			name: "Query with organization filter",
-			query: QueryMeter{
-				TenantSlug:     "test_tenant",
-				MeterSlug:      "page_views",
-				Aggregation:    models.AggregationSum,
-				Organizations:  []string{"org1", "org2"},
-				From:           fromTime,
-				To:             toTime,
-				WindowTimeZone: &utc,
-			},
-			wantErr: false,
-			checkResult: func(t *testing.T, sql string, args []any) {
-				sql = normalizeSQL(sql)
-				assert.Contains(t, sql, "organization = ?")
-
-				// Create a copy of args to work with
-				argsCopy := make([]any, len(args))
-				copy(argsCopy, args)
-
-				// Check for timestamps and organization IDs
-				foundOrg1 := false
-				foundOrg2 := false
-
-				for _, arg := range argsCopy {
-					switch arg {
-					case "org1":
-						foundOrg1 = true
-					case "org2":
-						foundOrg2 = true
-					}
-				}
-
-				assert.True(t, foundOrg1, "Args should contain org1")
-				assert.True(t, foundOrg2, "Args should contain org2")
-			},
-		},
-		{
-			name: "Query with user filter",
-			query: QueryMeter{
-				TenantSlug:     "test_tenant",
-				MeterSlug:      "page_views",
-				Aggregation:    models.AggregationSum,
-				Users:          []string{"user1", "user2"},
-				From:           fromTime,
-				To:             toTime,
-				WindowTimeZone: &utc,
-			},
-			wantErr: false,
-			checkResult: func(t *testing.T, sql string, args []any) {
-				sql = normalizeSQL(sql)
-				assert.Contains(t, sql, "user = ?")
-
-				// Create a copy of args to work with
-				argsCopy := make([]any, len(args))
-				copy(argsCopy, args)
-
-				// Check for timestamps and user IDs
-				foundUser1 := false
-				foundUser2 := false
-
-				for _, arg := range argsCopy {
-					switch arg {
-					case "user1":
-						foundUser1 = true
-					case "user2":
-						foundUser2 = true
-					}
-				}
-
-				assert.True(t, foundUser1, "Args should contain user1")
-				assert.True(t, foundUser2, "Args should contain user2")
-			},
-		},
-		{
 			name: "Query with custom dimension filter",
 			query: QueryMeter{
 				TenantSlug:  "test_tenant",
@@ -281,9 +207,9 @@ func TestQueryMeterToSQL(t *testing.T) {
 			checkResult: func(t *testing.T, sql string, args []any) {
 				sql = normalizeSQL(sql)
 				// Check for the filter expressions - should contain path and referrer filters
-				assert.True(t, strings.Contains(sql, "path = ?") || strings.Contains(sql, "\"path\" = ?"),
+				assert.True(t, strings.Contains(sql, "path IN (?, ?)") || strings.Contains(sql, "\"path\" IN (?, ?)"),
 					"SQL should contain path filter condition")
-				assert.True(t, strings.Contains(sql, "referrer = ?") || strings.Contains(sql, "\"referrer\" = ?"),
+				assert.True(t, strings.Contains(sql, "referrer IN (?, ?)") || strings.Contains(sql, "\"referrer\" IN (?, ?)"),
 					"SQL should contain referrer filter condition")
 
 				// Create a copy of args to work with
@@ -369,8 +295,6 @@ func TestQueryMeterToSQL(t *testing.T) {
 				TenantSlug:     "test_tenant",
 				MeterSlug:      "page_views",
 				Aggregation:    models.AggregationSum,
-				Organizations:  []string{"org1"},
-				Users:          []string{"user1"},
 				FilterGroupBy:  map[string][]string{"path": {"home"}},
 				GroupBy:        []string{"referrer"},
 				From:           fromTime,
@@ -408,8 +332,6 @@ func TestQueryMeterToSQL(t *testing.T) {
 					}
 				}
 
-				assert.True(t, foundValues["org1"], "Args should contain 'org1'")
-				assert.True(t, foundValues["user1"], "Args should contain 'user1'")
 				assert.True(t, foundValues["home"], "Args should contain 'home'")
 
 				// Check for group by with window
