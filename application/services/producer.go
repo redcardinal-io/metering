@@ -6,13 +6,12 @@ import (
 	"fmt"
 
 	"github.com/redcardinal-io/metering/application/repositories"
-	domainerrors "github.com/redcardinal-io/metering/domain/errors"
+	domainerrors "github.com/redcardinal-io/metering/domain/errors" // Assuming AppError is defined here or accessible
 	"github.com/redcardinal-io/metering/domain/models"
 )
 
 const (
-	// Maximum number of events allowed in a single batch
-	MaxBatchSize = 1000
+	MaxBatchSize = 100
 )
 
 type ProducerService struct {
@@ -27,157 +26,218 @@ func NewProducerService(producer repositories.ProducerRepository, store reposito
 	}
 }
 
-// PublishEvents publishes a batch of events to the specified topic, with options for validation
+type meterConfig struct {
+	exists             map[string]bool
+	requiredProperties map[string][]string
+}
+
+type validationResult struct {
+	validEvents  []*models.Event
+	failedEvents []*models.FailedEvent
+}
+
 func (p *ProducerService) PublishEvents(ctx context.Context, topic string, events *models.EventBatch, allowPartialSuccess bool) (*models.PublishEventsResult, error) {
-	if events == nil || len(events.Events) == 0 {
-		return &models.PublishEventsResult{SuccessCount: 0}, nil
+	if err := validateBatchSize(events); err != nil {
+		return nil, err
 	}
 
-	// Check batch size limit
-	if len(events.Events) > MaxBatchSize {
-		return nil, domainerrors.New(
-			fmt.Errorf("batch size exceeds maximum limit of %d events", MaxBatchSize),
-			domainerrors.EINVALID,
-			"batch size too large",
-		)
-	}
-
-	// Extract unique event types
-	eventTypeMap := make(map[string]bool)
-	for _, event := range events.Events {
-		if event != nil {
-			eventTypeMap[event.Type] = true
-		}
-	}
-
-	// Convert to slice
-	eventTypes := make([]string, 0, len(eventTypeMap))
-	for eventType := range eventTypeMap {
-		eventTypes = append(eventTypes, eventType)
-	}
-
-	// Fetch meters for each event type
-	meters := make([]*models.Meter, 0)
-	meters, err := p.store.ListMetersByEventTypes(ctx, eventTypes)
-
+	config, err := p.fetchAndPrepareMeterConfig(ctx, events)
 	if err != nil {
-		return nil, domainerrors.New(
-			fmt.Errorf("failed to fetch meters: %w", err),
-			domainerrors.EINTERNAL,
-			"meter fetching error",
-		)
+		return nil, err
 	}
 
-	if len(meters) == 0 {
-		return nil, domainerrors.New(
-			fmt.Errorf("No Meters found for given Event Types"),
-			domainerrors.EINVALID,
-			"No Meters found for given Event Types",
-		)
+	valResult, err := p.validateEventsAgainstConfig(events, config, allowPartialSuccess)
+	if err != nil {
+		return nil, err
 	}
-	// Process required properties by event type
-	properties := listPropertiesForEventType(meters)
 
-	// Validate and prepare events
-	validEvents := make([]*models.Event, 0, len(events.Events))
 	result := &models.PublishEventsResult{
-		FailedEvents: make([]*models.FailedEvent, 0),
+		SuccessCount: 0,
+		FailedEvents: valResult.failedEvents,
 	}
 
-	for _, event := range events.Events {
-		if event == nil {
-			if !allowPartialSuccess {
-				return nil, domainerrors.New(
-					fmt.Errorf("event cannot be nil"),
-					domainerrors.EINVALID,
-					"invalid event",
-				)
-			}
-			result.FailedEvents = append(result.FailedEvents, &models.FailedEvent{
-				Event: nil,
-				Error: domainerrors.New(
-					fmt.Errorf("event cannot be nil"),
-					domainerrors.EINVALID,
-					"invalid event",
-				),
-			})
-			continue
-		}
-
-		// Validate the event
-		err := p.ValidateEvent(event, properties[event.Type])
-		if err != nil {
-			if !allowPartialSuccess {
-				return nil, err
-			}
-			result.FailedEvents = append(result.FailedEvents, &models.FailedEvent{
-				Event: event,
-				Error: err,
-			})
-			continue
-		}
-
-		validEvents = append(validEvents, event)
-	}
-
-	if len(validEvents) == 0 {
-		if len(result.FailedEvents) > 0 {
-			return result, domainerrors.New(
-				fmt.Errorf("all events failed validation"),
+	if len(valResult.validEvents) == 0 {
+		if len(result.FailedEvents) > 0 && allowPartialSuccess {
+			return nil, domainerrors.New(
+				fmt.Errorf("all %d events failed validation", len(events.Events)),
 				domainerrors.EINVALID,
-				"validation errors",
+				"all events failed validation",
+				domainerrors.WithOperation("PublishEvents"),
 			)
 		}
-		return result, nil
-	}
-
-	// Create a new batch with only valid events
-	validBatch := &models.EventBatch{
-		Events: validEvents,
-	}
-
-	// Publish the valid events
-	err = p.producer.PublishEvents(topic, validBatch)
-	if err != nil {
-		return result, domainerrors.New(
-			fmt.Errorf("failed to publish events: %w", err),
-			domainerrors.EINTERNAL,
-			"publishing error",
+		return nil, domainerrors.New(
+			fmt.Errorf("no valid events found in the batch"),
+			domainerrors.EINVALID,
+			"no valid events",
+			domainerrors.WithOperation("Producer.PublishEvents"),
 		)
 	}
 
-	result.SuccessCount = len(validEvents)
+	validBatch := &models.EventBatch{Events: valResult.validEvents}
+	err = p.producer.PublishEvents(topic, validBatch)
+	if err != nil {
+		return nil, domainerrors.New(
+			fmt.Errorf("failed to publish valid events: %w", err),
+			domainerrors.EINTERNAL,
+			"event publishing failed",
+			domainerrors.WithOperation("Producer.PublishEvents"),
+		)
+	}
+
+	result.SuccessCount = len(valResult.validEvents)
 	return result, nil
 }
 
-// ValidateEvent validates a single event against required properties
-func (p *ProducerService) ValidateEvent(event *models.Event, properties []string) error {
-	if event == nil {
-		return domainerrors.New(fmt.Errorf("event cannot be nil"), domainerrors.EINVALID, "invalid event")
+func validateBatchSize(events *models.EventBatch) error {
+	if len(events.Events) > MaxBatchSize {
+		return domainerrors.New(
+			fmt.Errorf("batch size (%d) exceeds maximum limit of %d events", len(events.Events), MaxBatchSize),
+			domainerrors.EINVALID,
+			"batch size too large",
+			domainerrors.WithOperation("Producer.validateBatchSize"),
+		)
 	}
+	return nil
+}
 
-	if event.Type == "" {
-		return domainerrors.New(fmt.Errorf("event type cannot be empty"), domainerrors.EINVALID, "invalid event type")
-	}
-
-	// Skip property validation if no properties are required
-	if len(properties) == 0 {
-		return nil
-	}
-
-	// Parse event properties once
-	var eventProperties map[string]any
-	if event.Properties == "" {
-		eventProperties = make(map[string]any)
-	} else {
-		if err := json.Unmarshal([]byte(event.Properties), &eventProperties); err != nil {
-			return domainerrors.New(err, domainerrors.EINVALID, "invalid event properties format")
+func (p *ProducerService) fetchAndPrepareMeterConfig(ctx context.Context, events *models.EventBatch) (*meterConfig, error) {
+	eventTypeSet := make(map[string]struct{})
+	for _, event := range events.Events {
+		if event != nil && event.Type != "" {
+			eventTypeSet[event.Type] = struct{}{}
 		}
 	}
 
-	// Validate event properties against required properties
+	if len(eventTypeSet) == 0 {
+		return nil, domainerrors.New(
+			fmt.Errorf("no valid event types found in the batch"),
+			domainerrors.EINVALID,
+			"no valid event types",
+			domainerrors.WithOperation("Producer.fetchAndPrepareMeterConfig"),
+		)
+	}
+
+	eventTypes := make([]string, 0, len(eventTypeSet))
+	for eventType := range eventTypeSet {
+		eventTypes = append(eventTypes, eventType)
+	}
+
+	meters, err := p.store.ListMetersByEventTypes(ctx, eventTypes)
+	if err != nil {
+		return nil, domainerrors.New(
+			fmt.Errorf("failed to fetch meters for event types %v: %w", eventTypes, err),
+			domainerrors.EINTERNAL,
+			"meter fetching error",
+			domainerrors.WithOperation("Producer.fetchAndPrepareMeterConfig"),
+		)
+	}
+
+	config := &meterConfig{
+		exists:             make(map[string]bool),
+		requiredProperties: make(map[string][]string),
+	}
+	tempProperties := make(map[string]map[string]struct{})
+
+	for _, meter := range meters {
+		if meter == nil {
+			continue
+		}
+		eventType := meter.EventType
+		config.exists[eventType] = true
+
+		if _, ok := tempProperties[eventType]; !ok {
+			tempProperties[eventType] = make(map[string]struct{})
+		}
+
+		if meter.Properties != nil {
+			for _, prop := range meter.Properties {
+				if prop != "" {
+					tempProperties[eventType][prop] = struct{}{}
+				}
+			}
+		}
+		if meter.ValueProperty != "" {
+			tempProperties[eventType][meter.ValueProperty] = struct{}{}
+		}
+	}
+
+	for eventType, propsSet := range tempProperties {
+		propsList := make([]string, 0, len(propsSet))
+		for prop := range propsSet {
+			propsList = append(propsList, prop)
+		}
+		config.requiredProperties[eventType] = propsList
+	}
+
+	return config, nil
+}
+
+func (p *ProducerService) validateEventsAgainstConfig(events *models.EventBatch, config *meterConfig, allowPartialSuccess bool) (*validationResult, error) {
+	result := &validationResult{
+		validEvents:  make([]*models.Event, 0, len(events.Events)),
+		failedEvents: make([]*models.FailedEvent, 0),
+	}
+
+	for _, event := range events.Events {
+		var validationErr error
+
+		if event == nil {
+			validationErr = domainerrors.New(fmt.Errorf("event is nil"), domainerrors.EINVALID, "nil event in batch",
+				domainerrors.WithOperation("Producer.validateEventsAgainstConfig"),
+			)
+		} else if event.Type == "" {
+			validationErr = domainerrors.New(fmt.Errorf("event type is empty"), domainerrors.EINVALID, "missing event type",
+				domainerrors.WithOperation("Producer.validateEventsAgainstConfig"),
+			)
+		} else if !config.exists[event.Type] {
+			validationErr = domainerrors.New(
+				fmt.Errorf("no meter configured for event type: %s", event.Type),
+				domainerrors.EINVALID,
+				"missing meter configuration",
+				domainerrors.WithOperation("Producer.validateEventsAgainstConfig"),
+			)
+		} else {
+			requiredProps := config.requiredProperties[event.Type]
+			validationErr = p.validateEventProperties(event, requiredProps)
+		}
+
+		if validationErr != nil {
+			if !allowPartialSuccess {
+				return nil, validationErr
+			}
+			result.failedEvents = append(result.failedEvents, &models.FailedEvent{
+				Event: event,
+				Error: validationErr,
+			})
+		} else {
+			result.validEvents = append(result.validEvents, event)
+		}
+	}
+
+	return result, nil
+}
+
+func (p *ProducerService) validateEventProperties(event *models.Event, requiredProps []string) error {
+	if len(requiredProps) == 0 {
+		return nil
+	}
+
+	var eventProperties map[string]any
+	if event.Properties == "" || event.Properties == "{}" {
+		eventProperties = make(map[string]any)
+	} else {
+		if err := json.Unmarshal([]byte(event.Properties), &eventProperties); err != nil {
+			return domainerrors.New(
+				fmt.Errorf("failed to unmarshal event properties for event ID %s (type %s): %w", event.ID, event.Type, err),
+				domainerrors.EINVALID,
+				"invalid event properties format",
+				domainerrors.WithOperation("Producer.validateEventProperties"),
+			)
+		}
+	}
+
 	missingProps := make([]string, 0)
-	for _, reqProp := range properties {
+	for _, reqProp := range requiredProps {
 		value, exists := eventProperties[reqProp]
 		if !exists || isEmptyValue(value) {
 			missingProps = append(missingProps, reqProp)
@@ -186,16 +246,16 @@ func (p *ProducerService) ValidateEvent(event *models.Event, properties []string
 
 	if len(missingProps) > 0 {
 		return domainerrors.New(
-			fmt.Errorf("missing or empty required properties: %v", missingProps),
+			fmt.Errorf("event ID %s (type %s) missing or empty required properties: %v", event.ID, event.Type, missingProps),
 			domainerrors.EINVALID,
-			"invalid event properties",
+			"missing required event properties",
+			domainerrors.WithOperation("Producer.validateEventProperties"),
 		)
 	}
 
 	return nil
 }
 
-// isEmptyValue checks if a value should be considered empty
 func isEmptyValue(value any) bool {
 	if value == nil {
 		return true
@@ -205,49 +265,14 @@ func isEmptyValue(value any) bool {
 	case string:
 		return v == ""
 	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
-		return false // Numbers are considered non-empty regardless of value
+		return false
 	case bool:
-		return false // Boolean values are considered non-empty
+		return false
 	case []any:
 		return len(v) == 0
 	case map[string]any:
 		return len(v) == 0
 	default:
-		// For complex types, consider them non-empty
 		return false
 	}
-}
-
-// listPropertiesForEventType returns a map of event types to their unique required property names aggregated from the provided meters.
-func listPropertiesForEventType(meters []*models.Meter) map[string][]string {
-	properties := make(map[string]map[string]struct{})
-
-	// First pass: collect unique properties by event type using maps
-	for _, meter := range meters {
-		if _, exists := properties[meter.EventType]; !exists {
-			properties[meter.EventType] = make(map[string]struct{})
-		}
-
-		// Check if Properties is nil before iterating
-		if meter.Properties != nil {
-			for _, prop := range meter.Properties {
-				properties[meter.EventType][prop] = struct{}{}
-			}
-		}
-		if meter.ValueProperty != "" {
-			properties[meter.EventType][meter.ValueProperty] = struct{}{}
-		}
-	}
-
-	// Second pass: convert maps to slices
-	result := make(map[string][]string)
-	for eventType, uniqueProps := range properties {
-		propsList := make([]string, 0, len(uniqueProps))
-		for prop := range uniqueProps {
-			propsList = append(propsList, prop)
-		}
-		result[eventType] = propsList
-	}
-
-	return result
 }
