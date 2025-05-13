@@ -72,3 +72,14 @@ type Meter struct {
 	CreatedBy     string
 	UpdatedBy     string
 }
+
+type Plan struct {
+	ID          pgtype.UUID
+	Name        string
+	Description pgtype.Text
+	TenantSlug  string
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	CreatedBy   string
+	UpdatedBy   string
+}
