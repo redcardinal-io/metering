@@ -24,3 +24,14 @@ create table "meter" (
 
   unique (tenant_slug, slug)
 );
+
+create table if not exists plan (
+	id uuid primary key default uuid_generate_v4(),
+	name varchar not null,
+	description text,
+	tenant_slug varchar not null,
+	created_at timestamp with time zone not null default current_timestamp,
+	updated_at timestamp with time zone not null default current_timestamp,
+	created_by varchar not null,
+	updated_by varchar not null
+);
