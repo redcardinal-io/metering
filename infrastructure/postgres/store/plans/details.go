@@ -27,7 +27,7 @@ func (p *PgPlanStoreRepository) GetPlanByID(ctx context.Context, id string) (*mo
 
 	// Handle errors from either get operation
 	if detailsErr != nil {
-		return nil, postgres.MapError(detailsErr, "Postgres.GetMeterByIDorSlug")
+		return nil, postgres.MapError(detailsErr, "Postgres.GetPlanByID")
 	}
 
 	uuid, err := uuid.FromBytes(m.ID.Bytes[:])

@@ -22,12 +22,16 @@ func (p *PgPlanStoreRepository) ListPlans(ctx context.Context, page pagination.P
 
 	if err != nil {
 		p.logger.Error("Error listing plans: ", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.ListMeters")
+		return nil, postgres.MapError(err, "Postgres.ListPlans")
 	}
 
 	plans := make([]models.Plan, 0, len(m))
 	for _, plan := range m {
-		id, _ := uuid.FromBytes(plan.ID.Bytes[:])
+		id, err := uuid.FromBytes(plan.ID.Bytes[:])
+		if err != nil {
+			p.logger.Error("failed to parse UUID from bytes", zap.Error(err))
+			return nil, postgres.MapError(err, "Postgres.ParseUUID")
+		}
 		plans = append(plans, models.Plan{
 			Name:        plan.Name,
 			Description: plan.Description.String,

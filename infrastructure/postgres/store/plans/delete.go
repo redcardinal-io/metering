@@ -26,7 +26,7 @@ func (p *PgPlanStoreRepository) DeletePlanByID(ctx context.Context, id string) e
 	// Handle errors from either delete operation
 	if deleteErr != nil {
 		p.logger.Error("failed to delete plan", zap.Error(deleteErr))
-		return postgres.MapError(deleteErr, "Postgres.DeleteMeter")
+		return postgres.MapError(deleteErr, "Postgres.DeletePlan")
 	}
 
 	return nil
