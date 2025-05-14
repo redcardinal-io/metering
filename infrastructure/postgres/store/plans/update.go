@@ -28,7 +28,7 @@ func (s *PgPlanStoreRepository) UpdatePlanByID(ctx context.Context, id string, a
 	}
 
 	if updateErr != nil {
-		return nil, postgres.MapError(updateErr, "Postgres.UpdateMeterByIDorSlug")
+		return nil, postgres.MapError(updateErr, "Postgres.UpdatePlanByID")
 	}
 
 	uuid, err := uuid.FromBytes(m.ID.Bytes[:])

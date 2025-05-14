@@ -24,7 +24,7 @@ func (p *PgPlanStoreRepository) CreatePlan(ctx context.Context, arg models.Creat
 
 	if err != nil {
 		p.logger.Error("failed to create plan", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.CreateMeter")
+		return nil, postgres.MapError(err, "Postgres.CreatePlan")
 	}
 
 	id, err := uuid.FromBytes(m.ID.Bytes[:])
