@@ -13,10 +13,12 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/kafka"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/meters"
+	"github.com/redcardinal-io/metering/infrastructure/postgres/store/plans"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/events"
 	meterRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/meters"
+	planRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans"
 	"go.uber.org/zap"
 )
 
@@ -72,10 +74,12 @@ func ServeHttp() error {
 	}
 	defer store.Close()
 	meterStore := meters.NewPostgresMeterStoreRepository(store.GetDB(), logger)
+	planStore := plans.NewPostgresPlanStoreRepository(store.GetDB(), logger)
 
 	// intialize services
 	producerService := services.NewProducerService(producer, meterStore)
 	meterService := services.NewMeterService(olap, meterStore)
+	planService := services.NewPlanService(planStore)
 
 	// Register routes
 	routes := routes.NewHTTPHandler(logger)
@@ -94,6 +98,10 @@ func ServeHttp() error {
 	// meter routes
 	meterRoutes := meterRoutes.NewHTTPHandler(logger, meterService)
 	meterRoutes.RegisterRoutes(v1)
+
+	//plan routes
+	planRoutes := planRoutes.NewHTTPHandler(logger, planService)
+	planRoutes.RegisterRoutes(v1)
 
 	// Start server
 	return app.Listen(":" + config.Server.Port)
