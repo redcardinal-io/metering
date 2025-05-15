@@ -12,7 +12,7 @@ type PlanService struct {
 	store repositories.PlanStoreRepository
 }
 
-// NewPlanService creates a new PlanService with the provided plan store repositories.
+// NewPlanService returns a new PlanService that uses the given PlanStoreRepository for plan operations.
 func NewPlanService(store repositories.PlanStoreRepository) *PlanService {
 	return &PlanService{
 		store: store,

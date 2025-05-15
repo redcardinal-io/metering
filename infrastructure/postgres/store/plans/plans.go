@@ -12,6 +12,7 @@ type PgPlanStoreRepository struct {
 	logger *logger.Logger
 }
 
+// NewPostgresPlanStoreRepository creates a new PostgreSQL-backed plan store repository using the provided database connection and logger.
 func NewPostgresPlanStoreRepository(db any, logger *logger.Logger) repositories.PlanStoreRepository {
 	return &PgPlanStoreRepository{
 		q:      gen.New(db.(*pgxpool.Pool)),
