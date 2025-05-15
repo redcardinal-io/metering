@@ -1,0 +1,44 @@
+package postgres
+
+import (
+	"context"
+	"database/sql"
+
+	"github.com/pressly/goose/v3"
+)
+
+func init() {
+	goose.AddMigrationContext(upPlan, downPlan)
+}
+
+func upPlan(ctx context.Context, tx *sql.Tx) error {
+	_, err := tx.ExecContext(ctx, `
+		do $$
+		begin
+			-- create table and indexes
+			create table if not exists plan (
+				id uuid primary key default uuid_generate_v4(),
+				name varchar not null,
+				description text,
+				tenant_slug varchar not null,
+        created_at timestamp with time zone not null default current_timestamp,
+        updated_at timestamp with time zone not null default current_timestamp,
+        created_by varchar not null,
+        updated_by varchar not null
+			);
+		  
+      perform goose_manage_updated_at('plan');
+			create index if not exists idx_plan_tenant_slug on plan(tenant_slug);
+		end;
+		$$;
+	`)
+	return err
+}
+
+func downPlan(ctx context.Context, tx *sql.Tx) error {
+	// This code is executed when the migration is rolled back.
+	_, err := tx.ExecContext(ctx, `
+		drop table if exists plan;
+	`)
+	return err
+}

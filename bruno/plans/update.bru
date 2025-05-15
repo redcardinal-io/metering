@@ -1,0 +1,23 @@
+meta {
+  name: update
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/v1/plans/027fd502-f98b-48ca-a6d5-2c6a133954c2
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "name": "updated name",
+    "description":"updated description",
+    "updated_by":"test user"
+  }
+}
