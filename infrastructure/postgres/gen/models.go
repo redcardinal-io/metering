@@ -57,6 +57,48 @@ func (ns NullAggregationEnum) Value() (driver.Value, error) {
 	return string(ns.AggregationEnum), nil
 }
 
+type PlanTypeEnum string
+
+const (
+	PlanTypeEnumStandard PlanTypeEnum = "standard"
+	PlanTypeEnumCustom   PlanTypeEnum = "custom"
+)
+
+func (e *PlanTypeEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PlanTypeEnum(s)
+	case string:
+		*e = PlanTypeEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PlanTypeEnum: %T", src)
+	}
+	return nil
+}
+
+type NullPlanTypeEnum struct {
+	PlanTypeEnum PlanTypeEnum
+	Valid        bool // Valid is true if PlanTypeEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPlanTypeEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.PlanTypeEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PlanTypeEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPlanTypeEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PlanTypeEnum), nil
+}
+
 type Meter struct {
 	ID            pgtype.UUID
 	Name          string
@@ -76,10 +118,13 @@ type Meter struct {
 type Plan struct {
 	ID          pgtype.UUID
 	Name        string
+	Slug        string
 	Description pgtype.Text
+	Type        PlanTypeEnum
 	TenantSlug  string
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
+	ArchivedAt  pgtype.Timestamptz
 	CreatedBy   string
 	UpdatedBy   string
 }

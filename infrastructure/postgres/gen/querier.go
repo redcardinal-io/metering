@@ -11,6 +11,8 @@ import (
 )
 
 type Querier interface {
+	ArchivePlanByID(ctx context.Context, arg ArchivePlanByIDParams) (Plan, error)
+	ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugParams) (Plan, error)
 	CountMeters(ctx context.Context, tenantSlug string) (int64, error)
 	CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error)
 	CountPlans(ctx context.Context, tenantSlug string) (int64, error)
@@ -19,17 +21,22 @@ type Querier interface {
 	DeleteMeterByID(ctx context.Context, arg DeleteMeterByIDParams) error
 	DeleteMeterBySlug(ctx context.Context, arg DeleteMeterBySlugParams) error
 	DeletePlanByID(ctx context.Context, arg DeletePlanByIDParams) error
+	DeletePlanBySlug(ctx context.Context, arg DeletePlanBySlugParams) error
 	GetMeterByID(ctx context.Context, arg GetMeterByIDParams) (Meter, error)
 	GetMeterBySlug(ctx context.Context, arg GetMeterBySlugParams) (Meter, error)
 	GetPlanByID(ctx context.Context, arg GetPlanByIDParams) (Plan, error)
+	GetPlanBySlug(ctx context.Context, arg GetPlanBySlugParams) (Plan, error)
 	GetPropertiesByEventType(ctx context.Context, arg GetPropertiesByEventTypeParams) ([]interface{}, error)
 	GetValuePropertiesByEventType(ctx context.Context, arg GetValuePropertiesByEventTypeParams) ([]pgtype.Text, error)
 	ListMetersByEventTypes(ctx context.Context, arg ListMetersByEventTypesParams) ([]Meter, error)
 	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)
 	ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error)
+	UnArchivePlanByID(ctx context.Context, arg UnArchivePlanByIDParams) (Plan, error)
+	UnArchivePlanBySlug(ctx context.Context, arg UnArchivePlanBySlugParams) (Plan, error)
 	UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error)
 	UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error)
 	UpdatePlanByID(ctx context.Context, arg UpdatePlanByIDParams) (Plan, error)
+	UpdatePlanBySlug(ctx context.Context, arg UpdatePlanBySlugParams) (Plan, error)
 }
 
 var _ Querier = (*Queries)(nil)

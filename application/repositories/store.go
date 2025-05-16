@@ -25,8 +25,9 @@ type MeterStoreRepository interface {
 
 type PlanStoreRepository interface {
 	CreatePlan(ctx context.Context, arg models.CreatePlanInput) (*models.Plan, error)
-	GetPlanByID(ctx context.Context, id string) (*models.Plan, error)
+	GetPlanByIDorSlug(ctx context.Context, idOrSlug string) (*models.Plan, error)
 	ListPlans(ctx context.Context, pagination pagination.Pagination) (*pagination.PaginationView[models.Plan], error)
-	DeletePlanByID(ctx context.Context, id string) error
-	UpdatePlanByID(ctx context.Context, id string, arg models.UpdatePlanInput) (*models.Plan, error)
+	DeletePlanByIDorSlug(ctx context.Context, idOrSlug string) error
+	UpdatePlanByIDorSlug(ctx context.Context, idOrSlug string, arg models.UpdatePlanInput) (*models.Plan, error)
+	ArchivePlanByIDorSlug(ctx context.Context, idOrSlug string, arg models.ArchivePlanInput) error
 }

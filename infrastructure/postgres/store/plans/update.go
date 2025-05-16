@@ -11,10 +11,10 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
 )
 
-func (s *PgPlanStoreRepository) UpdatePlanByID(ctx context.Context, id string, arg models.UpdatePlanInput) (*models.Plan, error) {
+func (s *PgPlanStoreRepository) UpdatePlanByIDorSlug(ctx context.Context, idOrSlug string, arg models.UpdatePlanInput) (*models.Plan, error) {
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	// Try to parse as UUID first
-	parsedId, err := uuid.Parse(id)
+	parsedId, err := uuid.Parse(idOrSlug)
 	var updateErr error
 	var m gen.Plan
 	if err == nil {
@@ -23,6 +23,15 @@ func (s *PgPlanStoreRepository) UpdatePlanByID(ctx context.Context, id string, a
 			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
 			TenantSlug:  tenantSlug,
 			ID:          pgtype.UUID{Bytes: parsedId, Valid: true},
+			UpdatedBy:   arg.UpdatedBy,
+		})
+	} else {
+		// Not a UUID, update by slug
+		m, updateErr = s.q.UpdatePlanBySlug(ctx, gen.UpdatePlanBySlugParams{
+			Name:        pgtype.Text{String: arg.Name, Valid: arg.Name != ""},
+			Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
+			TenantSlug:  tenantSlug,
+			Slug:        idOrSlug,
 			UpdatedBy:   arg.UpdatedBy,
 		})
 	}
@@ -40,6 +49,9 @@ func (s *PgPlanStoreRepository) UpdatePlanByID(ctx context.Context, id string, a
 	return &models.Plan{
 		Name:        m.Name,
 		Description: m.Description.String,
+		Slug:        m.Slug,
+		Type:        models.PlanTypeEnum(m.Type),
+		ArchivedAt:  m.ArchivedAt,
 		TenantSlug:  m.TenantSlug,
 		Base: models.Base{
 			ID:        uuid,
