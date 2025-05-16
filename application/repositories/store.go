@@ -30,3 +30,11 @@ type PlanStoreRepository interface {
 	DeletePlanByID(ctx context.Context, id string) error
 	UpdatePlanByID(ctx context.Context, id string, arg models.UpdatePlanInput) (*models.Plan, error)
 }
+
+type FeatureStoreRepository interface {
+	CreateFeature(ctx context.Context, arg models.CreateFeatureInput) (*models.Feature, error)
+	GetFeatureByIDorSlug(ctx context.Context, idOrSlug string) (*models.Feature, error)
+	ListFeatures(ctx context.Context, pagination pagination.Pagination) (*pagination.PaginationView[models.Feature], error)
+	DeleteFeatureByIDorSlug(ctx context.Context, idOrSlug string) error
+	UpdateFeatureByIDorSlug(ctx context.Context, idOrSlug string, arg models.UpdateFeatureInput) (*models.Feature, error)
+}
