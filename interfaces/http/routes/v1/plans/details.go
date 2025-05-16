@@ -10,11 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
-func (h *httpHandler) getByID(ctx *fiber.Ctx) error {
+func (h *httpHandler) getByIDorSlug(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
-	id := ctx.Params("id")
+	idOrSlug := ctx.Params("idOrSlug")
 
-	if id == "" {
+	if idOrSlug == "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan ID is required")
 		h.logger.Error("plan ID is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
@@ -22,9 +22,9 @@ func (h *httpHandler) getByID(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
-	plan, err := h.planSvc.GetPlanByID(c, id)
+	plan, err := h.planSvc.GetPlanByIDorSlug(c, idOrSlug)
 	if err != nil {
-		h.logger.Error("failed to get plan", zap.String("id", id), zap.Reflect("error", err))
+		h.logger.Error("failed to get plan", zap.String("id", idOrSlug), zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
