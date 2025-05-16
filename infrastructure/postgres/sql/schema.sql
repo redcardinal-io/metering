@@ -35,3 +35,24 @@ create table if not exists plan (
 	created_by varchar not null,
 	updated_by varchar not null
 );
+
+create type feature_enum as enum (
+	'static',
+	'metered'
+);
+
+create table if not exists feature (
+	id uuid primary key default uuid_generate_v4(),
+	name varchar not null,
+	slug varchar not null,
+	description varchar not null,
+	tenant_slug varchar not null,
+  type feature_enum default 'static',
+	config jsonb default null,
+	created_at timestamp with time zone default now(),
+	updated_at timestamp with time zone default now(),
+	created_by varchar not null,
+	updated_by varchar not null,
+	unique (tenant_slug, slug)
+
+);

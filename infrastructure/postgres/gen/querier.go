@@ -11,22 +11,28 @@ import (
 )
 
 type Querier interface {
+	CountFeatures(ctx context.Context, tenantSlug string) (int64, error)
 	CountMeters(ctx context.Context, tenantSlug string) (int64, error)
 	CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error)
 	CountPlans(ctx context.Context, tenantSlug string) (int64, error)
+	CreateFeature(ctx context.Context, arg CreateFeatureParams) (Feature, error)
 	CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error)
 	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
+	DeleteFeatureByID(ctx context.Context, arg DeleteFeatureByIDParams) error
 	DeleteMeterByID(ctx context.Context, arg DeleteMeterByIDParams) error
 	DeleteMeterBySlug(ctx context.Context, arg DeleteMeterBySlugParams) error
 	DeletePlanByID(ctx context.Context, arg DeletePlanByIDParams) error
+	GetFeatureByID(ctx context.Context, arg GetFeatureByIDParams) (Feature, error)
 	GetMeterByID(ctx context.Context, arg GetMeterByIDParams) (Meter, error)
 	GetMeterBySlug(ctx context.Context, arg GetMeterBySlugParams) (Meter, error)
 	GetPlanByID(ctx context.Context, arg GetPlanByIDParams) (Plan, error)
 	GetPropertiesByEventType(ctx context.Context, arg GetPropertiesByEventTypeParams) ([]interface{}, error)
 	GetValuePropertiesByEventType(ctx context.Context, arg GetValuePropertiesByEventTypeParams) ([]pgtype.Text, error)
+	ListFeaturesPaginated(ctx context.Context, arg ListFeaturesPaginatedParams) ([]Feature, error)
 	ListMetersByEventTypes(ctx context.Context, arg ListMetersByEventTypesParams) ([]Meter, error)
 	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)
 	ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error)
+	UpdateFeatureByID(ctx context.Context, arg UpdateFeatureByIDParams) (Feature, error)
 	UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error)
 	UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error)
 	UpdatePlanByID(ctx context.Context, arg UpdatePlanByIDParams) (Plan, error)
