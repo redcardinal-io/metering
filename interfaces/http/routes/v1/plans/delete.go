@@ -14,8 +14,8 @@ func (h *httpHandler) deleteByIDorSlug(ctx *fiber.Ctx) error {
 	idOrSlug := ctx.Params("idOrSlug")
 
 	if idOrSlug == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan ID is required")
-		h.logger.Error("plan ID is required", zap.Reflect("error", errResp))
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan ID or Slug is required")
+		h.logger.Error("plan ID or Slug is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
