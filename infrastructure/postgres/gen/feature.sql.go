@@ -93,6 +93,22 @@ func (q *Queries) DeleteFeatureByID(ctx context.Context, arg DeleteFeatureByIDPa
 	return err
 }
 
+const deleteFeatureBySlug = `-- name: DeleteFeatureBySlug :exec
+delete from feature
+where slug = $1
+and tenant_slug = $2
+`
+
+type DeleteFeatureBySlugParams struct {
+	Slug       string
+	TenantSlug string
+}
+
+func (q *Queries) DeleteFeatureBySlug(ctx context.Context, arg DeleteFeatureBySlugParams) error {
+	_, err := q.db.Exec(ctx, deleteFeatureBySlug, arg.Slug, arg.TenantSlug)
+	return err
+}
+
 const getFeatureByID = `-- name: GetFeatureByID :one
 select id, name, slug, description, tenant_slug, type, config, created_at, updated_at, created_by, updated_by from feature
 where id = $1
@@ -106,6 +122,36 @@ type GetFeatureByIDParams struct {
 
 func (q *Queries) GetFeatureByID(ctx context.Context, arg GetFeatureByIDParams) (Feature, error) {
 	row := q.db.QueryRow(ctx, getFeatureByID, arg.ID, arg.TenantSlug)
+	var i Feature
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.TenantSlug,
+		&i.Type,
+		&i.Config,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const getFeatureBySlug = `-- name: GetFeatureBySlug :one
+select id, name, slug, description, tenant_slug, type, config, created_at, updated_at, created_by, updated_by from feature
+where slug = $1
+and tenant_slug = $2
+`
+
+type GetFeatureBySlugParams struct {
+	Slug       string
+	TenantSlug string
+}
+
+func (q *Queries) GetFeatureBySlug(ctx context.Context, arg GetFeatureBySlugParams) (Feature, error) {
+	row := q.db.QueryRow(ctx, getFeatureBySlug, arg.Slug, arg.TenantSlug)
 	var i Feature
 	err := row.Scan(
 		&i.ID,
@@ -195,6 +241,52 @@ func (q *Queries) UpdateFeatureByID(ctx context.Context, arg UpdateFeatureByIDPa
 		arg.Config,
 		arg.UpdatedBy,
 		arg.ID,
+		arg.TenantSlug,
+		arg.Name,
+	)
+	var i Feature
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.TenantSlug,
+		&i.Type,
+		&i.Config,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const updateFeatureBySlug = `-- name: UpdateFeatureBySlug :one
+update feature
+set name = coalesce($6, name),
+    description = coalesce($1, description),
+    config = coalesce($2, config),
+    updated_by = $3
+where slug = $4
+and tenant_slug = $5
+returning id, name, slug, description, tenant_slug, type, config, created_at, updated_at, created_by, updated_by
+`
+
+type UpdateFeatureBySlugParams struct {
+	Description pgtype.Text
+	Config      []byte
+	UpdatedBy   string
+	Slug        string
+	TenantSlug  string
+	Name        pgtype.Text
+}
+
+func (q *Queries) UpdateFeatureBySlug(ctx context.Context, arg UpdateFeatureBySlugParams) (Feature, error) {
+	row := q.db.QueryRow(ctx, updateFeatureBySlug,
+		arg.Description,
+		arg.Config,
+		arg.UpdatedBy,
+		arg.Slug,
 		arg.TenantSlug,
 		arg.Name,
 	)

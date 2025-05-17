@@ -44,7 +44,7 @@ func (p *PgFeatureRepository) CreateFeature(ctx context.Context, arg models.Crea
 	}
 
 	config := make(map[string]any)
-	_ = json.Unmarshal(m.Config, config)
+	_ = json.Unmarshal(m.Config, &config)
 	return &models.Feature{
 		Name:        m.Name,
 		Description: m.Description.String,
