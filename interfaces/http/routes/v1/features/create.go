@@ -14,7 +14,7 @@ type createFeatureRequest struct {
 	Name        string         `json:"name" validate:"required"`
 	Description string         `json:"description" validate:"required"`
 	Slug        string         `json:"slug" validate:"required"`
-	Type        string         `json:"type" validate:"required,oneof=standard metered"`
+	Type        string         `json:"type" validate:"required,oneof=static metered"`
 	Config      map[string]any `json:"config" validate:"required"`
 	CreatedBy   string         `json:"created_by" validate:"required"`
 }
