@@ -39,12 +39,13 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
 
 	feature, err := h.featureSvc.CreateFeature(c, models.CreateFeatureInput{
-		Name:       req.Name,
-		Slug:       req.Slug,
-		Type:       models.FeatureTypeEnum(req.Type),
-		TenantSlug: tenant_slug,
-		Config:     req.Config,
-		CreatedBy:  req.CreatedBy,
+		Name:        req.Name,
+		Description: req.Description,
+		Slug:        req.Slug,
+		Type:        models.FeatureTypeEnum(req.Type),
+		TenantSlug:  tenant_slug,
+		Config:      req.Config,
+		CreatedBy:   req.CreatedBy,
 	})
 	if err != nil {
 		h.logger.Error("failed to create feature", zap.Reflect("error", err))

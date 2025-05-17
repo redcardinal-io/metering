@@ -25,7 +25,7 @@ func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanManagementServi
 
 func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	// Group all plans routes
-	plans := r.Group("/features")
+	plans := r.Group("/plans")
 
 	// Plan collection routes
 	plans.Post("/", h.create)
