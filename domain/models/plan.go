@@ -36,7 +36,7 @@ type Plan struct {
 // CreatePlanInput represents the input for creating a new plan
 type CreatePlanInput struct {
 	Name        string
-	PlanSlug    string
+	Slug        string
 	Type        PlanTypeEnum
 	Description string
 	CreatedBy   string

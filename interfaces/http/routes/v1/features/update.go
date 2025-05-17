@@ -1,4 +1,4 @@
-package plans
+package features
 
 import (
 	"context"
@@ -10,10 +10,11 @@ import (
 	"go.uber.org/zap"
 )
 
-type updatePlanRequest struct {
-	Name        string `json:"name,omitempty" validate:"omitempty,min=3,max=255"`
-	Description string `json:"description,omitempty" validate:"omitempty,min=10,max=255"`
-	UpdatedBy   string `json:"updated_by" validate:"required,min=3,max=255"`
+type updateFeatureRequest struct {
+	Name        string         `json:"name,omitempty" validate:"omitempty,min=3,max=100"`
+	Description string         `json:"description" validate:"omitempty,min=10,max=255"`
+	Config      map[string]any `json:"config" validate:"omitempty"`
+	UpdateBy    string         `json:"updated_by" validate:"required,min=3,max=100"`
 }
 
 func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
@@ -26,38 +27,38 @@ func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	var req updatePlanRequest
+	var req updateFeatureRequest
 	if err := ctx.BodyParser(&req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
 		h.logger.Error("failed to parse request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	// validate the request body
 	if err := h.validator.Struct(req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid request body")
 		h.logger.Error("invalid request body", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
-	if req.Name == "" && req.Description == "" {
+	if req.Name == "" && req.Description == "" && req.Config == nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "at least one field (name or description) is required")
-		h.logger.Error("at least one field (name or description) is required", zap.Reflect("error", errResp))
+		h.logger.Error("at least one field (name or description or config) is required ", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
-	plan, err := h.planSvc.UpdatePlan(c, idOrSlug, models.UpdatePlanInput{
+	feature, err := h.featureSvc.UpdateFeatureByIDorSlug(c, idOrSlug, models.UpdateFeatureInput{
 		Name:        req.Name,
+		UpdatedBy:   req.UpdateBy,
+		Config:      req.Config,
 		Description: req.Description,
-		UpdatedBy:   req.UpdatedBy,
 	})
 	if err != nil {
-		h.logger.Error("failed to update plan", zap.String("idOrSlug", idOrSlug), zap.Reflect("error", err))
+		h.logger.Error("failed to update feature", zap.String("idOrSlug", idOrSlug), zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
 	return ctx.
-		Status(fiber.StatusOK).JSON(models.NewHttpResponse(plan, "plan updated successfully", fiber.StatusOK))
+		Status(fiber.StatusOK).JSON(models.NewHttpResponse(feature, "feature updated successfully", fiber.StatusOK))
 }

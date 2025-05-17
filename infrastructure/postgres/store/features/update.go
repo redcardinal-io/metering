@@ -18,12 +18,19 @@ func (p *PgFeatureRepository) UpdateFeatureByIDorSlug(ctx context.Context, idOrS
 	parsedId, err := uuid.Parse(idOrSlug)
 	var updateErr error
 	var m gen.Feature
+
+	configJson, err := json.Marshal(input.Config)
+	if err != nil {
+		return nil, postgres.MapError(err, "Postgres.MarshalConfig")
+	}
+
 	if err == nil {
 		m, updateErr = p.q.UpdateFeatureByID(ctx, gen.UpdateFeatureByIDParams{
 			Name:        pgtype.Text{String: input.Name, Valid: input.Name != ""},
 			Description: pgtype.Text{String: input.Description, Valid: input.Description != ""},
 			TenantSlug:  tenantSlug,
 			ID:          pgtype.UUID{Bytes: parsedId, Valid: true},
+			Config:      configJson,
 			UpdatedBy:   input.UpdatedBy,
 		})
 	} else {
@@ -47,7 +54,7 @@ func (p *PgFeatureRepository) UpdateFeatureByIDorSlug(ctx context.Context, idOrS
 	}
 
 	config := make(map[string]any)
-	_ = json.Unmarshal(m.Config, &config)
+	_ = json.Unmarshal(m.Config, &configJson)
 
 	return &models.Feature{
 		Name:        m.Name,
