@@ -22,7 +22,7 @@ func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 
 	if idOrSlug == "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan ID is required")
-		h.logger.Error("plan ID is required", zap.Reflect("error", errResp))
+		h.logger.Error("plan idOrSlug is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
@@ -53,7 +53,7 @@ func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 		UpdatedBy:   req.UpdatedBy,
 	})
 	if err != nil {
-		h.logger.Error("failed to update plan", zap.String("id", idOrSlug), zap.Reflect("error", err))
+		h.logger.Error("failed to update plan", zap.String("idOrSlug", idOrSlug), zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
