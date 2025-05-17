@@ -13,7 +13,7 @@ type httpHandler struct {
 	validator *validator.Validate
 }
 
-// NewHTTPHandler initializes a new httpHandler with the provided logger and plan service for handling plan-related HTTP endpoints.
+// NewHTTPHandler creates and returns a new httpHandler configured with the given logger and plan management service.
 func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanManagementService) *httpHandler {
 	validator := validator.New()
 	return &httpHandler{

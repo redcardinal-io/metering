@@ -26,7 +26,11 @@ import (
 
 // ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
 //
-// It loads configuration, sets up logging, connects to Kafka, ClickHouse, and Postgres, and registers event, meter, and plan routes under the `/v1` API group. Resources are properly closed on shutdown. Returns an error if any initialization or server startup step fails.
+// ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
+// 
+// It loads application configuration, sets up logging, connects to Kafka, ClickHouse, and Postgres, and registers event, meter, plan, and feature routes under the `/v1` API group. Resources are properly closed on shutdown.
+// 
+// Returns an error if any initialization or server startup step fails.
 func ServeHttp() error {
 	// Load configuration
 	config, err := config.LoadConfig()
