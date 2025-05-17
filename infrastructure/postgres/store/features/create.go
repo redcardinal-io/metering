@@ -1,7 +1,8 @@
-package plans
+package features
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -12,20 +13,28 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *PgPlanStoreRepository) CreatePlan(ctx context.Context, arg models.CreatePlanInput) (*models.Plan, error) {
+func (p *PgFeatureRepository) CreateFeature(ctx context.Context, arg models.CreateFeatureInput) (*models.Feature, error) {
+	// no need validate tenant slug, it is already validated
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
-	m, err := p.q.CreatePlan(ctx, gen.CreatePlanParams{
+	configBytes, err := json.Marshal(arg.Config)
+	if err != nil {
+		p.logger.Error("failed to marshal config", zap.Error(err))
+		return nil, postgres.MapError(err, "Postgres.CreateFeature.MarshalConfig")
+	}
+
+	m, err := p.q.CreateFeature(ctx, gen.CreateFeatureParams{
 		Name:        arg.Name,
-		Slug:        arg.Slug,
-		Type:        gen.PlanTypeEnum(arg.Type),
 		Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
+		Slug:        arg.Slug,
+		Type:        gen.FeatureEnum(arg.Type),
+		Config:      configBytes,
 		TenantSlug:  tenantSlug,
 		CreatedBy:   arg.CreatedBy,
 		UpdatedBy:   arg.CreatedBy,
 	})
 	if err != nil {
-		p.logger.Error("failed to create plan", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.CreatePlan")
+		p.logger.Error("failed to create feature", zap.Error(err))
+		return nil, postgres.MapError(err, "Postgres.CreateFeature")
 	}
 
 	id, err := uuid.FromBytes(m.ID.Bytes[:])
@@ -34,13 +43,15 @@ func (p *PgPlanStoreRepository) CreatePlan(ctx context.Context, arg models.Creat
 		return nil, postgres.MapError(err, "Postgres.ParseUUID")
 	}
 
-	plan := &models.Plan{
+	config := make(map[string]any)
+	_ = json.Unmarshal(m.Config, &config)
+	return &models.Feature{
 		Name:        m.Name,
-		Slug:        m.Slug,
-		Type:        models.PlanTypeEnum(m.Type),
 		Description: m.Description.String,
-		ArchivedAt:  m.ArchivedAt,
+		Slug:        m.Slug,
 		TenantSlug:  m.TenantSlug,
+		Type:        models.FeatureTypeEnum(m.Type),
+		Config:      config,
 		Base: models.Base{
 			ID:        id,
 			CreatedAt: m.CreatedAt,
@@ -48,7 +59,5 @@ func (p *PgPlanStoreRepository) CreatePlan(ctx context.Context, arg models.Creat
 			UpdatedBy: m.UpdatedBy,
 			UpdatedAt: m.UpdatedAt,
 		},
-	}
-
-	return plan, nil
+	}, nil
 }

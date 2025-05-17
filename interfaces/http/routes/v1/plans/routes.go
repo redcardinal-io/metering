@@ -9,12 +9,12 @@ import (
 
 type httpHandler struct {
 	logger    *logger.Logger
-	planSvc   *services.PlanService
+	planSvc   *services.PlanManagementService
 	validator *validator.Validate
 }
 
-// NewHTTPHandler initializes a new httpHandler with the provided logger and plan service for handling plan-related HTTP endpoints.
-func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanService) *httpHandler {
+// NewHTTPHandler creates and returns a new httpHandler configured with the given logger and plan management service.
+func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanManagementService) *httpHandler {
 	validator := validator.New()
 	return &httpHandler{
 		logger:    logger,
@@ -38,5 +38,4 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 
 	// Toggle Plan Archive
 	plans.Put("/:idOrSlug/archive", h.archive)
-
 }

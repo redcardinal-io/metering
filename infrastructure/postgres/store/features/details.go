@@ -1,7 +1,8 @@
-package plans
+package features
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -11,29 +12,28 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
 )
 
-func (p *PgPlanStoreRepository) GetPlanByIDorSlug(ctx context.Context, idOrSlug string) (*models.Plan, error) {
+func (p *PgFeatureRepository) GetFeatureByIDorSlug(ctx context.Context, idOrSlug string) (*models.Feature, error) {
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	// Try to parse as UUID first
 	parsedId, err := uuid.Parse(idOrSlug)
 	var detailsErr error
-	var m gen.Plan
+	var m gen.Feature
 	if err == nil {
 		// Valid UUID, get details by ID
-		m, detailsErr = p.q.GetPlanByID(ctx, gen.GetPlanByIDParams{
+		m, detailsErr = p.q.GetFeatureByID(ctx, gen.GetFeatureByIDParams{
 			ID:         pgtype.UUID{Bytes: parsedId, Valid: true},
 			TenantSlug: tenantSlug,
 		})
 	} else {
 		// Not a UUID, get details by slug
-		m, detailsErr = p.q.GetPlanBySlug(ctx, gen.GetPlanBySlugParams{
+		m, detailsErr = p.q.GetFeatureBySlug(ctx, gen.GetFeatureBySlugParams{
 			Slug:       idOrSlug,
 			TenantSlug: tenantSlug,
 		})
 	}
 
-	// Handle errors from either get operation
 	if detailsErr != nil {
-		return nil, postgres.MapError(detailsErr, "Postgres.GetPlanByIDorSlug")
+		return nil, postgres.MapError(detailsErr, "Postgres.GetFeatureByIDorSlug")
 	}
 
 	uuid, err := uuid.FromBytes(m.ID.Bytes[:])
@@ -41,13 +41,16 @@ func (p *PgPlanStoreRepository) GetPlanByIDorSlug(ctx context.Context, idOrSlug 
 		return nil, postgres.MapError(err, "Postgres.ParseUUID")
 	}
 
-	return &models.Plan{
+	config := make(map[string]any)
+	_ = json.Unmarshal(m.Config, &config)
+
+	return &models.Feature{
 		Name:        m.Name,
 		Description: m.Description.String,
 		Slug:        m.Slug,
-		Type:        models.PlanTypeEnum(m.Type),
 		TenantSlug:  m.TenantSlug,
-		ArchivedAt:  m.ArchivedAt,
+		Type:        models.FeatureTypeEnum(m.Type),
+		Config:      config,
 		Base: models.Base{
 			ID:        uuid,
 			CreatedAt: m.CreatedAt,

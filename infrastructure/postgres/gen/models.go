@@ -57,6 +57,48 @@ func (ns NullAggregationEnum) Value() (driver.Value, error) {
 	return string(ns.AggregationEnum), nil
 }
 
+type FeatureEnum string
+
+const (
+	FeatureEnumStatic  FeatureEnum = "static"
+	FeatureEnumMetered FeatureEnum = "metered"
+)
+
+func (e *FeatureEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = FeatureEnum(s)
+	case string:
+		*e = FeatureEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for FeatureEnum: %T", src)
+	}
+	return nil
+}
+
+type NullFeatureEnum struct {
+	FeatureEnum FeatureEnum
+	Valid       bool // Valid is true if FeatureEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullFeatureEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.FeatureEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.FeatureEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullFeatureEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.FeatureEnum), nil
+}
+
 type PlanTypeEnum string
 
 const (
@@ -97,6 +139,20 @@ func (ns NullPlanTypeEnum) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.PlanTypeEnum), nil
+}
+
+type Feature struct {
+	ID          pgtype.UUID
+	Name        string
+	Slug        string
+	Description pgtype.Text
+	TenantSlug  string
+	Type        FeatureEnum
+	Config      []byte
+	CreatedAt   pgtype.Timestamptz
+	UpdatedAt   pgtype.Timestamptz
+	CreatedBy   string
+	UpdatedBy   string
 }
 
 type Meter struct {

@@ -12,19 +12,25 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/clickhouse"
 	"github.com/redcardinal-io/metering/infrastructure/kafka"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store"
+	"github.com/redcardinal-io/metering/infrastructure/postgres/store/features"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/meters"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/plans"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/events"
+	featuresRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/features"
 	meterRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/meters"
 	planRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans"
 	"go.uber.org/zap"
 )
 
 // ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
+//
+// ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
 // 
-// It loads configuration, sets up logging, connects to Kafka, ClickHouse, and Postgres, and registers event, meter, and plan routes under the `/v1` API group. Resources are properly closed on shutdown. Returns an error if any initialization or server startup step fails.
+// It loads application configuration, sets up logging, connects to Kafka, ClickHouse, and Postgres, and registers event, meter, plan, and feature routes under the `/v1` API group. Resources are properly closed on shutdown.
+// 
+// Returns an error if any initialization or server startup step fails.
 func ServeHttp() error {
 	// Load configuration
 	config, err := config.LoadConfig()
@@ -78,11 +84,12 @@ func ServeHttp() error {
 	defer store.Close()
 	meterStore := meters.NewPostgresMeterStoreRepository(store.GetDB(), logger)
 	planStore := plans.NewPostgresPlanStoreRepository(store.GetDB(), logger)
+	featureStore := features.NewPgFeatureStoreRepository(store.GetDB(), logger)
 
 	// intialize services
 	producerService := services.NewProducerService(producer, meterStore)
 	meterService := services.NewMeterService(olap, meterStore)
-	planService := services.NewPlanService(planStore)
+	planMangementService := services.NewPlanService(planStore, featureStore)
 
 	// Register routes
 	routes := routes.NewHTTPHandler(logger)
@@ -102,9 +109,13 @@ func ServeHttp() error {
 	meterRoutes := meterRoutes.NewHTTPHandler(logger, meterService)
 	meterRoutes.RegisterRoutes(v1)
 
-	//plan routes
-	planRoutes := planRoutes.NewHTTPHandler(logger, planService)
+	// plan routes
+	planRoutes := planRoutes.NewHTTPHandler(logger, planMangementService)
 	planRoutes.RegisterRoutes(v1)
+
+	// feature routes
+	featuresRoutes := featuresRoutes.NewHTTPHandler(logger, planMangementService)
+	featuresRoutes.RegisterRoutes(v1)
 
 	// Start server
 	return app.Listen(":" + config.Server.Port)

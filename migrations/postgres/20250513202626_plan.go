@@ -7,14 +7,12 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-// init registers the upPlan and downPlan migration functions with goose for this migration.
+// init registers the migration functions for creating and dropping the "plan" table with goose.
 func init() {
 	goose.AddMigrationContext(upPlan, downPlan)
 }
 
-// upPlan applies the database migration to create the "plan" table and its associated index if they do not exist. 
-// It also invokes a procedure to manage the "updated_at" timestamp column.
-// Returns an error if the migration fails.
+// upPlan creates the "plan" table with its schema, including a custom enum type, and ensures necessary indexes and triggers exist.
 func upPlan(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
 		do $$
@@ -52,9 +50,8 @@ func upPlan(ctx context.Context, tx *sql.Tx) error {
 	return err
 }
 
-// downPlan drops the "plan" table if it exists during migration rollback. Returns an error if the operation fails.
+// downPlan removes the "plan" table from the database if it exists.
 func downPlan(ctx context.Context, tx *sql.Tx) error {
-	// This code is executed when the migration is rolled back.
 	_, err := tx.ExecContext(ctx, `
 		drop table if exists plan;
 	`)
