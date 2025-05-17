@@ -58,7 +58,7 @@ func (s *PlanManagementService) ArchivePlanByIDorSlug(ctx context.Context, IDorS
 	return nil
 }
 
-func (s *PlanManagementService) UpdatePlanIDorSlug(ctx context.Context, IDorSlug string, arg models.UpdatePlanInput) (*models.Plan, error) {
+func (s *PlanManagementService) UpdatePlanByIDorSlug(ctx context.Context, IDorSlug string, arg models.UpdatePlanInput) (*models.Plan, error) {
 	// Call the store repository to update the plan
 	m, err := s.planStore.UpdatePlanByIDorSlug(ctx, IDorSlug, arg)
 	if err != nil {

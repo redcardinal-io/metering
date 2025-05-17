@@ -18,8 +18,8 @@ import (
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/events"
+	featuresRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/features"
 	meterRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/meters"
-	featuresRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans"
 	planRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans"
 	"go.uber.org/zap"
 )
