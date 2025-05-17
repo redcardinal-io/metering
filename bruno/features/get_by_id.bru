@@ -1,0 +1,15 @@
+meta {
+  name: get_by_id
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/v1/features/da992131-3bf7-418a-954e-b5173778f0b3
+  body: none
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}

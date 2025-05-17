@@ -40,7 +40,7 @@ func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 	if req.Name == "" && req.Description == "" && req.Config == nil {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "at least one field (name or description) is required")
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "at least one field (name or description or config) is required")
 		h.logger.Error("at least one field (name or description or config) is required ", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}

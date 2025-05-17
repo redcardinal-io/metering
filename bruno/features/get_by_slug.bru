@@ -1,0 +1,15 @@
+meta {
+  name: get_by_slug
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/v1/features/gpt_models
+  body: none
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}

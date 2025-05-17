@@ -54,7 +54,7 @@ func (p *PgFeatureRepository) UpdateFeatureByIDorSlug(ctx context.Context, idOrS
 	}
 
 	config := make(map[string]any)
-	_ = json.Unmarshal(m.Config, &configJson)
+	_ = json.Unmarshal(m.Config, &config)
 
 	return &models.Feature{
 		Name:        m.Name,
