@@ -19,6 +19,7 @@ import (
 	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/events"
 	meterRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/meters"
+	featuresRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans"
 	planRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans"
 	"go.uber.org/zap"
 )
@@ -84,7 +85,7 @@ func ServeHttp() error {
 	// intialize services
 	producerService := services.NewProducerService(producer, meterStore)
 	meterService := services.NewMeterService(olap, meterStore)
-	planService := services.NewPlanService(planStore, featureStore)
+	planMangementService := services.NewPlanService(planStore, featureStore)
 
 	// Register routes
 	routes := routes.NewHTTPHandler(logger)
@@ -105,8 +106,12 @@ func ServeHttp() error {
 	meterRoutes.RegisterRoutes(v1)
 
 	// plan routes
-	planRoutes := planRoutes.NewHTTPHandler(logger, planService)
+	planRoutes := planRoutes.NewHTTPHandler(logger, planMangementService)
 	planRoutes.RegisterRoutes(v1)
+
+	// feature routes
+	featuresRoutes := featuresRoutes.NewHTTPHandler(logger, planMangementService)
+	featuresRoutes.RegisterRoutes(v1)
 
 	// Start server
 	return app.Listen(":" + config.Server.Port)

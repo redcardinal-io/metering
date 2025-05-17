@@ -14,7 +14,7 @@ type updateFeatureRequest struct {
 	Name        string         `json:"name,omitempty" validate:"omitempty,min=3,max=100"`
 	Description string         `json:"description" validate:"omitempty,min=10,max=255"`
 	Config      map[string]any `json:"config" validate:"omitempty"`
-	UpdateBy    string         `json:"updated_by" validate:"required,min=3,max=100"`
+	UpdatedBy   string         `json:"updated_by" validate:"required,min=3,max=100"`
 }
 
 func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
@@ -22,8 +22,8 @@ func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 	idOrSlug := ctx.Params("idOrSlug")
 
 	if idOrSlug == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan ID is required")
-		h.logger.Error("plan idOrSlug is required", zap.Reflect("error", errResp))
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "feature idOrSlug is required")
+		h.logger.Error("feature idOrSlug is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
@@ -49,7 +49,7 @@ func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 
 	feature, err := h.featureSvc.UpdateFeatureByIDorSlug(c, idOrSlug, models.UpdateFeatureInput{
 		Name:        req.Name,
-		UpdatedBy:   req.UpdateBy,
+		UpdatedBy:   req.UpdatedBy,
 		Config:      req.Config,
 		Description: req.Description,
 	})
