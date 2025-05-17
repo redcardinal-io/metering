@@ -7,12 +7,12 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-// init registers the upFeature and downFeature functions as the migration steps with goose.
+// init registers the upFeature and downFeature functions as migration steps with goose.
 func init() {
 	goose.AddMigrationContext(upFeature, downFeature)
 }
 
-// upFeature applies the database migration to create the feature enum type, feature table, and related indexes if they do not already exist.
+// upFeature applies the database migration to create the feature_enum type, the feature table with its constraints, and related indexes if they do not already exist. Returns an error if the migration fails.
 func upFeature(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
 		do $$
@@ -51,7 +51,7 @@ func upFeature(ctx context.Context, tx *sql.Tx) error {
 	return err
 }
 
-// downFeature rolls back the migration by dropping the feature table and the feature_enum type if they exist.
+// downFeature reverses the migration by dropping the feature table and the feature_enum type if they exist.
 func downFeature(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
 		drop table if exists feature;

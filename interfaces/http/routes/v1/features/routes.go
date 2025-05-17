@@ -13,6 +13,7 @@ type httpHandler struct {
 	validator  *validator.Validate
 }
 
+// NewHTTPHandler creates a new httpHandler for feature-related HTTP routes with logging, feature service, and validation capabilities.
 func NewHTTPHandler(logger *logger.Logger, featureSvc *services.PlanManagementService) *httpHandler {
 	validator := validator.New()
 	return &httpHandler{logger, featureSvc, validator}
