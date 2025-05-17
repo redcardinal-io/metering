@@ -54,6 +54,7 @@ func upPlan(ctx context.Context, tx *sql.Tx) error {
 func downPlan(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
 		drop table if exists plan;
+		drop type if exists plan_type_enum;
 	`)
 	return err
 }
