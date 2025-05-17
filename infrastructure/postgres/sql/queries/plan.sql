@@ -2,17 +2,25 @@
 INSERT INTO plan (
     name,
     description,
+    slug,
+    type,
     tenant_slug,
     created_by,
     updated_by
 ) VALUES (
-    $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5, $6, $7
 ) RETURNING *;
 
 -- name: GetPlanByID :one
 SELECT * FROM plan
 WHERE id = $1
 AND tenant_slug = $2;
+
+-- name: GetPlanBySlug :one
+SELECT * FROM plan
+WHERE slug = $1
+AND tenant_slug = $2;
+
 
 -- name: ListPlansPaginated :many
 SELECT * FROM plan
@@ -25,6 +33,43 @@ OFFSET $3;
 DELETE FROM plan
 WHERE id = $1
 AND tenant_slug = $2;
+
+-- name: DeletePlanBySlug :exec
+DELETE FROM plan
+WHERE slug = $1
+AND tenant_slug = $2;
+
+-- name: ArchivePlanByID :one
+UPDATE plan
+SET archived_at = CURRENT_TIMESTAMP,
+    updated_by = $3
+WHERE id = $1
+AND tenant_slug = $2
+RETURNING *;
+
+-- name: ArchivePlanBySlug :one
+UPDATE plan
+SET archived_at = CURRENT_TIMESTAMP,
+    updated_by = $3
+WHERE slug = $1
+AND tenant_slug = $2
+RETURNING *;
+
+-- name: UnArchivePlanByID :one
+UPDATE plan
+SET archived_at = null,
+    updated_by = $3
+WHERE id = $1
+AND tenant_slug = $2
+RETURNING *;
+
+-- name: UnArchivePlanBySlug :one
+UPDATE plan
+SET archived_at = null,
+    updated_by = $3
+WHERE slug = $1
+AND tenant_slug = $2
+RETURNING *;
 
 -- name: CountPlans :one
 SELECT count(*) FROM plan
@@ -39,4 +84,11 @@ WHERE id = $2
 AND tenant_slug = $3
 RETURNING *;
 
-
+-- name: UpdatePlanBySlug :one
+UPDATE plan
+SET name = coalesce(sqlc.narg('name'), name),
+    description = coalesce($1, description),
+    updated_by = $3
+WHERE slug = $2
+AND tenant_slug = $4
+RETURNING *;

@@ -16,6 +16,8 @@ func (p *PgPlanStoreRepository) CreatePlan(ctx context.Context, arg models.Creat
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	m, err := p.q.CreatePlan(ctx, gen.CreatePlanParams{
 		Name:        arg.Name,
+		Slug:        arg.PlanSlug,
+		Type:        gen.PlanTypeEnum(arg.Type),
 		Description: pgtype.Text{String: arg.Description, Valid: arg.Description != ""},
 		TenantSlug:  tenantSlug,
 		CreatedBy:   arg.CreatedBy,
@@ -35,7 +37,10 @@ func (p *PgPlanStoreRepository) CreatePlan(ctx context.Context, arg models.Creat
 
 	plan := &models.Plan{
 		Name:        m.Name,
+		Slug:        m.Slug,
+		Type:        models.PlanTypeEnum(m.Type),
 		Description: m.Description.String,
+		ArchivedAt:  m.ArchivedAt,
 		TenantSlug:  m.TenantSlug,
 		Base: models.Base{
 			ID:        id,

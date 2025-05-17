@@ -11,16 +11,22 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
 )
 
-func (p *PgPlanStoreRepository) GetPlanByID(ctx context.Context, id string) (*models.Plan, error) {
+func (p *PgPlanStoreRepository) GetPlanByIDorSlug(ctx context.Context, idOrSlug string) (*models.Plan, error) {
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	// Try to parse as UUID first
-	parsedId, err := uuid.Parse(id)
+	parsedId, err := uuid.Parse(idOrSlug)
 	var detailsErr error
 	var m gen.Plan
 	if err == nil {
 		// Valid UUID, get details by ID
 		m, detailsErr = p.q.GetPlanByID(ctx, gen.GetPlanByIDParams{
 			ID:         pgtype.UUID{Bytes: parsedId, Valid: true},
+			TenantSlug: tenantSlug,
+		})
+	} else {
+		// Not a UUID, get details by slug
+		m, detailsErr = p.q.GetPlanBySlug(ctx, gen.GetPlanBySlugParams{
+			Slug:       idOrSlug,
 			TenantSlug: tenantSlug,
 		})
 	}
@@ -38,7 +44,10 @@ func (p *PgPlanStoreRepository) GetPlanByID(ctx context.Context, id string) (*mo
 	return &models.Plan{
 		Name:        m.Name,
 		Description: m.Description.String,
+		Slug:        m.Slug,
+		Type:        models.PlanTypeEnum(m.Type),
 		TenantSlug:  m.TenantSlug,
+		ArchivedAt:  m.ArchivedAt,
 		Base: models.Base{
 			ID:        uuid,
 			CreatedAt: m.CreatedAt,
