@@ -12,6 +12,8 @@ import (
 
 type createPlanRequest struct {
 	Name        string `json:"name" validate:"required"`
+	Slug        string `json:"slug" validate:"required"`
+	Type        string `json:"type" validate:"required,oneof=standard custom"`
 	Description string `json:"description,omitempty"`
 	CreatedBy   string `json:"created_by" validate:"required"`
 }
@@ -36,6 +38,8 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 
 	plan, err := h.planSvc.CreatePlan(c, models.CreatePlanInput{
 		Name:        req.Name,
+		PlanSlug:    req.Slug,
+		Type:        models.PlanTypeEnum(req.Type),
 		Description: req.Description,
 		CreatedBy:   req.CreatedBy,
 	})

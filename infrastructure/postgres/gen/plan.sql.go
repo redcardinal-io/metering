@@ -11,6 +11,74 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const archivePlanByID = `-- name: ArchivePlanByID :one
+UPDATE plan
+SET archived_at = CURRENT_TIMESTAMP,
+    updated_by = $3
+WHERE id = $1
+AND tenant_slug = $2
+RETURNING id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by
+`
+
+type ArchivePlanByIDParams struct {
+	ID         pgtype.UUID
+	TenantSlug string
+	UpdatedBy  string
+}
+
+func (q *Queries) ArchivePlanByID(ctx context.Context, arg ArchivePlanByIDParams) (Plan, error) {
+	row := q.db.QueryRow(ctx, archivePlanByID, arg.ID, arg.TenantSlug, arg.UpdatedBy)
+	var i Plan
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.Type,
+		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const archivePlanBySlug = `-- name: ArchivePlanBySlug :one
+UPDATE plan
+SET archived_at = CURRENT_TIMESTAMP,
+    updated_by = $3
+WHERE slug = $1
+AND tenant_slug = $2
+RETURNING id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by
+`
+
+type ArchivePlanBySlugParams struct {
+	Slug       string
+	TenantSlug string
+	UpdatedBy  string
+}
+
+func (q *Queries) ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugParams) (Plan, error) {
+	row := q.db.QueryRow(ctx, archivePlanBySlug, arg.Slug, arg.TenantSlug, arg.UpdatedBy)
+	var i Plan
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.Type,
+		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
 const countPlans = `-- name: CountPlans :one
 SELECT count(*) FROM plan
 WHERE tenant_slug = $1
@@ -27,17 +95,21 @@ const createPlan = `-- name: CreatePlan :one
 INSERT INTO plan (
     name,
     description,
+    slug,
+    type,
     tenant_slug,
     created_by,
     updated_by
 ) VALUES (
-    $1, $2, $3, $4, $5
-) RETURNING id, name, description, tenant_slug, created_at, updated_at, created_by, updated_by
+    $1, $2, $3, $4, $5, $6, $7
+) RETURNING id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by
 `
 
 type CreatePlanParams struct {
 	Name        string
 	Description pgtype.Text
+	Slug        string
+	Type        PlanTypeEnum
 	TenantSlug  string
 	CreatedBy   string
 	UpdatedBy   string
@@ -47,6 +119,8 @@ func (q *Queries) CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, e
 	row := q.db.QueryRow(ctx, createPlan,
 		arg.Name,
 		arg.Description,
+		arg.Slug,
+		arg.Type,
 		arg.TenantSlug,
 		arg.CreatedBy,
 		arg.UpdatedBy,
@@ -55,10 +129,13 @@ func (q *Queries) CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, e
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Slug,
 		&i.Description,
+		&i.Type,
 		&i.TenantSlug,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ArchivedAt,
 		&i.CreatedBy,
 		&i.UpdatedBy,
 	)
@@ -81,8 +158,24 @@ func (q *Queries) DeletePlanByID(ctx context.Context, arg DeletePlanByIDParams) 
 	return err
 }
 
+const deletePlanBySlug = `-- name: DeletePlanBySlug :exec
+DELETE FROM plan
+WHERE slug = $1
+AND tenant_slug = $2
+`
+
+type DeletePlanBySlugParams struct {
+	Slug       string
+	TenantSlug string
+}
+
+func (q *Queries) DeletePlanBySlug(ctx context.Context, arg DeletePlanBySlugParams) error {
+	_, err := q.db.Exec(ctx, deletePlanBySlug, arg.Slug, arg.TenantSlug)
+	return err
+}
+
 const getPlanByID = `-- name: GetPlanByID :one
-SELECT id, name, description, tenant_slug, created_at, updated_at, created_by, updated_by FROM plan
+SELECT id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by FROM plan
 WHERE id = $1
 AND tenant_slug = $2
 `
@@ -98,10 +191,43 @@ func (q *Queries) GetPlanByID(ctx context.Context, arg GetPlanByIDParams) (Plan,
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Slug,
 		&i.Description,
+		&i.Type,
 		&i.TenantSlug,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ArchivedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const getPlanBySlug = `-- name: GetPlanBySlug :one
+SELECT id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by FROM plan
+WHERE slug = $1
+AND tenant_slug = $2
+`
+
+type GetPlanBySlugParams struct {
+	Slug       string
+	TenantSlug string
+}
+
+func (q *Queries) GetPlanBySlug(ctx context.Context, arg GetPlanBySlugParams) (Plan, error) {
+	row := q.db.QueryRow(ctx, getPlanBySlug, arg.Slug, arg.TenantSlug)
+	var i Plan
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.Type,
+		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
 		&i.CreatedBy,
 		&i.UpdatedBy,
 	)
@@ -109,7 +235,7 @@ func (q *Queries) GetPlanByID(ctx context.Context, arg GetPlanByIDParams) (Plan,
 }
 
 const listPlansPaginated = `-- name: ListPlansPaginated :many
-SELECT id, name, description, tenant_slug, created_at, updated_at, created_by, updated_by FROM plan
+SELECT id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by FROM plan
 WHERE tenant_slug = $1
 ORDER BY created_at DESC
 LIMIT $2
@@ -134,10 +260,13 @@ func (q *Queries) ListPlansPaginated(ctx context.Context, arg ListPlansPaginated
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,
+			&i.Slug,
 			&i.Description,
+			&i.Type,
 			&i.TenantSlug,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.ArchivedAt,
 			&i.CreatedBy,
 			&i.UpdatedBy,
 		); err != nil {
@@ -151,6 +280,74 @@ func (q *Queries) ListPlansPaginated(ctx context.Context, arg ListPlansPaginated
 	return items, nil
 }
 
+const unArchivePlanByID = `-- name: UnArchivePlanByID :one
+UPDATE plan
+SET archived_at = null,
+    updated_by = $3
+WHERE id = $1
+AND tenant_slug = $2
+RETURNING id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by
+`
+
+type UnArchivePlanByIDParams struct {
+	ID         pgtype.UUID
+	TenantSlug string
+	UpdatedBy  string
+}
+
+func (q *Queries) UnArchivePlanByID(ctx context.Context, arg UnArchivePlanByIDParams) (Plan, error) {
+	row := q.db.QueryRow(ctx, unArchivePlanByID, arg.ID, arg.TenantSlug, arg.UpdatedBy)
+	var i Plan
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.Type,
+		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const unArchivePlanBySlug = `-- name: UnArchivePlanBySlug :one
+UPDATE plan
+SET archived_at = null,
+    updated_by = $3
+WHERE slug = $1
+AND tenant_slug = $2
+RETURNING id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by
+`
+
+type UnArchivePlanBySlugParams struct {
+	Slug       string
+	TenantSlug string
+	UpdatedBy  string
+}
+
+func (q *Queries) UnArchivePlanBySlug(ctx context.Context, arg UnArchivePlanBySlugParams) (Plan, error) {
+	row := q.db.QueryRow(ctx, unArchivePlanBySlug, arg.Slug, arg.TenantSlug, arg.UpdatedBy)
+	var i Plan
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.Type,
+		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
 const updatePlanByID = `-- name: UpdatePlanByID :one
 UPDATE plan
 SET name = coalesce($5, name),
@@ -158,7 +355,7 @@ SET name = coalesce($5, name),
     updated_by = $4
 WHERE id = $2
 AND tenant_slug = $3
-RETURNING id, name, description, tenant_slug, created_at, updated_at, created_by, updated_by
+RETURNING id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by
 `
 
 type UpdatePlanByIDParams struct {
@@ -181,10 +378,56 @@ func (q *Queries) UpdatePlanByID(ctx context.Context, arg UpdatePlanByIDParams) 
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
+		&i.Slug,
 		&i.Description,
+		&i.Type,
 		&i.TenantSlug,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.ArchivedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return i, err
+}
+
+const updatePlanBySlug = `-- name: UpdatePlanBySlug :one
+UPDATE plan
+SET name = coalesce($5, name),
+    description = coalesce($1, description),
+    updated_by = $3
+WHERE slug = $2
+AND tenant_slug = $4
+RETURNING id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by
+`
+
+type UpdatePlanBySlugParams struct {
+	Description pgtype.Text
+	Slug        string
+	UpdatedBy   string
+	TenantSlug  string
+	Name        pgtype.Text
+}
+
+func (q *Queries) UpdatePlanBySlug(ctx context.Context, arg UpdatePlanBySlugParams) (Plan, error) {
+	row := q.db.QueryRow(ctx, updatePlanBySlug,
+		arg.Description,
+		arg.Slug,
+		arg.UpdatedBy,
+		arg.TenantSlug,
+		arg.Name,
+	)
+	var i Plan
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.Type,
+		&i.TenantSlug,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ArchivedAt,
 		&i.CreatedBy,
 		&i.UpdatedBy,
 	)

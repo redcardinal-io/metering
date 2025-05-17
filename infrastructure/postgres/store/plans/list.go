@@ -34,6 +34,9 @@ func (p *PgPlanStoreRepository) ListPlans(ctx context.Context, page pagination.P
 		}
 		plans = append(plans, models.Plan{
 			Name:        plan.Name,
+			Slug:        plan.Slug,
+			Type:        models.PlanTypeEnum(plan.Type),
+			ArchivedAt:  plan.ArchivedAt,
 			Description: plan.Description.String,
 			TenantSlug:  plan.TenantSlug,
 			Base: models.Base{
