@@ -1,6 +1,8 @@
 package features
 
 import (
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redcardinal-io/metering/application/repositories"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
 )
@@ -8,4 +10,11 @@ import (
 type PgFeatureRepository struct {
 	q      *gen.Queries
 	logger *logger.Logger
+}
+
+func NewPgFeatureStoreRepository(db any, logger *logger.Logger) repositories.FeatureStoreRepository {
+	return &PgFeatureRepository{
+		q:      gen.New(db.(*pgxpool.Pool)),
+		logger: logger,
+	}
 }
