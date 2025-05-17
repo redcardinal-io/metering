@@ -21,7 +21,7 @@ func (h *httpHandler) deleteByIDorSlug(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
-	err := h.planSvc.DeletePlan(c, idOrSlug)
+	err := h.planSvc.DeletePlanIDOrSlug(c, idOrSlug)
 	if err != nil {
 		h.logger.Error("failed to delete plan", zap.String("id", idOrSlug), zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)

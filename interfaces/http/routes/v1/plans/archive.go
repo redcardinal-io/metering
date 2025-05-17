@@ -41,7 +41,7 @@ func (h *httpHandler) archive(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
-	err := h.planSvc.ArchivePlan(c, idOrSlug, models.ArchivePlanInput{
+	err := h.planSvc.ArchivePlanByIDorSlug(c, idOrSlug, models.ArchivePlanInput{
 		UpdatedBy: req.UpdatedBy,
 		Archive:   req.Archive,
 	})
