@@ -32,7 +32,11 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	plans.Get("/", h.list)
 
 	// Single Plan routes with id parameter
-	plans.Get("/:id", h.getByID)
-	plans.Put("/:id", h.updateByID)
-	plans.Delete("/:id", h.deleteByID)
+	plans.Get("/:idOrSlug", h.getByIDorSlug)
+	plans.Put("/:idOrSlug", h.updateByIDorSlug)
+	plans.Delete("/:idOrSlug", h.deleteByIDorSlug)
+
+	// Toggle Plan Archive
+	plans.Put("/:idOrSlug/archive", h.archive)
+
 }

@@ -29,18 +29,18 @@ func (s *PlanService) CreatePlan(ctx context.Context, arg models.CreatePlanInput
 	return m, nil
 }
 
-func (s *PlanService) GetPlanByID(ctx context.Context, ID string) (*models.Plan, error) {
+func (s *PlanService) GetPlanByIDorSlug(ctx context.Context, IDorSlug string) (*models.Plan, error) {
 	// Call the repository to get the plan
-	m, err := s.store.GetPlanByID(ctx, ID)
+	m, err := s.store.GetPlanByIDorSlug(ctx, IDorSlug)
 	if err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (s *PlanService) DeletePlan(ctx context.Context, ID string) error {
+func (s *PlanService) DeletePlan(ctx context.Context, IDorSlug string) error {
 
-	err := s.store.DeletePlanByID(ctx, ID)
+	err := s.store.DeletePlanByIDorSlug(ctx, IDorSlug)
 	if err != nil {
 		return err
 	}
@@ -48,9 +48,19 @@ func (s *PlanService) DeletePlan(ctx context.Context, ID string) error {
 	return nil
 }
 
-func (s *PlanService) UpdatePlan(ctx context.Context, ID string, arg models.UpdatePlanInput) (*models.Plan, error) {
+func (s *PlanService) ArchivePlan(ctx context.Context, IDorSlug string, arg models.ArchivePlanInput) error {
+
+	err := s.store.ArchivePlanByIDorSlug(ctx, IDorSlug, arg)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *PlanService) UpdatePlan(ctx context.Context, IDorSlug string, arg models.UpdatePlanInput) (*models.Plan, error) {
 	// Call the store repository to update the plan
-	m, err := s.store.UpdatePlanByID(ctx, ID, arg)
+	m, err := s.store.UpdatePlanByIDorSlug(ctx, IDorSlug, arg)
 	if err != nil {
 		return nil, err
 	}

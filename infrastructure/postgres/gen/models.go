@@ -76,41 +76,27 @@ func (e *FeatureEnum) Scan(src interface{}) error {
 	return nil
 }
 
-type NullFeatureEnum struct {
-	FeatureEnum FeatureEnum
-	Valid       bool // Valid is true if FeatureEnum is not NULL
+type NullPlanTypeEnum struct {
+	PlanTypeEnum PlanTypeEnum
+	Valid        bool // Valid is true if PlanTypeEnum is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullFeatureEnum) Scan(value interface{}) error {
+func (ns *NullPlanTypeEnum) Scan(value interface{}) error {
 	if value == nil {
-		ns.FeatureEnum, ns.Valid = "", false
+		ns.PlanTypeEnum, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.FeatureEnum.Scan(value)
+	return ns.PlanTypeEnum.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullFeatureEnum) Value() (driver.Value, error) {
+func (ns NullPlanTypeEnum) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.FeatureEnum), nil
-}
-
-type Feature struct {
-	ID          pgtype.UUID
-	Name        string
-	Slug        string
-	Description string
-	TenantSlug  string
-	Type        NullFeatureEnum
-	Config      []byte
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
-	CreatedBy   string
-	UpdatedBy   string
+	return string(ns.PlanTypeEnum), nil
 }
 
 type Meter struct {
@@ -132,10 +118,13 @@ type Meter struct {
 type Plan struct {
 	ID          pgtype.UUID
 	Name        string
+	Slug        string
 	Description pgtype.Text
+	Type        PlanTypeEnum
 	TenantSlug  string
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz
+	ArchivedAt  pgtype.Timestamptz
 	CreatedBy   string
 	UpdatedBy   string
 }
