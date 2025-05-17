@@ -1,0 +1,22 @@
+meta {
+  name: archive
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{base_url}}/v1/plans/6699fd55-f93e-42f1-8826-98cebd471257/archive
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "updated_by":"test user",
+    "archive":true
+  }
+}
