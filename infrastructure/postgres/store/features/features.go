@@ -12,6 +12,7 @@ type PgFeatureRepository struct {
 	logger *logger.Logger
 }
 
+// NewPgFeatureStoreRepository creates a new PostgreSQL-backed feature repository using the provided database connection and logger.
 func NewPgFeatureStoreRepository(db any, logger *logger.Logger) repositories.FeatureStoreRepository {
 	return &PgFeatureRepository{
 		q:      gen.New(db.(*pgxpool.Pool)),

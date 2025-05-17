@@ -12,7 +12,7 @@ const (
 	Custom   PlanTypeEnum = "custom"
 )
 
-// ValidatePlanType returns true if the provided string is a valid plan type.
+// ValidatePlanType checks whether the given string matches a defined PlanTypeEnum value.
 func ValidatePlanType(value string) bool {
 	switch PlanTypeEnum(value) {
 	case Standard, Custom:
