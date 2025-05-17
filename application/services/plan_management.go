@@ -16,7 +16,8 @@ type PlanManagementService struct {
 // NewPlanService returns a new PlanService that uses the given PlanStoreRepository for plan operations.
 func NewPlanService(planStore repositories.PlanStoreRepository, featureStore repositories.FeatureStoreRepository) *PlanManagementService {
 	return &PlanManagementService{
-		planStore: planStore,
+		planStore:    planStore,
+		featureStore: featureStore,
 	}
 }
 
@@ -39,7 +40,7 @@ func (s *PlanManagementService) GetPlanByIDorSlug(ctx context.Context, IDorSlug 
 	return m, nil
 }
 
-func (s *PlanManagementService) DeletePlan(ctx context.Context, IDorSlug string) error {
+func (s *PlanManagementService) DeletePlanIDOrSlug(ctx context.Context, IDorSlug string) error {
 	err := s.planStore.DeletePlanByIDorSlug(ctx, IDorSlug)
 	if err != nil {
 		return err
@@ -48,7 +49,7 @@ func (s *PlanManagementService) DeletePlan(ctx context.Context, IDorSlug string)
 	return nil
 }
 
-func (s *PlanManagementService) ArchivePlan(ctx context.Context, IDorSlug string, arg models.ArchivePlanInput) error {
+func (s *PlanManagementService) ArchivePlanByIDorSlug(ctx context.Context, IDorSlug string, arg models.ArchivePlanInput) error {
 	err := s.planStore.ArchivePlanByIDorSlug(ctx, IDorSlug, arg)
 	if err != nil {
 		return err
@@ -57,7 +58,7 @@ func (s *PlanManagementService) ArchivePlan(ctx context.Context, IDorSlug string
 	return nil
 }
 
-func (s *PlanManagementService) UpdatePlan(ctx context.Context, IDorSlug string, arg models.UpdatePlanInput) (*models.Plan, error) {
+func (s *PlanManagementService) UpdatePlanIDorSlug(ctx context.Context, IDorSlug string, arg models.UpdatePlanInput) (*models.Plan, error) {
 	// Call the store repository to update the plan
 	m, err := s.planStore.UpdatePlanByIDorSlug(ctx, IDorSlug, arg)
 	if err != nil {

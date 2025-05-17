@@ -15,16 +15,16 @@ import (
 func (p *PgFeatureRepository) UpdateFeatureByIDorSlug(ctx context.Context, idOrSlug string, input models.UpdateFeatureInput) (*models.Feature, error) {
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	// Try to parse as UUID first
-	parsedId, err := uuid.Parse(idOrSlug)
+	parsedId, parseErr := uuid.Parse(idOrSlug)
 	var updateErr error
 	var m gen.Feature
 
 	configJson, err := json.Marshal(input.Config)
 	if err != nil {
-		return nil, postgres.MapError(err, "Postgres.MarshalConfig")
+		return nil, postgres.MapError(parseErr, "Postgres.MarshalConfig")
 	}
 
-	if err == nil {
+	if parseErr == nil {
 		m, updateErr = p.q.UpdateFeatureByID(ctx, gen.UpdateFeatureByIDParams{
 			Name:        pgtype.Text{String: input.Name, Valid: input.Name != ""},
 			Description: pgtype.Text{String: input.Description, Valid: input.Description != ""},
@@ -48,9 +48,9 @@ func (p *PgFeatureRepository) UpdateFeatureByIDorSlug(ctx context.Context, idOrS
 		return nil, postgres.MapError(updateErr, "Postgres.UpdateFeatureByID")
 	}
 
-	uuid, err := uuid.FromBytes(m.ID.Bytes[:])
-	if err != nil {
-		return nil, postgres.MapError(err, "Postgres.ParseUUID")
+	uuid, parseErr := uuid.FromBytes(m.ID.Bytes[:])
+	if parseErr != nil {
+		return nil, postgres.MapError(parseErr, "Postgres.ParseUUID")
 	}
 
 	config := make(map[string]any)
