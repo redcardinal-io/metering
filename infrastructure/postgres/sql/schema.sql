@@ -55,14 +55,13 @@ create table if not exists feature (
 	id uuid primary key default uuid_generate_v4(),
 	name varchar not null,
 	slug varchar not null,
-	description varchar not null,
+	description varchar default null,
 	tenant_slug varchar not null,
-  type feature_enum default 'static',
+  type feature_enum not null default 'static',
 	config jsonb default null,
 	created_at timestamp with time zone default now(),
 	updated_at timestamp with time zone default now(),
 	created_by varchar not null,
 	updated_by varchar not null,
 	unique (tenant_slug, slug)
-
 );

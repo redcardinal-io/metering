@@ -145,9 +145,9 @@ type Feature struct {
 	ID          pgtype.UUID
 	Name        string
 	Slug        string
-	Description string
+	Description pgtype.Text
 	TenantSlug  string
-	Type        NullFeatureEnum
+	Type        FeatureEnum
 	Config      []byte
 	CreatedAt   pgtype.Timestamptz
 	UpdatedAt   pgtype.Timestamptz

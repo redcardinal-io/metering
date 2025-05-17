@@ -41,9 +41,9 @@ insert into feature (
 type CreateFeatureParams struct {
 	Name        string
 	Slug        string
-	Description string
+	Description pgtype.Text
 	TenantSlug  string
-	Type        NullFeatureEnum
+	Type        FeatureEnum
 	Config      []byte
 	CreatedBy   string
 	UpdatedBy   string
@@ -181,7 +181,7 @@ returning id, name, slug, description, tenant_slug, type, config, created_at, up
 `
 
 type UpdateFeatureByIDParams struct {
-	Description string
+	Description pgtype.Text
 	Config      []byte
 	UpdatedBy   string
 	ID          pgtype.UUID
