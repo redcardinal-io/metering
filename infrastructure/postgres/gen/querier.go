@@ -21,11 +21,13 @@ type Querier interface {
 	CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error)
 	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
 	DeleteFeatureByID(ctx context.Context, arg DeleteFeatureByIDParams) error
+	DeleteFeatureBySlug(ctx context.Context, arg DeleteFeatureBySlugParams) error
 	DeleteMeterByID(ctx context.Context, arg DeleteMeterByIDParams) error
 	DeleteMeterBySlug(ctx context.Context, arg DeleteMeterBySlugParams) error
 	DeletePlanByID(ctx context.Context, arg DeletePlanByIDParams) error
 	DeletePlanBySlug(ctx context.Context, arg DeletePlanBySlugParams) error
 	GetFeatureByID(ctx context.Context, arg GetFeatureByIDParams) (Feature, error)
+	GetFeatureBySlug(ctx context.Context, arg GetFeatureBySlugParams) (Feature, error)
 	GetMeterByID(ctx context.Context, arg GetMeterByIDParams) (Meter, error)
 	GetMeterBySlug(ctx context.Context, arg GetMeterBySlugParams) (Meter, error)
 	GetPlanByID(ctx context.Context, arg GetPlanByIDParams) (Plan, error)
@@ -39,6 +41,7 @@ type Querier interface {
 	UnArchivePlanByID(ctx context.Context, arg UnArchivePlanByIDParams) (Plan, error)
 	UnArchivePlanBySlug(ctx context.Context, arg UnArchivePlanBySlugParams) (Plan, error)
 	UpdateFeatureByID(ctx context.Context, arg UpdateFeatureByIDParams) (Feature, error)
+	UpdateFeatureBySlug(ctx context.Context, arg UpdateFeatureBySlugParams) (Feature, error)
 	UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error)
 	UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error)
 	UpdatePlanByID(ctx context.Context, arg UpdatePlanByIDParams) (Plan, error)
