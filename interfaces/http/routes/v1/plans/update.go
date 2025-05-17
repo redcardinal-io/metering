@@ -47,7 +47,7 @@ func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
-	plan, err := h.planSvc.UpdatePlan(c, idOrSlug, models.UpdatePlanInput{
+	plan, err := h.planSvc.UpdatePlanIDorSlug(c, idOrSlug, models.UpdatePlanInput{
 		Name:        req.Name,
 		Description: req.Description,
 		UpdatedBy:   req.UpdatedBy,
