@@ -30,6 +30,7 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	// Plan collection routes
 	plans.Post("/", h.create)
 	plans.Get("/", h.list)
+	plans.Get("/:type", h.list)
 
 	// Single Plan routes with id parameter
 	plans.Get("/:idOrSlug", h.getByIDorSlug)

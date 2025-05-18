@@ -21,6 +21,13 @@ SELECT * FROM plan
 WHERE slug = $1
 AND tenant_slug = $2;
 
+-- name: ListPlansByType :many
+SELECT * FROM plan
+WHERE type = $1
+AND tenant_slug = $2
+ORDER BY created_at DESC
+LIMIT $3
+OFFSET $4;
 
 -- name: ListPlansPaginated :many
 SELECT * FROM plan

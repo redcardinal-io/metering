@@ -37,6 +37,7 @@ type Querier interface {
 	ListFeaturesPaginated(ctx context.Context, arg ListFeaturesPaginatedParams) ([]Feature, error)
 	ListMetersByEventTypes(ctx context.Context, arg ListMetersByEventTypesParams) ([]Meter, error)
 	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)
+	ListPlansByType(ctx context.Context, arg ListPlansByTypeParams) ([]Plan, error)
 	ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error)
 	UnArchivePlanByID(ctx context.Context, arg UnArchivePlanByIDParams) (Plan, error)
 	UnArchivePlanBySlug(ctx context.Context, arg UnArchivePlanBySlugParams) (Plan, error)
