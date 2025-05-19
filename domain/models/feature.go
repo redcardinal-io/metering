@@ -3,8 +3,8 @@ package models
 type FeatureTypeEnum string
 
 const (
-	// FeatureTypeStandard represents a standard feature
-	FeatureTypeStandard FeatureTypeEnum = "standard"
+	// FeatureTypeStatic represents a static feature
+	FeatureTypeStatic FeatureTypeEnum = "static"
 	// FeatureTypeMetered represents a custom feature
 	FeatureTypeMetered FeatureTypeEnum = "metered"
 )
