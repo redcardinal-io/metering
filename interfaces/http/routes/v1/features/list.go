@@ -2,7 +2,6 @@ package features
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
@@ -19,7 +18,6 @@ func (h *httpHandler) list(ctx *fiber.Ctx) error {
 	paginationInput := pagination.ExtractPaginationFromContext(ctx)
 	// validate the pagination input
 	if paginationInput.Queries["type"] != "" {
-		fmt.Println("feature type", paginationInput.Queries["type"])
 		if paginationInput.Queries["type"] != string(models.FeatureTypeStatic) &&
 			paginationInput.Queries["type"] != string(models.FeatureTypeMetered) {
 			errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "invalid feature type")

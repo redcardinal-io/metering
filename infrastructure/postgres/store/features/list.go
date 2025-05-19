@@ -22,10 +22,7 @@ func (p *PgFeatureRepository) ListFeatures(ctx context.Context, page pagination.
 		Limit:      int32(page.Limit),
 		Offset:     int32(page.GetOffset()),
 		TenantSlug: tenantSlug,
-		Type: gen.NullFeatureEnum{
-			FeatureEnum: gen.FeatureEnum(featureType),
-			Valid:       featureType != "",
-		},
+		Type:       createFeatureTypeEnum(featureType),
 	})
 	if err != nil {
 		p.logger.Error("Error listing features: ", zap.Error(err))
@@ -57,10 +54,7 @@ func (p *PgFeatureRepository) ListFeatures(ctx context.Context, page pagination.
 
 	count, err := p.q.CountFeatures(ctx, gen.CountFeaturesParams{
 		TenantSlug: tenantSlug,
-		Type: gen.NullFeatureEnum{
-			FeatureEnum: gen.FeatureEnum(featureType),
-			Valid:       featureType != "",
-		},
+		Type:       createFeatureTypeEnum(featureType),
 	})
 	if err != nil {
 		p.logger.Error("Error counting features: ", zap.Error(err))
@@ -69,4 +63,11 @@ func (p *PgFeatureRepository) ListFeatures(ctx context.Context, page pagination.
 
 	result := pagination.FormatWith(page, int(count), features)
 	return &result, nil
+}
+
+func createFeatureTypeEnum(featureType string) gen.NullFeatureEnum {
+	return gen.NullFeatureEnum{
+		FeatureEnum: gen.FeatureEnum(featureType),
+		Valid:       featureType != "",
+	}
 }
