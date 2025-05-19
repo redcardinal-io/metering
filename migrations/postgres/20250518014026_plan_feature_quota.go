@@ -22,8 +22,8 @@ func upPlanFeatureQuota(ctx context.Context, tx *sql.Tx) error {
 	  			  'week',
 	  			  'month',
 	  			  'year',
-	  				'custom'
-	  				'rolling'
+	  				'custom',
+	  				'rolling',
 	  				'never'
 	  			);
 	  	end if;
