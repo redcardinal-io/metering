@@ -4,7 +4,7 @@ type FeatureTypeEnum string
 
 const (
 	// FeatureTypeStatic represents a standard feature
-	FeatureTypeStatic FeatureTypeEnum = "standard"
+	FeatureTypeStatic FeatureTypeEnum = "static"
 	// FeatureTypeMetered represents a custom feature
 	FeatureTypeMetered FeatureTypeEnum = "metered"
 )
