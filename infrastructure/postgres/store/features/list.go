@@ -65,6 +65,8 @@ func (p *PgFeatureRepository) ListFeatures(ctx context.Context, page pagination.
 	return &result, nil
 }
 
+// createFeatureTypeEnum converts a feature type string into a nullable FeatureEnum for database queries.
+// The returned enum is marked valid only if the input string is non-empty.
 func createFeatureTypeEnum(featureType string) gen.NullFeatureEnum {
 	return gen.NullFeatureEnum{
 		FeatureEnum: gen.FeatureEnum(featureType),
