@@ -5,11 +5,11 @@ meta {
 }
 
 get {
-  url: {{base_url}}/v1/features
+  url: {{base_url}}/v1/features?
   body: none
   auth: inherit
 }
 
 headers {
-  x-tenant-slug: 
+  x-tenant-slug: {{tenant_slug}}
 }
