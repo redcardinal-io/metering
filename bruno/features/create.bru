@@ -4,8 +4,22 @@ meta {
   seq: 1
 }
 
-get {
-  url: 
-  body: none
+post {
+  url: {{base_url}}/v1/features
+  body: json
   auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "name":"tokens",
+    "slug":"tokens",
+    "type":"metered",
+    "description":"number of tokens",
+    "created_by":"created_by"
+  }
 }
