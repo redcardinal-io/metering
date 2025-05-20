@@ -43,18 +43,16 @@ type Querier interface {
 	ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error)
 	UnArchivePlanByID(ctx context.Context, arg UnArchivePlanByIDParams) (Plan, error)
 	UnArchivePlanBySlug(ctx context.Context, arg UnArchivePlanBySlugParams) (Plan, error)
-	UnAssignPlanToOrgByPlanId(ctx context.Context, arg UnAssignPlanToOrgByPlanIdParams) error
-	UnAssignPlanToUserByPlanId(ctx context.Context, arg UnAssignPlanToUserByPlanIdParams) error
+	UnAssignPlanToOrg(ctx context.Context, arg UnAssignPlanToOrgParams) error
+	UnAssignPlanToUser(ctx context.Context, arg UnAssignPlanToUserParams) error
 	UpdateFeatureByID(ctx context.Context, arg UpdateFeatureByIDParams) (Feature, error)
 	UpdateFeatureBySlug(ctx context.Context, arg UpdateFeatureBySlugParams) (Feature, error)
 	UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error)
 	UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error)
-	UpdateOrgsValidFrom(ctx context.Context, arg UpdateOrgsValidFromParams) (PlanAssignment, error)
-	UpdateOrgsValidUntil(ctx context.Context, arg UpdateOrgsValidUntilParams) (PlanAssignment, error)
+	UpdateOrgsValidFromAndUntil(ctx context.Context, arg UpdateOrgsValidFromAndUntilParams) (PlanAssignment, error)
 	UpdatePlanByID(ctx context.Context, arg UpdatePlanByIDParams) (Plan, error)
 	UpdatePlanBySlug(ctx context.Context, arg UpdatePlanBySlugParams) (Plan, error)
-	UpdateUsersValidFrom(ctx context.Context, arg UpdateUsersValidFromParams) (PlanAssignment, error)
-	UpdateUsersValidUntil(ctx context.Context, arg UpdateUsersValidUntilParams) (PlanAssignment, error)
+	UpdateUsersValidFromAndUntil(ctx context.Context, arg UpdateUsersValidFromAndUntilParams) (PlanAssignment, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -21,7 +21,6 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
   BEGIN
   INSERT INTO plan_assignment_history (
     action,
-    plan_assignment_id,
     plan_id,
     organization_id,
     user_id,
@@ -33,7 +32,6 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
     updated_by
   ) VALUES (
     'INSERT',
-    NEW.id,
     NEW.plan_id,
     NEW.organization_id,
     NEW.user_id,
@@ -54,7 +52,6 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
   BEGIN
   INSERT INTO plan_assignment_history (
     action,
-    plan_assignment_id,
     plan_id,
     organization_id,
     user_id,
@@ -66,7 +63,6 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
     updated_by
   ) VALUES (
     'UPDATE',
-    NEW.id,
     NEW.plan_id,
     NEW.organization_id,
     NEW.user_id,
@@ -87,7 +83,6 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
   BEGIN
   INSERT INTO plan_assignment_history (
     action,
-    plan_assignment_id,
     plan_id,
     organization_id,
     user_id,
@@ -99,7 +94,6 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
     updated_by
   ) VALUES (
     'DELETE',
-    OLD.id,
     OLD.plan_id,
     OLD.organization_id,
     OLD.user_id,
@@ -130,11 +124,23 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
   FOR EACH ROW
   EXECUTE FUNCTION fn_plan_assignment_delete_trigger();
 
+  -- check if history_action exists and create it if it doesn't
+  do $$
+  begin
+  if not exists (select 1 from pg_type where typname = 'history_action_enum') then
+  create type history_action_enum as enum (
+    'INSERT',
+    'UPDATE',
+    'DELETE'
+  );
+  end if;
+  end
+  $$;
+
   -- create table and indexes
   create table if not exists plan_assignment_history (
     id uuid primary key default uuid_generate_v4(),
-    plan_assignment_id uuid,
-    action varchar not null,
+    action history_action_enum not null,
     plan_id uuid,
     organization_id uuid default null,
     user_id uuid default null,

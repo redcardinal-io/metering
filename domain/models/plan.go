@@ -33,6 +33,16 @@ type Plan struct {
 	TenantSlug  string             `json:"tenant_slug"`
 }
 
+// PlanAssignment represents a plan_assignment entity from the database
+type PlanAssignment struct {
+	Base
+	PlanId         pgtype.UUID        `json:"plan_id"`
+	OrganizationId pgtype.UUID        `json:"organization_id"`
+	UserId         pgtype.UUID        `json:"user_id"`
+	ValidFrom      pgtype.Timestamptz `json:"valid_from"`
+	ValidUntil     pgtype.Timestamptz `json:"valid_until"`
+}
+
 // CreatePlanInput represents the input for creating a new plan
 type CreatePlanInput struct {
 	Name        string
@@ -51,4 +61,11 @@ type UpdatePlanInput struct {
 type ArchivePlanInput struct {
 	UpdatedBy string
 	Archive   bool
+}
+
+type AssignOrUpdateAssignedPlanInput struct {
+	OrganizationOrUserId pgtype.UUID
+	ValidFrom            pgtype.Timestamptz
+	ValidUntil           pgtype.Timestamptz
+	By                   string
 }

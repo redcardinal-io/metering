@@ -9,11 +9,11 @@ import (
 
 // init registers the migration functions for creating and dropping the "plan_assignment" table with goose.
 func init() {
-	goose.AddMigrationContext(upPlanAssignmentHistoryHistoryHistoryHistoryHistoryHistory, downPlanAssignment)
+	goose.AddMigrationContext(upPlanAssignment, downPlanAssignment)
 }
 
-// upPlanAssignmentHistoryHistoryHistoryHistoryHistoryHistory creates the "plan_assignment" table with its schema, ensures necessary indexes and triggers exist.
-func upPlanAssignmentHistoryHistoryHistoryHistoryHistoryHistory(ctx context.Context, tx *sql.Tx) error {
+// upPlanAssignment creates the "plan_assignment" table with its schema, ensures necessary indexes and triggers exist.
+func upPlanAssignment(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
 		do $$
 		begin
@@ -29,6 +29,8 @@ func upPlanAssignmentHistoryHistoryHistoryHistoryHistoryHistory(ctx context.Cont
         updated_at timestamp with time zone not null default current_timestamp,
         created_by varchar not null,
         updated_by varchar not null,
+
+        unique (plan_id, organization_id, user_id),
 
         FOREIGN KEY (plan_id) REFERENCES plan(id)
         ON DELETE CASCADE,

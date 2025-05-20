@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
@@ -31,6 +32,15 @@ type PlanStoreRepository interface {
 	DeletePlanByIDorSlug(ctx context.Context, idOrSlug string) error
 	UpdatePlanByIDorSlug(ctx context.Context, idOrSlug string, arg models.UpdatePlanInput) (*models.Plan, error)
 	ArchivePlanByIDorSlug(ctx context.Context, idOrSlug string, arg models.ArchivePlanInput) error
+}
+
+type PlanAssignmentsStoreRepository interface {
+	AssignPlanToOrg(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput) (*models.PlanAssignment, error)
+	AssignPlanToUser(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput) (*models.PlanAssignment, error)
+	UnAssignPlanToOrg(ctx context.Context, planId uuid.UUID, orgOrUserId uuid.UUID) error
+	UnAssignPlanToUser(ctx context.Context, planId uuid.UUID, orgOrUserId uuid.UUID) error
+	UpdateAssignedPlanToOrg(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput) (*models.PlanAssignment, error)
+	UpdateAssignedPlanToUser(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput) (*models.PlanAssignment, error)
 }
 
 type FeatureStoreRepository interface {
