@@ -30,7 +30,8 @@ func upPlanAssignment(ctx context.Context, tx *sql.Tx) error {
         created_by varchar not null,
         updated_by varchar not null,
 
-        unique (plan_id, organization_id, user_id),
+        unique (plan_id, organization_id),
+        unique (plan_id, user_id),
 
         FOREIGN KEY (plan_id) REFERENCES plan(id)
         ON DELETE CASCADE,

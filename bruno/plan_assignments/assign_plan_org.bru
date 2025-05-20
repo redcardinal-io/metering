@@ -1,0 +1,24 @@
+meta {
+  name: assign_plan_org
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/v1/plans/37f138db-f2bb-4bd6-b7b7-da34b4dc6bd3/assignments/assign
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "organization_id": "1f140541-d707-4da6-908e-1f9c9eae53df",
+    "valid_from": "2025-05-20T18:13:43.478615Z",
+    "valid_until":"2025-06-20T18:13:43.478615Z",
+    "created_by": "rc_tenant_admin_user"
+  }
+}

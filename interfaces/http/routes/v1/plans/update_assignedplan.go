@@ -13,31 +13,17 @@ import (
 	"go.uber.org/zap"
 )
 
-type AssignPlanRequest struct {
+type UpadateAssignedPlanRequest struct {
 	OrganizationId string  `json:"organization_id"`
 	UserId         string  `json:"user_id"`
 	ValidFrom      *string `json:"valid_from" validate:"required"`
 	ValidUntil     *string `json:"valid_until"`
-	CreatedBy      string  `json:"created_by" validate:"required"`
+	UpdatedBy      string  `json:"updated_by" validate:"required"`
 }
 
-func getPlanId(h *httpHandler, c context.Context, idOrSlug string) (*uuid.UUID, error) {
-	// Try to parse as UUID first
-	planId, err := uuid.Parse(idOrSlug)
-	if err != nil {
-		plan, getErr := h.planSvc.GetPlanByIDorSlug(c, idOrSlug)
-		if getErr != nil {
-			return nil, getErr
-		}
-		planId = plan.ID
-	}
-
-	return &planId, nil
-}
-
-func (h *httpHandler) assignPlan(ctx *fiber.Ctx) error {
+func (h *httpHandler) updateAssignedPlan(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
-	var req AssignPlanRequest
+	var req UpadateAssignedPlanRequest
 
 	idOrSlug := ctx.Params("idOrSlug")
 
@@ -109,15 +95,15 @@ func (h *httpHandler) assignPlan(ctx *fiber.Ctx) error {
 	if req.ValidUntil == nil {
 		var ValidUntil pgtype.Timestamptz
 
-		planAssignment, genErr = h.planSvc.AssignPlan(c, *planId, models.AssignOrUpdateAssignedPlanInput{
+		planAssignment, genErr = h.planSvc.UpdateAssignedPlan(c, *planId, models.AssignOrUpdateAssignedPlanInput{
 			OrganizationOrUserId: pgtype.UUID{Bytes: orgOrUserId, Valid: true},
 			ValidFrom:            pgtype.Timestamptz{Time: ValidFrom, Valid: true},
 			ValidUntil:           ValidUntil,
-			By:                   req.CreatedBy,
+			By:                   req.UpdatedBy,
 		}, isOrg)
 
 		if genErr != nil {
-			h.logger.Error("failed to assign plan", zap.Reflect("error", genErr))
+			h.logger.Error("failed to update assigned plan", zap.Reflect("error", genErr))
 			errResp := domainerrors.NewErrorResponse(genErr)
 			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 		}
@@ -129,20 +115,20 @@ func (h *httpHandler) assignPlan(ctx *fiber.Ctx) error {
 			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 		}
 
-		planAssignment, genErr = h.planSvc.AssignPlan(c, *planId, models.AssignOrUpdateAssignedPlanInput{
+		planAssignment, genErr = h.planSvc.UpdateAssignedPlan(c, *planId, models.AssignOrUpdateAssignedPlanInput{
 			OrganizationOrUserId: pgtype.UUID{Bytes: orgOrUserId, Valid: true},
 			ValidFrom:            pgtype.Timestamptz{Time: ValidFrom, Valid: true},
 			ValidUntil:           pgtype.Timestamptz{Time: ValidUntil, Valid: true},
-			By:                   req.CreatedBy,
+			By:                   req.UpdatedBy,
 		}, isOrg)
 
 		if genErr != nil {
-			h.logger.Error("failed to assign plan", zap.Reflect("error", genErr))
+			h.logger.Error("failed to update assigned plan", zap.Reflect("error", genErr))
 			errResp := domainerrors.NewErrorResponse(genErr)
 			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 		}
 	}
 
 	return ctx.
-		Status(fiber.StatusCreated).JSON(models.NewHttpResponse(planAssignment, "plan created successfully", fiber.StatusCreated))
+		Status(fiber.StatusCreated).JSON(models.NewHttpResponse(planAssignment, "updated assignment successfully", fiber.StatusCreated))
 }

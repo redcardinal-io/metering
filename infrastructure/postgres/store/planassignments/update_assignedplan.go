@@ -77,10 +77,10 @@ func (p *PgPlanAssignmentsStoreRepository) UpdateAssignedPlanToUser(ctx context.
 			UpdatedBy: m.UpdatedBy,
 			UpdatedAt: m.UpdatedAt,
 		},
-		PlanId:         m.PlanID,
-		OrganizationId: m.OrganizationID,
-		ValidFrom:      m.ValidFrom,
-		ValidUntil:     m.ValidUntil,
+		PlanId:     m.PlanID,
+		UserId:     m.UserID,
+		ValidFrom:  m.ValidFrom,
+		ValidUntil: m.ValidUntil,
 	}
 
 	return planAssignment, nil

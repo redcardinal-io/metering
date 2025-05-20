@@ -14,6 +14,8 @@ import (
 func (p *PgPlanAssignmentsStoreRepository) AssignPlanToOrg(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput) (*models.PlanAssignment, error) {
 	m, err := p.q.AssignPlanToOrg(ctx, gen.AssignPlanToOrgParams{
 		PlanID:         pgtype.UUID{Bytes: planId, Valid: true},
+		ValidFrom:      arg.ValidFrom,
+		ValidUntil:     arg.ValidUntil,
 		OrganizationID: arg.OrganizationOrUserId,
 		CreatedBy:      arg.By,
 		UpdatedBy:      arg.By,
@@ -48,10 +50,12 @@ func (p *PgPlanAssignmentsStoreRepository) AssignPlanToOrg(ctx context.Context, 
 
 func (p *PgPlanAssignmentsStoreRepository) AssignPlanToUser(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput) (*models.PlanAssignment, error) {
 	m, err := p.q.AssignPlanToUser(ctx, gen.AssignPlanToUserParams{
-		PlanID:    pgtype.UUID{Bytes: planId, Valid: true},
-		UserID:    arg.OrganizationOrUserId,
-		CreatedBy: arg.By,
-		UpdatedBy: arg.By,
+		PlanID:     pgtype.UUID{Bytes: planId, Valid: true},
+		UserID:     arg.OrganizationOrUserId,
+		ValidFrom:  arg.ValidFrom,
+		ValidUntil: arg.ValidUntil,
+		CreatedBy:  arg.By,
+		UpdatedBy:  arg.By,
 	})
 	if err != nil {
 		p.logger.Error("failed to assign plan to the user", zap.Error(err))
