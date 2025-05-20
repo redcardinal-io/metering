@@ -12,28 +12,13 @@ import (
 )
 
 func (p *PgPlanAssignmentsStoreRepository) UpdateAssignedPlanToOrg(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput) (*models.PlanAssignment, error) {
-	var m gen.PlanAssignment
-	var err error
-
-	if arg.ValidUntil.Valid {
-		m, err = p.q.UpdateOrgsValidFromAndUntil(ctx, gen.UpdateOrgsValidFromAndUntilParams{
-			PlanID:         pgtype.UUID{Bytes: planId, Valid: true},
-			OrganizationID: arg.OrganizationOrUserId,
-			UpdatedBy:      arg.By,
-			ValidFrom:      arg.ValidFrom,
-			ValidUntil:     arg.ValidUntil,
-		})
-	} else {
-		var nullTimestamp pgtype.Timestamptz
-
-		m, err = p.q.UpdateOrgsValidFromAndUntil(ctx, gen.UpdateOrgsValidFromAndUntilParams{
-			PlanID:         pgtype.UUID{Bytes: planId, Valid: true},
-			OrganizationID: arg.OrganizationOrUserId,
-			UpdatedBy:      arg.By,
-			ValidFrom:      arg.ValidFrom,
-			ValidUntil:     nullTimestamp,
-		})
-	}
+	m, err := p.q.UpdateOrgsValidFromAndUntil(ctx, gen.UpdateOrgsValidFromAndUntilParams{
+		PlanID:         pgtype.UUID{Bytes: planId, Valid: true},
+		OrganizationID: arg.OrganizationOrUserId,
+		UpdatedBy:      arg.By,
+		ValidFrom:      arg.ValidFrom,
+		ValidUntil:     arg.ValidUntil,
+	})
 
 	if err != nil {
 		p.logger.Error("failed to update assigned plan to the organization", zap.Error(err))
@@ -64,28 +49,14 @@ func (p *PgPlanAssignmentsStoreRepository) UpdateAssignedPlanToOrg(ctx context.C
 }
 
 func (p *PgPlanAssignmentsStoreRepository) UpdateAssignedPlanToUser(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput) (*models.PlanAssignment, error) {
-	var m gen.PlanAssignment
-	var err error
 
-	if arg.ValidUntil.Valid {
-		m, err = p.q.UpdateUsersValidFromAndUntil(ctx, gen.UpdateUsersValidFromAndUntilParams{
-			PlanID:     pgtype.UUID{Bytes: planId, Valid: true},
-			UserID:     arg.OrganizationOrUserId,
-			UpdatedBy:  arg.By,
-			ValidFrom:  arg.ValidFrom,
-			ValidUntil: arg.ValidUntil,
-		})
-	} else {
-		var nullTimestamp pgtype.Timestamptz
-
-		m, err = p.q.UpdateUsersValidFromAndUntil(ctx, gen.UpdateUsersValidFromAndUntilParams{
-			PlanID:     pgtype.UUID{Bytes: planId, Valid: true},
-			UserID:     arg.OrganizationOrUserId,
-			UpdatedBy:  arg.By,
-			ValidFrom:  arg.ValidFrom,
-			ValidUntil: nullTimestamp,
-		})
-	}
+	m, err := p.q.UpdateUsersValidFromAndUntil(ctx, gen.UpdateUsersValidFromAndUntilParams{
+		PlanID:     pgtype.UUID{Bytes: planId, Valid: true},
+		UserID:     arg.OrganizationOrUserId,
+		UpdatedBy:  arg.By,
+		ValidFrom:  arg.ValidFrom,
+		ValidUntil: arg.ValidUntil,
+	})
 
 	if err != nil {
 		p.logger.Error("failed to update assigned plan to the user", zap.Error(err))

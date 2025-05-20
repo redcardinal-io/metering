@@ -14,6 +14,7 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/features"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/meters"
+	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planassignments"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/plans"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
@@ -27,9 +28,9 @@ import (
 // ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
 //
 // ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
-// 
+//
 // It loads application configuration, sets up logging, connects to Kafka, ClickHouse, and Postgres, and registers event, meter, plan, and feature routes under the `/v1` API group. Resources are properly closed on shutdown.
-// 
+//
 // Returns an error if any initialization or server startup step fails.
 func ServeHttp() error {
 	// Load configuration
@@ -85,11 +86,12 @@ func ServeHttp() error {
 	meterStore := meters.NewPostgresMeterStoreRepository(store.GetDB(), logger)
 	planStore := plans.NewPostgresPlanStoreRepository(store.GetDB(), logger)
 	featureStore := features.NewPgFeatureStoreRepository(store.GetDB(), logger)
+	planAssignmentsStore := planassignments.NewPostgresPlanAssignmentsStoreRepository(store.GetDB(), logger)
 
 	// intialize services
 	producerService := services.NewProducerService(producer, meterStore)
 	meterService := services.NewMeterService(olap, meterStore)
-	planMangementService := services.NewPlanService(planStore, featureStore)
+	planMangementService := services.NewPlanService(planStore, featureStore, planAssignmentsStore)
 
 	// Register routes
 	routes := routes.NewHTTPHandler(logger)

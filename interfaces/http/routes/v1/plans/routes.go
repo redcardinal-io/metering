@@ -37,6 +37,11 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	plans.Put("/:idOrSlug", h.updateByIDorSlug)
 	plans.Delete("/:idOrSlug", h.deleteByIDorSlug)
 
+	// Plan Assignments
+	plans.Post("/:idOrSlug/assignments/assign", h.assignPlan)
+	plans.Put("/:idOrSlug/assignments/terminate", h.unassignPlan)
+	plans.Put("/:idOrSlug/assignments/update", h.updateAssignedPlan)
+
 	// Toggle Plan Archive
 	plans.Put("/:idOrSlug/archive", h.archive)
 }
