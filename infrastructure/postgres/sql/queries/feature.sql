@@ -25,6 +25,7 @@ and tenant_slug = $2;
 -- name: ListFeaturesPaginated :many
 select * from feature
 where tenant_slug = $1
+and (sqlc.narg('type')::feature_enum is null or type = sqlc.narg('type')::feature_enum)
 order by created_at desc
 limit $2
 offset $3;
@@ -41,7 +42,8 @@ and tenant_slug = $2;
 
 -- name: CountFeatures :one
 select count(*) from feature
-where tenant_slug = $1;
+where tenant_slug = $1
+and (sqlc.narg('type')::feature_enum is null or type = sqlc.narg('type')::feature_enum);
 
 -- name: UpdateFeatureByID :one
 update feature
