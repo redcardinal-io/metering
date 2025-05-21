@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -36,11 +38,11 @@ type Plan struct {
 // PlanAssignment represents a plan_assignment entity from the database
 type PlanAssignment struct {
 	Base
-	PlanId         pgtype.UUID        `json:"plan_id"`
-	OrganizationId pgtype.UUID        `json:"organization_id"`
-	UserId         pgtype.UUID        `json:"user_id"`
-	ValidFrom      pgtype.Timestamptz `json:"valid_from"`
-	ValidUntil     pgtype.Timestamptz `json:"valid_until"`
+	PlanId         string    `json:"plan_id"`
+	OrganizationId string    `json:"organization_id"`
+	UserId         string    `json:"user_id"`
+	ValidFrom      time.Time `json:"valid_from"`
+	ValidUntil     time.Time `json:"valid_until"`
 }
 
 // CreatePlanInput represents the input for creating a new plan
@@ -63,9 +65,26 @@ type ArchivePlanInput struct {
 	Archive   bool
 }
 
-type AssignOrUpdateAssignedPlanInput struct {
-	OrganizationOrUserId pgtype.UUID
-	ValidFrom            pgtype.Timestamptz
-	ValidUntil           pgtype.Timestamptz
-	By                   string
+type AssignPlanInput struct {
+	UserID         string
+	OrganizationID string
+	PlanID         string
+	ValidFrom      time.Time
+	ValidUntil     time.Time
+	CreatedBy      string
+}
+
+type UpdateAssignedPlanInput struct {
+	PlanID         string
+	UserID         string
+	OrganizationID string
+	ValidFrom      time.Time
+	ValidUntil     time.Time
+	UpdatedBy      string
+}
+
+type TerminateAssignedPlanInput struct {
+	PlanId         string
+	UserId         string
+	OrganizationId string
 }

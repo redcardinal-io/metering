@@ -188,8 +188,8 @@ type Plan struct {
 type PlanAssignment struct {
 	ID             pgtype.UUID
 	PlanID         pgtype.UUID
-	OrganizationID pgtype.UUID
-	UserID         pgtype.UUID
+	OrganizationID pgtype.Text
+	UserID         pgtype.Text
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
 	CreatedAt      pgtype.Timestamptz

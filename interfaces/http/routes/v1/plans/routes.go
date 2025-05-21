@@ -39,8 +39,8 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	singlePlan.Put("/archive", h.archive)
 
 	// Plan Assignments
-	assignments := plans.Group("/:idOrSlug/assignments")
-	assignments.Post("/", h.assignPlan)
-	assignments.Delete("/", h.terminatePlan)
-	assignments.Put("/", h.updateAssignedPlan)
+	// assignments := plans.Group("/:idOrSlug/assignments")
+	// assignments.Post("/", h.assignPlan)
+	// assignments.Delete("/", h.terminatePlan)
+	// assignments.Put("/", h.updateAssignedPlan)
 }

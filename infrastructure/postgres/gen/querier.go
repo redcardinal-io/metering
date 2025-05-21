@@ -13,8 +13,8 @@ import (
 type Querier interface {
 	ArchivePlanByID(ctx context.Context, arg ArchivePlanByIDParams) (Plan, error)
 	ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugParams) (Plan, error)
-	AssignPlanToOrg(ctx context.Context, arg AssignPlanToOrgParams) (PlanAssignment, error)
-	AssignPlanToUser(ctx context.Context, arg AssignPlanToUserParams) (PlanAssignment, error)
+	// assigns a plan to either an organization or a user based on which id is provided
+	AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAssignment, error)
 	CountFeatures(ctx context.Context, tenantSlug string) (int64, error)
 	CountMeters(ctx context.Context, tenantSlug string) (int64, error)
 	CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error)
@@ -40,18 +40,18 @@ type Querier interface {
 	ListMetersByEventTypes(ctx context.Context, arg ListMetersByEventTypesParams) ([]Meter, error)
 	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)
 	ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error)
+	// removes a plan assignment for either an organization or user
+	TerminateAssignedPlan(ctx context.Context, arg TerminateAssignedPlanParams) error
 	UnArchivePlanByID(ctx context.Context, arg UnArchivePlanByIDParams) (Plan, error)
 	UnArchivePlanBySlug(ctx context.Context, arg UnArchivePlanBySlugParams) (Plan, error)
-	UnAssignPlanToOrg(ctx context.Context, arg UnAssignPlanToOrgParams) error
-	UnAssignPlanToUser(ctx context.Context, arg UnAssignPlanToUserParams) error
+	// updates the validity period of a plan assignment for either organization or user
+	UpdateAssignedPlan(ctx context.Context, arg UpdateAssignedPlanParams) (PlanAssignment, error)
 	UpdateFeatureByID(ctx context.Context, arg UpdateFeatureByIDParams) (Feature, error)
 	UpdateFeatureBySlug(ctx context.Context, arg UpdateFeatureBySlugParams) (Feature, error)
 	UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error)
 	UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error)
-	UpdateOrgsValidFromAndUntil(ctx context.Context, arg UpdateOrgsValidFromAndUntilParams) (PlanAssignment, error)
 	UpdatePlanByID(ctx context.Context, arg UpdatePlanByIDParams) (Plan, error)
 	UpdatePlanBySlug(ctx context.Context, arg UpdatePlanBySlugParams) (Plan, error)
-	UpdateUsersValidFromAndUntil(ctx context.Context, arg UpdateUsersValidFromAndUntilParams) (PlanAssignment, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -69,8 +69,8 @@ create table if not exists feature (
 create table if not exists plan_assignment (
 	id uuid primary key default uuid_generate_v4(),
 	plan_id uuid not null,
-	organization_id uuid default null,
-	user_id uuid default null,
+	organization_id string default null,
+	user_id string default null,
 	valid_from timestamp with time zone not null,
 	valid_until timestamp with time zone default null,
 	created_at timestamp with time zone not null default current_timestamp,

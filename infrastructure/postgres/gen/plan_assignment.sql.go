@@ -11,78 +11,36 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const assignPlanToOrg = `-- name: AssignPlanToOrg :one
-INSERT INTO plan_assignment (
+const assignPlan = `-- name: AssignPlan :one
+insert into plan_assignment (
     plan_id,
     organization_id,
+
+    user_id,
     valid_from,
     valid_until,
     created_by,
     updated_by
-) VALUES (
-    $1, $2, $3, $4, $5, $6
-) RETURNING id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
+) values (
+    $1, $2, $3, $4, $5, $6, $7
+) returning id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
 `
 
-type AssignPlanToOrgParams struct {
+type AssignPlanParams struct {
 	PlanID         pgtype.UUID
-	OrganizationID pgtype.UUID
+	OrganizationID pgtype.Text
+	UserID         pgtype.Text
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
 	CreatedBy      string
 	UpdatedBy      string
 }
 
-func (q *Queries) AssignPlanToOrg(ctx context.Context, arg AssignPlanToOrgParams) (PlanAssignment, error) {
-	row := q.db.QueryRow(ctx, assignPlanToOrg,
+// assigns a plan to either an organization or a user based on which id is provided
+func (q *Queries) AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAssignment, error) {
+	row := q.db.QueryRow(ctx, assignPlan,
 		arg.PlanID,
 		arg.OrganizationID,
-		arg.ValidFrom,
-		arg.ValidUntil,
-		arg.CreatedBy,
-		arg.UpdatedBy,
-	)
-	var i PlanAssignment
-	err := row.Scan(
-		&i.ID,
-		&i.PlanID,
-		&i.OrganizationID,
-		&i.UserID,
-		&i.ValidFrom,
-		&i.ValidUntil,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.CreatedBy,
-		&i.UpdatedBy,
-	)
-	return i, err
-}
-
-const assignPlanToUser = `-- name: AssignPlanToUser :one
-INSERT INTO plan_assignment (
-    plan_id,
-    user_id,
-    valid_from,
-    valid_until,
-    created_by,
-    updated_by
-) VALUES (
-    $1, $2, $3, $4, $5, $6
-) RETURNING id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
-`
-
-type AssignPlanToUserParams struct {
-	PlanID     pgtype.UUID
-	UserID     pgtype.UUID
-	ValidFrom  pgtype.Timestamptz
-	ValidUntil pgtype.Timestamptz
-	CreatedBy  string
-	UpdatedBy  string
-}
-
-func (q *Queries) AssignPlanToUser(ctx context.Context, arg AssignPlanToUserParams) (PlanAssignment, error) {
-	row := q.db.QueryRow(ctx, assignPlanToUser,
-		arg.PlanID,
 		arg.UserID,
 		arg.ValidFrom,
 		arg.ValidUntil,
@@ -105,105 +63,58 @@ func (q *Queries) AssignPlanToUser(ctx context.Context, arg AssignPlanToUserPara
 	return i, err
 }
 
-const unAssignPlanToOrg = `-- name: UnAssignPlanToOrg :exec
-DELETE FROM plan_assignment
-WHERE plan_id = $1
-AND organization_id = $2
+const terminateAssignedPlan = `-- name: TerminateAssignedPlan :exec
+delete from plan_assignment
+where plan_id = $1
+and (
+    (organization_id = $2 and $2 is not null) or
+    (user_id = $3 and $3 is not null)
+)
 `
 
-type UnAssignPlanToOrgParams struct {
+type TerminateAssignedPlanParams struct {
 	PlanID         pgtype.UUID
-	OrganizationID pgtype.UUID
+	OrganizationID pgtype.Text
+	UserID         pgtype.Text
 }
 
-func (q *Queries) UnAssignPlanToOrg(ctx context.Context, arg UnAssignPlanToOrgParams) error {
-	_, err := q.db.Exec(ctx, unAssignPlanToOrg, arg.PlanID, arg.OrganizationID)
+// removes a plan assignment for either an organization or user
+func (q *Queries) TerminateAssignedPlan(ctx context.Context, arg TerminateAssignedPlanParams) error {
+	_, err := q.db.Exec(ctx, terminateAssignedPlan, arg.PlanID, arg.OrganizationID, arg.UserID)
 	return err
 }
 
-const unAssignPlanToUser = `-- name: UnAssignPlanToUser :exec
-DELETE FROM plan_assignment
-WHERE plan_id = $1
-AND user_id = $2
+const updateAssignedPlan = `-- name: UpdateAssignedPlan :one
+update plan_assignment
+set valid_until = coalesce($4, valid_until),
+    valid_from = coalesce($3, valid_from),
+    updated_by = $5
+where (plan_id = $1)
+and (
+    (organization_id = $2 or $2 is null) or
+    (user_id = $6 or $6 is null)
+)
+returning id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
 `
 
-type UnAssignPlanToUserParams struct {
-	PlanID pgtype.UUID
-	UserID pgtype.UUID
-}
-
-func (q *Queries) UnAssignPlanToUser(ctx context.Context, arg UnAssignPlanToUserParams) error {
-	_, err := q.db.Exec(ctx, unAssignPlanToUser, arg.PlanID, arg.UserID)
-	return err
-}
-
-const updateOrgsValidFromAndUntil = `-- name: UpdateOrgsValidFromAndUntil :one
-UPDATE plan_assignment
-SET valid_until = $5,
-    valid_from = $4,
-    updated_by = $3
-WHERE plan_id = $1
-AND organization_id = $2
-RETURNING id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
-`
-
-type UpdateOrgsValidFromAndUntilParams struct {
+type UpdateAssignedPlanParams struct {
 	PlanID         pgtype.UUID
-	OrganizationID pgtype.UUID
-	UpdatedBy      string
+	OrganizationID pgtype.Text
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
+	UpdatedBy      string
+	UserID         pgtype.Text
 }
 
-func (q *Queries) UpdateOrgsValidFromAndUntil(ctx context.Context, arg UpdateOrgsValidFromAndUntilParams) (PlanAssignment, error) {
-	row := q.db.QueryRow(ctx, updateOrgsValidFromAndUntil,
+// updates the validity period of a plan assignment for either organization or user
+func (q *Queries) UpdateAssignedPlan(ctx context.Context, arg UpdateAssignedPlanParams) (PlanAssignment, error) {
+	row := q.db.QueryRow(ctx, updateAssignedPlan,
 		arg.PlanID,
 		arg.OrganizationID,
-		arg.UpdatedBy,
 		arg.ValidFrom,
 		arg.ValidUntil,
-	)
-	var i PlanAssignment
-	err := row.Scan(
-		&i.ID,
-		&i.PlanID,
-		&i.OrganizationID,
-		&i.UserID,
-		&i.ValidFrom,
-		&i.ValidUntil,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.CreatedBy,
-		&i.UpdatedBy,
-	)
-	return i, err
-}
-
-const updateUsersValidFromAndUntil = `-- name: UpdateUsersValidFromAndUntil :one
-UPDATE plan_assignment
-SET valid_until = $5,
-    valid_from = $4,
-    updated_by = $3
-WHERE plan_id = $1
-AND user_id = $2
-RETURNING id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
-`
-
-type UpdateUsersValidFromAndUntilParams struct {
-	PlanID     pgtype.UUID
-	UserID     pgtype.UUID
-	UpdatedBy  string
-	ValidFrom  pgtype.Timestamptz
-	ValidUntil pgtype.Timestamptz
-}
-
-func (q *Queries) UpdateUsersValidFromAndUntil(ctx context.Context, arg UpdateUsersValidFromAndUntilParams) (PlanAssignment, error) {
-	row := q.db.QueryRow(ctx, updateUsersValidFromAndUntil,
-		arg.PlanID,
+		arg.UpdatedBy,
 		arg.UserID,
-		arg.UpdatedBy,
-		arg.ValidFrom,
-		arg.ValidUntil,
 	)
 	var i PlanAssignment
 	err := row.Scan(
