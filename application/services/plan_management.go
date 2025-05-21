@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/application/repositories"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
@@ -24,53 +23,17 @@ func NewPlanService(planStore repositories.PlanStoreRepository, featureStore rep
 	}
 }
 
-func (s *PlanManagementService) AssignPlan(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput, isOrg bool) (*models.PlanAssignment, error) {
+func (s *PlanManagementService) CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error) {
 	// Assign the plan based on isOrg parameter in the database
-
-	var m *models.PlanAssignment
-	var err error
-
-	if isOrg {
-		m, err = s.planAssignmentsStore.AssignPlanToOrg(ctx, planId, arg)
-	} else {
-		m, err = s.planAssignmentsStore.AssignPlanToUser(ctx, planId, arg)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return m, nil
+	return s.planAssignmentsStore.CreateAssignment(ctx, arg)
 }
 
-func (s *PlanManagementService) UnAssignPlan(ctx context.Context, planId uuid.UUID, orgOrUserId uuid.UUID, isOrg bool) error {
-	var err error
-
-	if isOrg {
-		err = s.planAssignmentsStore.UnAssignPlanToOrg(ctx, planId, orgOrUserId)
-	} else {
-		err = s.planAssignmentsStore.UnAssignPlanToUser(ctx, planId, orgOrUserId)
-	}
-	if err != nil {
-		return err
-	}
-
-	return nil
+func (s *PlanManagementService) TerminateAssignment(ctx context.Context, arg models.TerminateAssignmentInput) error {
+	return s.planAssignmentsStore.TerminateAssignment(ctx, arg)
 }
 
-func (s *PlanManagementService) UpdateAssignedPlan(ctx context.Context, planId uuid.UUID, arg models.AssignOrUpdateAssignedPlanInput, isOrg bool) (*models.PlanAssignment, error) {
-	// Call the store repository to update the assigned plan
-	var m *models.PlanAssignment
-	var err error
-
-	if isOrg {
-		m, err = s.planAssignmentsStore.UpdateAssignedPlanToOrg(ctx, planId, arg)
-	} else {
-		m, err = s.planAssignmentsStore.UpdateAssignedPlanToUser(ctx, planId, arg)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return m, nil
+func (s *PlanManagementService) UpdateAssignment(ctx context.Context, arg models.UpdateAssignmentInput) (*models.PlanAssignment, error) {
+	return s.planAssignmentsStore.UpdateAssignment(ctx, arg)
 }
 
 func (s *PlanManagementService) CreatePlan(ctx context.Context, arg models.CreatePlanInput) (*models.Plan, error) {

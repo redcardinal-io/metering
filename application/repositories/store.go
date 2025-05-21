@@ -33,9 +33,9 @@ type PlanStoreRepository interface {
 }
 
 type PlanAssignmentsStoreRepository interface {
-	AssignPlan(ctx context.Context, arg models.AssignPlanInput) (*models.PlanAssignment, error)
-	TerminatePlan(ctx context.Context, arg *models.TerminateAssignedPlanInput) error
-	UpdateAssignedPlan(ctx context.Context, arg models.UpdateAssignedPlanInput) (*models.PlanAssignment, error)
+	CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error)
+	TerminateAssignment(ctx context.Context, arg models.TerminateAssignmentInput) error
+	UpdateAssignment(ctx context.Context, arg models.UpdateAssignmentInput) (*models.PlanAssignment, error)
 }
 
 type FeatureStoreRepository interface {

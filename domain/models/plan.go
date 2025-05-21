@@ -38,8 +38,8 @@ type Plan struct {
 // PlanAssignment represents a plan_assignment entity from the database
 type PlanAssignment struct {
 	Base
-	PlanId         string    `json:"plan_id"`
-	OrganizationId string    `json:"organization_id"`
+	PlanID         string    `json:"plan_id"`
+	OrganizationID string    `json:"organization_id"`
 	UserId         string    `json:"user_id"`
 	ValidFrom      time.Time `json:"valid_from"`
 	ValidUntil     time.Time `json:"valid_until"`
@@ -65,7 +65,7 @@ type ArchivePlanInput struct {
 	Archive   bool
 }
 
-type AssignPlanInput struct {
+type CreateAssignmentInput struct {
 	UserID         string
 	OrganizationID string
 	PlanID         string
@@ -74,7 +74,7 @@ type AssignPlanInput struct {
 	CreatedBy      string
 }
 
-type UpdateAssignedPlanInput struct {
+type UpdateAssignmentInput struct {
 	PlanID         string
 	UserID         string
 	OrganizationID string
@@ -83,8 +83,8 @@ type UpdateAssignedPlanInput struct {
 	UpdatedBy      string
 }
 
-type TerminateAssignedPlanInput struct {
-	PlanId         string
-	UserId         string
+type TerminateAssignmentInput struct {
+	PlanID         string
+	UserID         string
 	OrganizationId string
 }

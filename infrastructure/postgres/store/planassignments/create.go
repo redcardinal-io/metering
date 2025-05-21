@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *PgPlanAssignmentsStoreRepository) AssignPlan(ctx context.Context, arg models.AssignPlanInput) (*models.PlanAssignment, error) {
+func (p *PgPlanAssignmentsStoreRepository) CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error) {
 	// using must parse because the http handler should have already validated the UUID
 	planId := uuid.MustParse(arg.PlanID)
 
@@ -20,6 +20,7 @@ func (p *PgPlanAssignmentsStoreRepository) AssignPlan(ctx context.Context, arg m
 		ValidFrom:      pgtype.Timestamptz{Time: arg.ValidFrom, Valid: true},
 		ValidUntil:     pgtype.Timestamptz{Time: arg.ValidUntil, Valid: true},
 		OrganizationID: pgtype.Text{String: arg.OrganizationID, Valid: arg.OrganizationID != ""},
+		UserID:         pgtype.Text{String: arg.UserID, Valid: arg.UserID != ""},
 		CreatedBy:      arg.CreatedBy,
 		UpdatedBy:      arg.CreatedBy,
 	})
@@ -42,8 +43,8 @@ func (p *PgPlanAssignmentsStoreRepository) AssignPlan(ctx context.Context, arg m
 			UpdatedBy: m.UpdatedBy,
 			UpdatedAt: m.UpdatedAt,
 		},
-		PlanId:         m.PlanID.String(),
-		OrganizationId: m.OrganizationID.String,
+		PlanID:         m.PlanID.String(),
+		OrganizationID: m.OrganizationID.String,
 		UserId:         m.UserID.String,
 		ValidFrom:      m.ValidFrom.Time,
 		ValidUntil:     m.ValidUntil.Time,

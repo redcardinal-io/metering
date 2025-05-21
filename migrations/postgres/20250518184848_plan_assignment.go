@@ -21,8 +21,8 @@ func upPlanAssignment(ctx context.Context, tx *sql.Tx) error {
 			create table if not exists plan_assignment (
 				id uuid primary key default uuid_generate_v4(),
 				plan_id uuid not null,
-				organization_id string default null,
-				user_id string default null,
+				organization_id varchart default null,
+				user_id varchar default null,
         valid_from timestamp with time zone not null,
         valid_until timestamp with time zone default null,
         created_at timestamp with time zone not null default current_timestamp,
@@ -33,13 +33,13 @@ func upPlanAssignment(ctx context.Context, tx *sql.Tx) error {
         unique (plan_id, organization_id),
         unique (plan_id, user_id),
 
-        FOREIGN KEY (plan_id) REFERENCES plan(id)
-        ON DELETE CASCADE,
+        foreign key (plan_id) references plan(id)
+        on delete cascade,
 
-        CONSTRAINT only_one_entity CHECK (
-          (organization_id IS NULL AND user_id IS NOT NULL)
-          OR
-          (organization_id IS NOT NULL AND user_id IS NULL)
+        constraint only_one_entity CHECK (
+          (organization_id is null and user_id is not null)
+          or
+          (organization_id is not null AND user_id is null)
         )
 			);
       perform goose_manage_updated_at('plan_assignment');

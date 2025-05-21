@@ -160,7 +160,16 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
 // downPlanAssignment removes the "plan_assignment" table from the database if it exists.
 func downPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
+	-- drop triggers
+  drop trigger if exists trg_plan_assignment_insert on plan_assignment;
+  drop trigger if exists trg_plan_assignment_update on plan_assignment;
+  drop trigger if exists trg_plan_assignment_delete on plan_assignment;
+  drop function if exists fn_plan_assignment_insert_trigger();
+  drop function if exists fn_plan_assignment_update_trigger();
+  drop function if exists fn_plan_assignment_delete_trigger();
+
   drop table if exists plan_assignment_history;
+  drop type if exists history_action_enum;
   `)
 	return err
 }
