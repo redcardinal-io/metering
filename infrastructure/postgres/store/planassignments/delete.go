@@ -17,12 +17,12 @@ func (p *PgPlanAssignmentsStoreRepository) TerminateAssignment(ctx context.Conte
 
 	err := p.q.TerminateAssignedPlan(ctx, gen.TerminateAssignedPlanParams{
 		PlanID:         pgtype.UUID{Bytes: planID, Valid: true},
-		OrganizationID: pgtype.Text{String: arg.OrganizationId, Valid: arg.OrganizationId != ""},
+		OrganizationID: pgtype.Text{String: arg.OrganizationID, Valid: arg.OrganizationID != ""},
 		UserID:         pgtype.Text{String: arg.UserID, Valid: arg.UserID != ""},
 	})
 	if err != nil {
 		p.logger.Error("failed to un-assign plan to the organization", zap.Error(err))
-		return postgres.MapError(err, "Postgres.UnAssignPlan")
+		return postgres.MapError(err, "Postgres.TerminatePlan")
 	}
 
 	return nil

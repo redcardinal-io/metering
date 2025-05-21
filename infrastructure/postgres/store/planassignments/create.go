@@ -25,8 +25,8 @@ func (p *PgPlanAssignmentsStoreRepository) CreateAssignment(ctx context.Context,
 		UpdatedBy:      arg.CreatedBy,
 	})
 	if err != nil {
-		p.logger.Error("failed to assign plan to the organization", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.AssignPlan")
+		p.logger.Error("failed to assign plan", zap.Error(err))
+		return nil, postgres.MapError(err, "Postgres.CreateAssignment")
 	}
 
 	id, err := uuid.FromBytes(m.ID.Bytes[:])
@@ -45,7 +45,7 @@ func (p *PgPlanAssignmentsStoreRepository) CreateAssignment(ctx context.Context,
 		},
 		PlanID:         m.PlanID.String(),
 		OrganizationID: m.OrganizationID.String,
-		UserId:         m.UserID.String,
+		UserID:         m.UserID.String,
 		ValidFrom:      m.ValidFrom.Time,
 		ValidUntil:     m.ValidUntil.Time,
 	}

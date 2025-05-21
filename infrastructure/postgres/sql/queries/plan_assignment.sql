@@ -25,12 +25,12 @@ and (
 -- name: UpdateAssignedPlan :one
 -- updates the validity period of a plan assignment for either organization or user
 update plan_assignment
-set valid_until = coalesce($4, valid_until),
-    valid_from = coalesce($3, valid_from),
-    updated_by = $5
+set valid_until = coalesce(sqlc.narg('valid_until'), valid_until),
+    valid_from = coalesce(sqlc.narg('valid_from'), valid_from),
+    updated_by = $2
 where (plan_id = $1)
 and (
-    (organization_id = $2 or $2 is null) or
-    (user_id = $6 or $6 is null)
+    (organization_id = $3 or $3 is null) or
+    (user_id = $4 or $4 is null)
 )
 returning *;

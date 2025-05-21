@@ -21,7 +21,7 @@ func upPlanAssignment(ctx context.Context, tx *sql.Tx) error {
 			create table if not exists plan_assignment (
 				id uuid primary key default uuid_generate_v4(),
 				plan_id uuid not null,
-				organization_id varchart default null,
+				organization_id varchar default null,
 				user_id varchar default null,
         valid_from timestamp with time zone not null,
         valid_until timestamp with time zone default null,

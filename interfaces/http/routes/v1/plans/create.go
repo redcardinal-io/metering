@@ -52,11 +52,3 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	return ctx.
 		Status(fiber.StatusCreated).JSON(models.NewHttpResponse(plan, "plan created successfully", fiber.StatusCreated))
 }
-
-type assignPlanRequest struct {
-	OrganizationId string  `json:"organization_id"`
-	UserId         string  `json:"user_id"`
-	ValidFrom      *string `json:"valid_from" validate:"required"`
-	ValidUntil     *string `json:"valid_until"`
-	CreatedBy      string  `json:"created_by" validate:"required"`
-}

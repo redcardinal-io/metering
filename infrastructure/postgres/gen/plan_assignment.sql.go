@@ -86,35 +86,35 @@ func (q *Queries) TerminateAssignedPlan(ctx context.Context, arg TerminateAssign
 
 const updateAssignedPlan = `-- name: UpdateAssignedPlan :one
 update plan_assignment
-set valid_until = coalesce($4, valid_until),
-    valid_from = coalesce($3, valid_from),
-    updated_by = $5
+set valid_until = coalesce($5, valid_until),
+    valid_from = coalesce($6, valid_from),
+    updated_by = $2
 where (plan_id = $1)
 and (
-    (organization_id = $2 or $2 is null) or
-    (user_id = $6 or $6 is null)
+    (organization_id = $3 or $3 is null) or
+    (user_id = $4 or $4 is null)
 )
 returning id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
 `
 
 type UpdateAssignedPlanParams struct {
 	PlanID         pgtype.UUID
-	OrganizationID pgtype.Text
-	ValidFrom      pgtype.Timestamptz
-	ValidUntil     pgtype.Timestamptz
 	UpdatedBy      string
+	OrganizationID pgtype.Text
 	UserID         pgtype.Text
+	ValidUntil     pgtype.Timestamptz
+	ValidFrom      pgtype.Timestamptz
 }
 
 // updates the validity period of a plan assignment for either organization or user
 func (q *Queries) UpdateAssignedPlan(ctx context.Context, arg UpdateAssignedPlanParams) (PlanAssignment, error) {
 	row := q.db.QueryRow(ctx, updateAssignedPlan,
 		arg.PlanID,
-		arg.OrganizationID,
-		arg.ValidFrom,
-		arg.ValidUntil,
 		arg.UpdatedBy,
+		arg.OrganizationID,
 		arg.UserID,
+		arg.ValidUntil,
+		arg.ValidFrom,
 	)
 	var i PlanAssignment
 	err := row.Scan(

@@ -40,7 +40,7 @@ type PlanAssignment struct {
 	Base
 	PlanID         string    `json:"plan_id"`
 	OrganizationID string    `json:"organization_id"`
-	UserId         string    `json:"user_id"`
+	UserID         string    `json:"user_id"`
 	ValidFrom      time.Time `json:"valid_from"`
 	ValidUntil     time.Time `json:"valid_until"`
 }
@@ -78,13 +78,13 @@ type UpdateAssignmentInput struct {
 	PlanID         string
 	UserID         string
 	OrganizationID string
-	ValidFrom      time.Time
-	ValidUntil     time.Time
+	ValidFrom      *time.Time
+	ValidUntil     *time.Time
 	UpdatedBy      string
 }
 
 type TerminateAssignmentInput struct {
 	PlanID         string
 	UserID         string
-	OrganizationId string
+	OrganizationID string
 }

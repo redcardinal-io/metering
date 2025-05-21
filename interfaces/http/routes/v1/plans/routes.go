@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/redcardinal-io/metering/application/services"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
+	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans/planassignments"
 )
 
 type httpHandler struct {
@@ -32,15 +33,12 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	plans.Get("/", h.list)
 
 	// Single Plan routes with id or slug parameter
-	singlePlan := plans.Group("/:idOrSlug")
-	singlePlan.Get("/", h.details)
-	singlePlan.Put("/", h.update)
-	singlePlan.Delete("/", h.delete_h)
-	singlePlan.Put("/archive", h.archive)
+	plan := plans.Group("/:idOrSlug")
+	plan.Get("/", h.details)
+	plan.Put("/", h.update)
+	plan.Delete("/", h.delete_h)
+	plan.Put("/archive", h.archive)
 
-	// Plan Assignments
-	// assignments := plans.Group("/:idOrSlug/assignments")
-	// assignments.Post("/", h.assignPlan)
-	// assignments.Delete("/", h.terminatePlan)
-	// assignments.Put("/", h.updateAssignedPlan)
+	assignments := planassignments.NewHTTPHandler(h.logger, h.planSvc)
+	assignments.RegisterRoutes(plan)
 }

@@ -15,17 +15,27 @@ func (p *PgPlanAssignmentsStoreRepository) UpdateAssignment(ctx context.Context,
 	// using must parse because the http handler should have already validated the UUID
 	planId := uuid.MustParse(arg.PlanID)
 
+	validFrom := pgtype.Timestamptz{Valid: false}
+	if arg.ValidFrom != nil {
+		validFrom = pgtype.Timestamptz{Time: *arg.ValidFrom, Valid: true}
+	}
+
+	validUntil := pgtype.Timestamptz{Valid: false}
+	if arg.ValidUntil != nil {
+		validUntil = pgtype.Timestamptz{Time: *arg.ValidUntil, Valid: true}
+	}
+
 	m, err := p.q.UpdateAssignedPlan(ctx, gen.UpdateAssignedPlanParams{
 		PlanID:         pgtype.UUID{Bytes: planId, Valid: true},
 		OrganizationID: pgtype.Text{String: arg.OrganizationID, Valid: arg.OrganizationID != ""},
 		UserID:         pgtype.Text{String: arg.UserID, Valid: arg.UserID != ""},
 		UpdatedBy:      arg.UpdatedBy,
-		ValidFrom:      pgtype.Timestamptz{Time: arg.ValidFrom, Valid: true},
-		ValidUntil:     pgtype.Timestamptz{Time: arg.ValidUntil, Valid: true},
+		ValidFrom:      validFrom,
+		ValidUntil:     validUntil,
 	})
 	if err != nil {
-		p.logger.Error("failed to update assigned plan to the organization", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.UpdateAssignPlan")
+		p.logger.Error("failed to update assigned plan ", zap.Error(err))
+		return nil, postgres.MapError(err, "Postgres.UpdateAssignment")
 	}
 
 	id, err := uuid.FromBytes(m.ID.Bytes[:])
@@ -44,7 +54,7 @@ func (p *PgPlanAssignmentsStoreRepository) UpdateAssignment(ctx context.Context,
 		},
 		PlanID:         m.PlanID.String(),
 		OrganizationID: m.OrganizationID.String,
-		UserId:         m.UserID.String,
+		UserID:         m.UserID.String,
 		ValidFrom:      m.ValidFrom.Time,
 		ValidUntil:     m.ValidUntil.Time,
 	}
