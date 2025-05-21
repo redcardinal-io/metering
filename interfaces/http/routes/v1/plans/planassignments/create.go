@@ -12,10 +12,10 @@ import (
 )
 
 type createAssignmentRequest struct {
-	OrganizationId string    `json:"organization_id"`
+	OrganizationID string    `json:"organization_id"`
 	UserId         string    `json:"user_id"`
 	ValidFrom      time.Time `json:"valid_from" validate:"required"`
-	ValidUntil     time.Time `json:"valid_until" validate:"omitempty"`
+	ValidUntil     time.Time `json:"valid_until" validate:"required"`
 	CreatedBy      string    `json:"created_by" validate:"required"`
 }
 
@@ -62,13 +62,13 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.OrganizationId != "" && req.UserId != "" {
+	if req.OrganizationID != "" && req.UserId != "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "organization_id and user_id are mutually exclusive, provide any one")
 		h.logger.Error("organization_id and user_id are mutually exclusive, provide any one", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.OrganizationId == "" && req.UserId == "" {
+	if req.OrganizationID == "" && req.UserId == "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "organization_id or user_id is required")
 		h.logger.Error("organization_id or user_id is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
@@ -85,7 +85,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 
 	planAssignment, err := h.planSvc.CreateAssignment(c, models.CreateAssignmentInput{
 		PlanID:         planID,
-		OrganizationID: req.OrganizationId,
+		OrganizationID: req.OrganizationID,
 		UserID:         req.UserId,
 		ValidFrom:      req.ValidFrom.UTC(),
 		ValidUntil:     req.ValidUntil.UTC(),

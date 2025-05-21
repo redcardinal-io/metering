@@ -12,10 +12,10 @@ import (
 )
 
 type upadateAssignedPlanRequest struct {
-	OrganizationId string     `json:"organization_id"`
-	UserId         string     `json:"user_id"`
-	ValidFrom      *time.Time `json:"valid_from" validate:"required"`
-	ValidUntil     *time.Time `json:"valid_until"`
+	OrganizationID string     `json:"organization_id"`
+	UserID         string     `json:"user_id"`
+	ValidFrom      *time.Time `json:"valid_from" validate:"omitempty"`
+	ValidUntil     *time.Time `json:"valid_until" validate:"omitempty"`
 	UpdatedBy      string     `json:"updated_by" validate:"required"`
 }
 
@@ -44,13 +44,13 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.OrganizationId != "" && req.UserId != "" {
+	if req.OrganizationID != "" && req.UserID != "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "organization_id and user_id are mutually exclusive, provide any one")
 		h.logger.Error("organization_id and user_id are mutually exclusive, provide any one", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.OrganizationId == "" && req.UserId == "" {
+	if req.OrganizationID == "" && req.UserID == "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "organization_id or user_id is required")
 		h.logger.Error("organization_id or user_id is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
@@ -65,13 +65,18 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	utcValidFrom := req.ValidFrom.UTC()
-	utcValidUntil := req.ValidUntil.UTC()
+	var utcValidFrom, utcValidUntil time.Time
+	if req.ValidFrom != nil {
+		utcValidFrom = req.ValidFrom.UTC()
+	}
+	if req.ValidUntil != nil {
+		utcValidUntil = req.ValidUntil.UTC()
+	}
 
 	updatedAssignment, err := h.planSvc.UpdateAssignment(c, models.UpdateAssignmentInput{
 		PlanID:         planId,
-		OrganizationID: req.OrganizationId,
-		UserID:         req.UserId,
+		OrganizationID: req.OrganizationID,
+		UserID:         req.UserID,
 		ValidFrom:      &utcValidFrom,
 		ValidUntil:     &utcValidUntil,
 		UpdatedBy:      req.UpdatedBy,

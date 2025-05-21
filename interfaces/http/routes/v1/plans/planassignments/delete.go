@@ -11,8 +11,8 @@ import (
 )
 
 type terminatePlanRequest struct {
-	OrganizationId string `json:"organization_id"`
-	UserId         string `json:"user_id"`
+	OrganizationID string `json:"organization_id"`
+	UserID         string `json:"user_id"`
 }
 
 func (h *httpHandler) delete(ctx *fiber.Ctx) error {
@@ -40,13 +40,13 @@ func (h *httpHandler) delete(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.OrganizationId != "" && req.UserId != "" {
+	if req.OrganizationID != "" && req.UserID != "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "organization_id and user_id are mutually exclusive, provide any one")
 		h.logger.Error("organization_id and user_id are mutually exclusive, provide any one", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.OrganizationId == "" && req.UserId == "" {
+	if req.OrganizationID == "" && req.UserID == "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "organization_id or user_id is required")
 		h.logger.Error("organization_id or user_id is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
@@ -63,8 +63,8 @@ func (h *httpHandler) delete(ctx *fiber.Ctx) error {
 
 	err := h.planSvc.TerminateAssignment(c, models.TerminateAssignmentInput{
 		PlanID:         planID,
-		OrganizationID: req.OrganizationId,
-		UserID:         req.UserId,
+		OrganizationID: req.OrganizationID,
+		UserID:         req.UserID,
 	})
 	if err != nil {
 		h.logger.Error("failed to terminate plan assignment", zap.Reflect("error", err))
