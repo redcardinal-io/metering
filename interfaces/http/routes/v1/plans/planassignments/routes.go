@@ -33,7 +33,7 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	assignments.Delete("/", h.delete)
 }
 
-func getSlugFromPlanID(ctx context.Context, idOrSlug string, planSvc *services.PlanManagementService) (string, error) {
+func getPlanIDFromIdentifier(ctx context.Context, idOrSlug string, planSvc *services.PlanManagementService) (string, error) {
 	_, err := uuid.Parse(idOrSlug)
 	if err != nil {
 		plan, err := planSvc.GetPlanByIDorSlug(ctx, idOrSlug)

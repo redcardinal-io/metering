@@ -58,7 +58,7 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
 
-	planId, getErr := getSlugFromPlanID(c, idOrSlug, h.planSvc)
+	planId, getErr := getPlanIDFromIdentifier(c, idOrSlug, h.planSvc)
 	if getErr != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(getErr, domainerrors.EINVALID, "invalid plan id or slug")
 		h.logger.Error("invalid plan id or slug", zap.Reflect("error", errResp))

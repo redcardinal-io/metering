@@ -13,20 +13,20 @@ import (
 
 type createAssignmentRequest struct {
 	OrganizationID string    `json:"organization_id"`
-	UserId         string    `json:"user_id"`
+	UserID         string    `json:"user_id"`
 	ValidFrom      time.Time `json:"valid_from" validate:"required"`
 	ValidUntil     time.Time `json:"valid_until" validate:"required"`
 	CreatedBy      string    `json:"created_by" validate:"required"`
 }
 
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
-	tenant_slug := ctx.Get(constants.TenantHeader)
+	tenantSlug := ctx.Get(constants.TenantHeader)
 	var req createAssignmentRequest
 
 	idOrSlug := ctx.Params("idOrSlug")
 
 	if idOrSlug == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan ID is required")
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan idOrSlug is required")
 		h.logger.Error("plan idOrSlug is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
@@ -62,21 +62,21 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.OrganizationID != "" && req.UserId != "" {
+	if req.OrganizationID != "" && req.UserID != "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "organization_id and user_id are mutually exclusive, provide any one")
 		h.logger.Error("organization_id and user_id are mutually exclusive, provide any one", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.OrganizationID == "" && req.UserId == "" {
+	if req.OrganizationID == "" && req.UserID == "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "organization_id or user_id is required")
 		h.logger.Error("organization_id or user_id is required", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
+	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
-	planID, err := getSlugFromPlanID(c, idOrSlug, h.planSvc)
+	planID, err := getPlanIDFromIdentifier(c, idOrSlug, h.planSvc)
 	if err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid plan id or slug")
 		h.logger.Error("invalid plan id or slug", zap.Reflect("error", errResp))
@@ -86,7 +86,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	planAssignment, err := h.planSvc.CreateAssignment(c, models.CreateAssignmentInput{
 		PlanID:         planID,
 		OrganizationID: req.OrganizationID,
-		UserID:         req.UserId,
+		UserID:         req.UserID,
 		ValidFrom:      req.ValidFrom.UTC(),
 		ValidUntil:     req.ValidUntil.UTC(),
 		CreatedBy:      req.CreatedBy,
@@ -98,5 +98,5 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.
-		Status(fiber.StatusCreated).JSON(models.NewHttpResponse(planAssignment, "plan created successfully", fiber.StatusCreated))
+		Status(fiber.StatusCreated).JSON(models.NewHttpResponse(planAssignment, "plan assignment created successfully", fiber.StatusCreated))
 }
