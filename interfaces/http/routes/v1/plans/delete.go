@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (h *httpHandler) deleteByIDorSlug(ctx *fiber.Ctx) error {
+func (h *httpHandler) delete_h(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	idOrSlug := ctx.Params("idOrSlug")
 

@@ -30,18 +30,17 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	// Plan collection routes
 	plans.Post("/", h.create)
 	plans.Get("/", h.list)
-	plans.Get("/:type", h.list)
 
-	// Single Plan routes with id parameter
-	plans.Get("/:idOrSlug", h.getByIDorSlug)
-	plans.Put("/:idOrSlug", h.updateByIDorSlug)
-	plans.Delete("/:idOrSlug", h.deleteByIDorSlug)
+	// Single Plan routes with id or slug parameter
+	singlePlan := plans.Group("/:idOrSlug")
+	singlePlan.Get("/", h.details)
+	singlePlan.Put("/", h.update)
+	singlePlan.Delete("/", h.delete_h)
+	singlePlan.Put("/archive", h.archive)
 
 	// Plan Assignments
-	plans.Post("/:idOrSlug/assignments/assign", h.assignPlan)
-	plans.Put("/:idOrSlug/assignments/terminate", h.unassignPlan)
-	plans.Put("/:idOrSlug/assignments/update", h.updateAssignedPlan)
-
-	// Toggle Plan Archive
-	plans.Put("/:idOrSlug/archive", h.archive)
+	assignments := plans.Group("/:idOrSlug/assignments")
+	assignments.Post("/", h.assignPlan)
+	assignments.Delete("/", h.terminatePlan)
+	assignments.Put("/", h.updateAssignedPlan)
 }

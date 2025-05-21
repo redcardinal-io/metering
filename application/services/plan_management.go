@@ -130,16 +130,6 @@ func (s *PlanManagementService) ListPlans(ctx context.Context, pagination pagina
 	return m, nil
 }
 
-func (s *PlanManagementService) ListPlansByType(ctx context.Context, planType models.PlanTypeEnum, pagination pagination.Pagination) (*pagination.PaginationView[models.Plan], error) {
-	// Call the store repository to list the plans
-	m, err := s.planStore.ListPlansByType(ctx, planType, pagination)
-	if err != nil {
-		return nil, err
-	}
-
-	return m, nil
-}
-
 func (s *PlanManagementService) CreateFeature(ctx context.Context, arg models.CreateFeatureInput) (*models.Feature, error) {
 	return s.featureStore.CreateFeature(ctx, arg)
 }

@@ -82,10 +82,16 @@ func (q *Queries) ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugPa
 const countPlans = `-- name: CountPlans :one
 SELECT count(*) FROM plan
 WHERE tenant_slug = $1
+AND ($2::plan_type_enum is null or type = $2::plan_type_enum)
 `
 
-func (q *Queries) CountPlans(ctx context.Context, tenantSlug string) (int64, error) {
-	row := q.db.QueryRow(ctx, countPlans, tenantSlug)
+type CountPlansParams struct {
+	TenantSlug string
+	Type       NullPlanTypeEnum
+}
+
+func (q *Queries) CountPlans(ctx context.Context, arg CountPlansParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countPlans, arg.TenantSlug, arg.Type)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -234,62 +240,10 @@ func (q *Queries) GetPlanBySlug(ctx context.Context, arg GetPlanBySlugParams) (P
 	return i, err
 }
 
-const listPlansByType = `-- name: ListPlansByType :many
-SELECT id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by FROM plan
-WHERE type = $1
-AND tenant_slug = $2
-ORDER BY created_at DESC
-LIMIT $3
-OFFSET $4
-`
-
-type ListPlansByTypeParams struct {
-	Type       PlanTypeEnum
-	TenantSlug string
-	Limit      int32
-	Offset     int32
-}
-
-func (q *Queries) ListPlansByType(ctx context.Context, arg ListPlansByTypeParams) ([]Plan, error) {
-	rows, err := q.db.Query(ctx, listPlansByType,
-		arg.Type,
-		arg.TenantSlug,
-		arg.Limit,
-		arg.Offset,
-	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Plan
-	for rows.Next() {
-		var i Plan
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Slug,
-			&i.Description,
-			&i.Type,
-			&i.TenantSlug,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.ArchivedAt,
-			&i.CreatedBy,
-			&i.UpdatedBy,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const listPlansPaginated = `-- name: ListPlansPaginated :many
 SELECT id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by FROM plan
 WHERE tenant_slug = $1
+and ($4::plan_type_enum is null or type = $4::plan_type_enum)
 ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3
@@ -299,10 +253,16 @@ type ListPlansPaginatedParams struct {
 	TenantSlug string
 	Limit      int32
 	Offset     int32
+	Type       NullPlanTypeEnum
 }
 
 func (q *Queries) ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error) {
-	rows, err := q.db.Query(ctx, listPlansPaginated, arg.TenantSlug, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listPlansPaginated,
+		arg.TenantSlug,
+		arg.Limit,
+		arg.Offset,
+		arg.Type,
+	)
 	if err != nil {
 		return nil, err
 	}
