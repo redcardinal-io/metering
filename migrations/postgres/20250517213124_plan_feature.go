@@ -24,7 +24,11 @@ func upPlanFeature(ctx context.Context, tx *sql.Tx) error {
 		  config jsonb default null
 		);
 
-		perform goose_manage_updated_at('plan_feature');
+		do $$
+		begin
+		  perform goose_manage_updated_at('plan_feature');
+		end $$;
+		
 		create index if not exists idx_plan_feature_plan_id on plan_feature(plan_id);
 		create index if not exists idx_plan_feature_feature_id on plan_feature(feature_id);
 	`)
@@ -37,3 +41,4 @@ func downPlanFeature(ctx context.Context, tx *sql.Tx) error {
 	`)
 	return err
 }
+
