@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-type upadateAssignedPlanRequest struct {
+type updateAssignedPlanRequest struct {
 	PlanIDOrSlug        string     `json:"plan_idorslug" validate:"required"`
 	OrganizationID      string     `json:"organization_id"`
 	UserID              string     `json:"user_id"`
@@ -23,7 +23,7 @@ type upadateAssignedPlanRequest struct {
 
 func (h *httpHandler) update(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
-	var req upadateAssignedPlanRequest
+	var req updateAssignedPlanRequest
 
 	if err := ctx.BodyParser(&req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
