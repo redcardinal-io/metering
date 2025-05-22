@@ -71,3 +71,16 @@ returning
 delete from plan_feature
 where plan_id = $1
 and feature_id = $2;
+
+-- name: CheckPlanAndFeatureForTenant :one
+select exists (
+    select 1
+    from
+        plan p
+    join
+        feature f on p.tenant_slug = f.tenant_slug 
+    where
+        p.id = $1
+        and f.id = $2
+        and p.tenant_slug = $3 
+);

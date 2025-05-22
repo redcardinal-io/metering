@@ -1,4 +1,4 @@
-package plan_features
+package planfeatures
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *PgPlanFeatureStoreRepository) CreatePlanFeature(ctx context.Context, arg models.CreatePlanFeatureInput) (*models.PlanFeature, error) {
+func (p *PgPlanFeatureStoreRepository) UpdatePlanFeature(ctx context.Context, planID, featureID uuid.UUID, arg models.UpdatePlanFeatureInput) (*models.PlanFeature, error) {
 	var configBytes []byte
 	var err error
 
@@ -24,16 +24,15 @@ func (p *PgPlanFeatureStoreRepository) CreatePlanFeature(ctx context.Context, ar
 		}
 	}
 
-	m, err := p.q.CreatePlanFeature(ctx, gen.CreatePlanFeatureParams{
-		PlanID:    pgtype.UUID{Bytes: arg.PlanID, Valid: true},
-		FeatureID: pgtype.UUID{Bytes: arg.FeatureID, Valid: true},
+	m, err := p.q.UpdatePlanFeatureConfigByPlan(ctx, gen.UpdatePlanFeatureConfigByPlanParams{
 		Config:    configBytes,
-		CreatedBy: arg.CreatedBy,
-		UpdatedBy: arg.CreatedBy,
+		UpdatedBy: arg.UpdatedBy,
+		PlanID:    pgtype.UUID{Bytes: planID, Valid: true},
+		FeatureID: pgtype.UUID{Bytes: featureID, Valid: true},
 	})
 	if err != nil {
-		p.logger.Error("failed to create plan feature", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.CreatePlanFeature")
+		p.logger.Error("failed to update plan feature", zap.Error(err))
+		return nil, postgres.MapError(err, "Postgres.UpdatePlanFeature")
 	}
 
 	id, err := uuid.FromBytes(m.PlanFeatureID.Bytes[:])
@@ -42,21 +41,21 @@ func (p *PgPlanFeatureStoreRepository) CreatePlanFeature(ctx context.Context, ar
 		return nil, postgres.MapError(err, "Postgres.ParseUUID")
 	}
 
-	planID, err := uuid.FromBytes(m.PlanID.Bytes[:])
+	planIDResult, err := uuid.FromBytes(m.PlanID.Bytes[:])
 	if err != nil {
 		p.logger.Error("failed to parse plan UUID from bytes", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ParseUUID")
 	}
 
-	featureID, err := uuid.FromBytes(m.FeatureID.Bytes[:])
+	featureIDResult, err := uuid.FromBytes(m.FeatureID.Bytes[:])
 	if err != nil {
 		p.logger.Error("failed to parse feature UUID from bytes", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ParseUUID")
 	}
 
 	planFeature := &models.PlanFeature{
-		PlanID:    planID,
-		FeatureID: featureID,
+		PlanID:    planIDResult,
+		FeatureID: featureIDResult,
 		Config:    m.Config,
 		Base: models.Base{
 			ID:        id,

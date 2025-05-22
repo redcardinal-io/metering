@@ -1,4 +1,4 @@
-package plan_features
+package planfeatures
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (p *PgPlanFeatureStoreRepository) ListPlanFeaturesByPlan(ctx context.Context, planID uuid.UUID, filter models.PlanFeatureListFilter) (*[]models.PlanFeature, error) {
+func (p *PgPlanFeatureStoreRepository) ListPlanFeaturesByPlan(ctx context.Context, planID uuid.UUID, filter models.PlanFeatureListFilter) ([]models.PlanFeature, error) {
 	var featureType interface{}
 	if filter.FeatureType != nil {
 		featureType = string(*filter.FeatureType)
@@ -63,5 +63,5 @@ func (p *PgPlanFeatureStoreRepository) ListPlanFeaturesByPlan(ctx context.Contex
 		})
 	}
 
-	return &planFeatures, nil
+	return planFeatures, nil
 }

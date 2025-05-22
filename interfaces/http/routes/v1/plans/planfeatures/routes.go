@@ -1,11 +1,10 @@
-package plans
+package planfeatures
 
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redcardinal-io/metering/application/services"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
-	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans/planfeatures"
 )
 
 type httpHandler struct {
@@ -25,25 +24,9 @@ func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanManagementServi
 }
 
 func (h *httpHandler) RegisterRoutes(r fiber.Router) {
-	// Group all plans routes
-	plans := r.Group("/plans")
-
-	// Plan collection routes
-	plans.Post("/", h.create)
-	plans.Get("/", h.list)
-
-	// Single Plan routes with id parameter
-	plans.Get("/:idOrSlug", h.getByIDorSlug)
-	plans.Put("/:idOrSlug", h.updateByIDorSlug)
-	plans.Delete("/:idOrSlug", h.deleteByIDorSlug)
-
-	// Toggle Plan Archive
-	plans.Put("/:idOrSlug/archive", h.archive)
-
-	// Plan Features routes
-	planFeatures := plans.Group("/:planID/features")
-
 	// Register plan feature routes
-	planFeatureHandler := planfeatures.NewHTTPHandler(h.logger, h.planSvc)
-	planFeatureHandler.RegisterRoutes(planFeatures)
+	r.Post("/", h.create)
+	r.Get("/", h.list)
+	r.Put("/:featureID", h.TenantPlanFeatureMiddleware(), h.update)
+	r.Delete("/:featureID", h.TenantPlanFeatureMiddleware(), h.delete)
 }

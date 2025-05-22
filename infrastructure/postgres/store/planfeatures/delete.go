@@ -1,4 +1,4 @@
-package plan_features
+package planfeatures
 
 import (
 	"context"
@@ -16,7 +16,10 @@ func (p *PgPlanFeatureStoreRepository) DeletePlanFeature(ctx context.Context, ar
 		FeatureID: pgtype.UUID{Bytes: arg.FeatureID, Valid: true},
 	})
 	if err != nil {
-		p.logger.Error("failed to delete plan feature", zap.Error(err))
+		p.logger.Error("failed to delete plan feature",
+			zap.String("plan_id", arg.PlanID.String()),
+			zap.String("feature_id", arg.FeatureID.String()),
+			zap.Error(err))
 		return postgres.MapError(err, "Postgres.DeletePlanFeature")
 	}
 

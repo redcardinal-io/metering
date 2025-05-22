@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	ArchivePlanByID(ctx context.Context, arg ArchivePlanByIDParams) (Plan, error)
 	ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugParams) (Plan, error)
+	CheckPlanAndFeatureForTenant(ctx context.Context, arg CheckPlanAndFeatureForTenantParams) (bool, error)
 	CountFeatures(ctx context.Context, tenantSlug string) (int64, error)
 	CountMeters(ctx context.Context, tenantSlug string) (int64, error)
 	CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error)

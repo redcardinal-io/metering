@@ -11,6 +11,33 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const checkPlanAndFeatureForTenant = `-- name: CheckPlanAndFeatureForTenant :one
+select exists (
+    select 1
+    from
+        plan p
+    join
+        feature f on p.tenant_slug = f.tenant_slug 
+    where
+        p.id = $1
+        and f.id = $2
+        and p.tenant_slug = $3 
+)
+`
+
+type CheckPlanAndFeatureForTenantParams struct {
+	ID         pgtype.UUID
+	ID_2       pgtype.UUID
+	TenantSlug string
+}
+
+func (q *Queries) CheckPlanAndFeatureForTenant(ctx context.Context, arg CheckPlanAndFeatureForTenantParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkPlanAndFeatureForTenant, arg.ID, arg.ID_2, arg.TenantSlug)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createPlanFeature = `-- name: CreatePlanFeature :one
 insert into plan_feature (
     plan_id,
