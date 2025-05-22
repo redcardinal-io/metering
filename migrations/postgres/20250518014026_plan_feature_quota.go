@@ -40,9 +40,13 @@ func upPlanFeatureQuota(ctx context.Context, tx *sql.Tx) error {
 	  	create table if not exists plan_feature_quota (
 	  	  id uuid primary key default uuid_generate_v4(),
 	  	  plan_feature_id uuid not null references plan_feature(id) on delete cascade,
-	      limit_value bigint not null,
-	      reset_period metered_reset_period_enum not null,
+	  	  limit_value bigint not null,
+	  	  reset_period metered_reset_period_enum not null,
 	  	  custom_period_minutes bigint default null,
+	  	  check (
+	  	    (reset_period = 'custom' and custom_period_minutes is not null) or
+	  	    (reset_period != 'custom' and custom_period_minutes is null)
+	  	  ),
 	  	  action_at_limit metered_action_at_limit_enum not null default 'none',
 	  	  created_at timestamp with time zone not null default now(),
 	  	  updated_at timestamp with time zone not null default now()
@@ -50,6 +54,7 @@ func upPlanFeatureQuota(ctx context.Context, tx *sql.Tx) error {
 
 	  	perform goose_manage_updated_at('plan_feature_quota');
 	  	create index if not exists idx_plan_feature_quota_plan_feature_id on plan_feature_quota(plan_feature_id);
+	    unique(plan_feature_id)
 	  end;
 	  $$;
 	`)
