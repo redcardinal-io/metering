@@ -14,10 +14,16 @@ import (
 const countFeatures = `-- name: CountFeatures :one
 select count(*) from feature
 where tenant_slug = $1
+and ($2::feature_enum is null or type = $2::feature_enum)
 `
 
-func (q *Queries) CountFeatures(ctx context.Context, tenantSlug string) (int64, error) {
-	row := q.db.QueryRow(ctx, countFeatures, tenantSlug)
+type CountFeaturesParams struct {
+	TenantSlug string
+	Type       NullFeatureEnum
+}
+
+func (q *Queries) CountFeatures(ctx context.Context, arg CountFeaturesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countFeatures, arg.TenantSlug, arg.Type)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -172,6 +178,7 @@ func (q *Queries) GetFeatureBySlug(ctx context.Context, arg GetFeatureBySlugPara
 const listFeaturesPaginated = `-- name: ListFeaturesPaginated :many
 select id, name, slug, description, tenant_slug, type, config, created_at, updated_at, created_by, updated_by from feature
 where tenant_slug = $1
+and ($4::feature_enum is null or type = $4::feature_enum)
 order by created_at desc
 limit $2
 offset $3
@@ -181,10 +188,16 @@ type ListFeaturesPaginatedParams struct {
 	TenantSlug string
 	Limit      int32
 	Offset     int32
+	Type       NullFeatureEnum
 }
 
 func (q *Queries) ListFeaturesPaginated(ctx context.Context, arg ListFeaturesPaginatedParams) ([]Feature, error) {
-	rows, err := q.db.Query(ctx, listFeaturesPaginated, arg.TenantSlug, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listFeaturesPaginated,
+		arg.TenantSlug,
+		arg.Limit,
+		arg.Offset,
+		arg.Type,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -15,10 +15,14 @@ import (
 
 func (p *PgFeatureRepository) ListFeatures(ctx context.Context, page pagination.Pagination) (*pagination.PaginationView[models.Feature], error) {
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
+	// extract type from pagination query params
+	featureType := page.Queries["type"]
+
 	m, err := p.q.ListFeaturesPaginated(ctx, gen.ListFeaturesPaginatedParams{
 		Limit:      int32(page.Limit),
 		Offset:     int32(page.GetOffset()),
 		TenantSlug: tenantSlug,
+		Type:       createFeatureTypeEnum(featureType),
 	})
 	if err != nil {
 		p.logger.Error("Error listing features: ", zap.Error(err))
@@ -48,7 +52,10 @@ func (p *PgFeatureRepository) ListFeatures(ctx context.Context, page pagination.
 		})
 	}
 
-	count, err := p.q.CountFeatures(ctx, tenantSlug)
+	count, err := p.q.CountFeatures(ctx, gen.CountFeaturesParams{
+		TenantSlug: tenantSlug,
+		Type:       createFeatureTypeEnum(featureType),
+	})
 	if err != nil {
 		p.logger.Error("Error counting features: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.CountFeatures")
@@ -56,4 +63,13 @@ func (p *PgFeatureRepository) ListFeatures(ctx context.Context, page pagination.
 
 	result := pagination.FormatWith(page, int(count), features)
 	return &result, nil
+}
+
+// createFeatureTypeEnum converts a feature type string into a nullable FeatureEnum for database queries.
+// The returned enum is marked valid only if the input string is non-empty.
+func createFeatureTypeEnum(featureType string) gen.NullFeatureEnum {
+	return gen.NullFeatureEnum{
+		FeatureEnum: gen.FeatureEnum(featureType),
+		Valid:       featureType != "",
+	}
 }
