@@ -108,6 +108,8 @@ services:
       context: .
       dockerfile: Dockerfile.migrate
     env_file: .env.migrate
+    volumes:
+      - .:/app
     depends_on:
       - postgres
       - clickhouse

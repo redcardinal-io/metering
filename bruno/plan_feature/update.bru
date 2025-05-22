@@ -1,0 +1,23 @@
+meta {
+  name: update
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/v1/plans/f1d43b61-edac-479d-9731-774cc33972cc/features/ac8028a7-db05-44f6-9a3a-e4d999fe3e94
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "feature_id":"ac8028a7-db05-44f6-9a3a-e4d999fe3e94",
+    "config": {"models":["gpt4","gpt5"]},
+    "created_at":"admin"
+  }
+}

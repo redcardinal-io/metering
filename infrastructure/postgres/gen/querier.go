@@ -13,19 +13,22 @@ import (
 type Querier interface {
 	ArchivePlanByID(ctx context.Context, arg ArchivePlanByIDParams) (Plan, error)
 	ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugParams) (Plan, error)
-	CountFeatures(ctx context.Context, arg CountFeaturesParams) (int64, error)
+	CheckPlanAndFeatureForTenant(ctx context.Context, arg CheckPlanAndFeatureForTenantParams) (bool, error)
+	CountFeatures(ctx context.Context, tenantSlug string) (int64, error)
 	CountMeters(ctx context.Context, tenantSlug string) (int64, error)
 	CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error)
 	CountPlans(ctx context.Context, tenantSlug string) (int64, error)
 	CreateFeature(ctx context.Context, arg CreateFeatureParams) (Feature, error)
 	CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error)
 	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
+	CreatePlanFeature(ctx context.Context, arg CreatePlanFeatureParams) (CreatePlanFeatureRow, error)
 	DeleteFeatureByID(ctx context.Context, arg DeleteFeatureByIDParams) error
 	DeleteFeatureBySlug(ctx context.Context, arg DeleteFeatureBySlugParams) error
 	DeleteMeterByID(ctx context.Context, arg DeleteMeterByIDParams) error
 	DeleteMeterBySlug(ctx context.Context, arg DeleteMeterBySlugParams) error
 	DeletePlanByID(ctx context.Context, arg DeletePlanByIDParams) error
 	DeletePlanBySlug(ctx context.Context, arg DeletePlanBySlugParams) error
+	DeletePlanFeature(ctx context.Context, arg DeletePlanFeatureParams) error
 	GetFeatureByID(ctx context.Context, arg GetFeatureByIDParams) (Feature, error)
 	GetFeatureBySlug(ctx context.Context, arg GetFeatureBySlugParams) (Feature, error)
 	GetMeterByID(ctx context.Context, arg GetMeterByIDParams) (Meter, error)
@@ -37,6 +40,7 @@ type Querier interface {
 	ListFeaturesPaginated(ctx context.Context, arg ListFeaturesPaginatedParams) ([]Feature, error)
 	ListMetersByEventTypes(ctx context.Context, arg ListMetersByEventTypesParams) ([]Meter, error)
 	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)
+	ListPlanFeaturesByPlan(ctx context.Context, arg ListPlanFeaturesByPlanParams) ([]ListPlanFeaturesByPlanRow, error)
 	ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error)
 	UnArchivePlanByID(ctx context.Context, arg UnArchivePlanByIDParams) (Plan, error)
 	UnArchivePlanBySlug(ctx context.Context, arg UnArchivePlanBySlugParams) (Plan, error)
@@ -46,6 +50,7 @@ type Querier interface {
 	UpdateMeterBySlug(ctx context.Context, arg UpdateMeterBySlugParams) (Meter, error)
 	UpdatePlanByID(ctx context.Context, arg UpdatePlanByIDParams) (Plan, error)
 	UpdatePlanBySlug(ctx context.Context, arg UpdatePlanBySlugParams) (Plan, error)
+	UpdatePlanFeatureConfigByPlan(ctx context.Context, arg UpdatePlanFeatureConfigByPlanParams) (UpdatePlanFeatureConfigByPlanRow, error)
 }
 
 var _ Querier = (*Queries)(nil)
