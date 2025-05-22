@@ -19,9 +19,11 @@ func upPlanFeature(ctx context.Context, tx *sql.Tx) error {
 			feature_id uuid not null references feature(id) on delete cascade,
 			created_at timestamp with time zone not null default now(),
 			updated_at timestamp with time zone not null default now(),
-		  created_by varchar not null,
-		  updated_by varchar not null,
-		  config jsonb default null
+			created_by varchar not null,
+			updated_by varchar not null,
+			config jsonb default null,
+
+			unique (plan_id, feature_id)
 		);
 
 		do $$
@@ -41,4 +43,3 @@ func downPlanFeature(ctx context.Context, tx *sql.Tx) error {
 	`)
 	return err
 }
-

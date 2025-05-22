@@ -1,0 +1,15 @@
+meta {
+  name: list
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/v1/plans/f1d43b61-edac-479d-9731-774cc33972cc/features
+  body: none
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}

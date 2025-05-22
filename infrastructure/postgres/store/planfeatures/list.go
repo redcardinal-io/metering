@@ -12,15 +12,17 @@ import (
 )
 
 func (p *PgPlanFeatureStoreRepository) ListPlanFeaturesByPlan(ctx context.Context, planID uuid.UUID, filter models.PlanFeatureListFilter) ([]models.PlanFeature, error) {
-	var featureType interface{}
-	if filter.FeatureType != nil {
-		featureType = string(*filter.FeatureType)
+	params := gen.ListPlanFeaturesByPlanParams{
+		PlanID: pgtype.UUID{Bytes: planID, Valid: true},
+	}
+	if filter.FeatureType != "" {
+		params.FeatureType = gen.NullFeatureEnum{
+			FeatureEnum: gen.FeatureEnum(filter.FeatureType),
+			Valid:       true,
+		}
 	}
 
-	rows, err := p.q.ListPlanFeaturesByPlan(ctx, gen.ListPlanFeaturesByPlanParams{
-		PlanID:      pgtype.UUID{Bytes: planID, Valid: true},
-		FeatureType: featureType,
-	})
+	rows, err := p.q.ListPlanFeaturesByPlan(ctx, params)
 	if err != nil {
 		p.logger.Error("Error listing plan features: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListPlanFeatures")

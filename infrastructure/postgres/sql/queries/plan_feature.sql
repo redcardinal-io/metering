@@ -43,7 +43,7 @@ join
     feature f on pf.feature_id = f.id
 where
     pf.plan_id = $1
-    and (sqlc.narg('feature_type') is null or f.type = sqlc.narg('feature_type'))
+    and (sqlc.narg('feature_type')::feature_enum is null or f.type = sqlc.narg('feature_type')::feature_enum)
 order by
     pf.created_at desc;
 

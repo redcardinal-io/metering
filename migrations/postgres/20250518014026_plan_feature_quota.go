@@ -49,12 +49,13 @@ func upPlanFeatureQuota(ctx context.Context, tx *sql.Tx) error {
 	  	  ),
 	  	  action_at_limit metered_action_at_limit_enum not null default 'none',
 	  	  created_at timestamp with time zone not null default now(),
-	  	  updated_at timestamp with time zone not null default now()
+	  	  updated_at timestamp with time zone not null default now(),
+
+	      unique(plan_feature_id)
 	  	);
 
 	  	perform goose_manage_updated_at('plan_feature_quota');
 	  	create index if not exists idx_plan_feature_quota_plan_feature_id on plan_feature_quota(plan_feature_id);
-	    unique(plan_feature_id)
 	  end;
 	  $$;
 	`)

@@ -12,7 +12,7 @@ import (
 )
 
 type listPlanFeaturesQuery struct {
-	FeatureType *string `query:"feature_type"`
+	FeatureType string `query:"feature_type"`
 }
 
 func (h *httpHandler) list(ctx *fiber.Ctx) error {
@@ -53,10 +53,11 @@ func (h *httpHandler) list(ctx *fiber.Ctx) error {
 
 	// Create context with tenant slug
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
+	featureType := models.FeatureTypeEnum(query.FeatureType)
 
 	// Call service to list plan features
 	filter := models.PlanFeatureListFilter{
-		FeatureType: (*models.FeatureTypeEnum)(query.FeatureType),
+		FeatureType: featureType,
 	}
 
 	planFeatures, err := h.planSvc.ListPlanFeaturesByPlan(c, planID, filter)

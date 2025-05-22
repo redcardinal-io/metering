@@ -141,14 +141,14 @@ join
     feature f on pf.feature_id = f.id
 where
     pf.plan_id = $1
-    and ($2 is null or f.type = $2)
+    and ($2::feature_enum is null or f.type = $2::feature_enum)
 order by
     pf.created_at desc
 `
 
 type ListPlanFeaturesByPlanParams struct {
 	PlanID      pgtype.UUID
-	FeatureType interface{}
+	FeatureType NullFeatureEnum
 }
 
 type ListPlanFeaturesByPlanRow struct {

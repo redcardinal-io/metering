@@ -39,5 +39,5 @@ type DeletePlanFeatureInput struct {
 
 // PlanFeatureListFilter represents filters for listing plan features
 type PlanFeatureListFilter struct {
-	FeatureType *FeatureTypeEnum
+	FeatureType FeatureTypeEnum
 }

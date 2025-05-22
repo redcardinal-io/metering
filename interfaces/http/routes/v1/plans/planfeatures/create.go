@@ -60,6 +60,26 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	// Create context with tenant slug
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
+	belongs, err := h.planSvc.CheckPlanAndFeatureForTenant(c, planID, featureID)
+	if err != nil {
+		h.logger.Error("failed to check plan and feature for tenant",
+			zap.String("tenant", tenantSlug),
+			zap.String("plan_id", planID.String()),
+			zap.String("feature_id", featureID.String()),
+			zap.Error(err))
+		errResp := domainerrors.NewErrorResponse(err)
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
+	if !belongs {
+		errResp := domainerrors.NewErrorResponseWithOpts(
+			nil,
+			domainerrors.EUNAUTHORIZED,
+			"plan feature not found or does not belong to tenant",
+		)
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	// Call service to create plan feature
 	planFeature, err := h.planSvc.CreatePlanFeature(c, models.CreatePlanFeatureInput{
 		PlanID:    planID,
