@@ -45,9 +45,7 @@ where
     pf.plan_id = $1
     and (sqlc.narg('feature_type') is null or f.type = sqlc.narg('feature_type'))
 order by
-    pf.created_at desc
-limit $2
-offset $3;
+    pf.created_at desc;
 
 
 -- name: UpdatePlanFeatureConfigByPlan :one
@@ -71,6 +69,5 @@ returning
 
 -- name: DeletePlanFeature :exec
 delete from plan_feature
-where id = $1
-and plan_id = $2
-and feature_id = $3;
+where plan_id = $1
+and feature_id = $2;

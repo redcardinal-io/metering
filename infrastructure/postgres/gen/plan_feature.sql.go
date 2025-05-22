@@ -78,19 +78,17 @@ func (q *Queries) CreatePlanFeature(ctx context.Context, arg CreatePlanFeaturePa
 
 const deletePlanFeature = `-- name: DeletePlanFeature :exec
 delete from plan_feature
-where id = $1
-and plan_id = $2
-and feature_id = $3
+where plan_id = $1
+and feature_id = $2
 `
 
 type DeletePlanFeatureParams struct {
-	ID        pgtype.UUID
 	PlanID    pgtype.UUID
 	FeatureID pgtype.UUID
 }
 
 func (q *Queries) DeletePlanFeature(ctx context.Context, arg DeletePlanFeatureParams) error {
-	_, err := q.db.Exec(ctx, deletePlanFeature, arg.ID, arg.PlanID, arg.FeatureID)
+	_, err := q.db.Exec(ctx, deletePlanFeature, arg.PlanID, arg.FeatureID)
 	return err
 }
 
@@ -116,17 +114,13 @@ join
     feature f on pf.feature_id = f.id
 where
     pf.plan_id = $1
-    and ($4 is null or f.type = $4)
+    and ($2 is null or f.type = $2)
 order by
     pf.created_at desc
-limit $2
-offset $3
 `
 
 type ListPlanFeaturesByPlanParams struct {
 	PlanID      pgtype.UUID
-	Limit       int32
-	Offset      int32
 	FeatureType interface{}
 }
 
@@ -148,12 +142,7 @@ type ListPlanFeaturesByPlanRow struct {
 }
 
 func (q *Queries) ListPlanFeaturesByPlan(ctx context.Context, arg ListPlanFeaturesByPlanParams) ([]ListPlanFeaturesByPlanRow, error) {
-	rows, err := q.db.Query(ctx, listPlanFeaturesByPlan,
-		arg.PlanID,
-		arg.Limit,
-		arg.Offset,
-		arg.FeatureType,
-	)
+	rows, err := q.db.Query(ctx, listPlanFeaturesByPlan, arg.PlanID, arg.FeatureType)
 	if err != nil {
 		return nil, err
 	}
