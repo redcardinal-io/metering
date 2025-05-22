@@ -22,6 +22,7 @@ import (
 	featuresRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/features"
 	meterRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/meters"
 	planRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans"
+	planAssignmentsRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans/planassignments"
 	"go.uber.org/zap"
 )
 
@@ -110,6 +111,10 @@ func ServeHttp() error {
 	// meter routes
 	meterRoutes := meterRoutes.NewHTTPHandler(logger, meterService)
 	meterRoutes.RegisterRoutes(v1)
+
+	// plan assignment routes
+	planAssignmentsRoutes := planAssignmentsRoutes.NewHTTPHandler(logger, planMangementService)
+	planAssignmentsRoutes.RegisterRoutes(v1)
 
 	// plan routes
 	planRoutes := planRoutes.NewHTTPHandler(logger, planMangementService)

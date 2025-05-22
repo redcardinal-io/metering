@@ -12,11 +12,8 @@ import (
 )
 
 func (p *PgPlanAssignmentsStoreRepository) CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error) {
-	// using must parse because the http handler should have already validated the UUID
-	planId := uuid.MustParse(arg.PlanID)
-
 	m, err := p.q.AssignPlan(ctx, gen.AssignPlanParams{
-		PlanID:         pgtype.UUID{Bytes: planId, Valid: true},
+		PlanID:         pgtype.UUID{Bytes: *arg.PlanID, Valid: true},
 		ValidFrom:      pgtype.Timestamptz{Time: arg.ValidFrom, Valid: true},
 		ValidUntil:     pgtype.Timestamptz{Time: arg.ValidUntil, Valid: true},
 		OrganizationID: pgtype.Text{String: arg.OrganizationID, Valid: arg.OrganizationID != ""},

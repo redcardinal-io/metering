@@ -26,21 +26,21 @@ func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanManagementServi
 }
 
 func (h *httpHandler) RegisterRoutes(r fiber.Router) {
-	assignments := r.Group("/assignments")
+	assignments := r.Group("/plans/assignments")
 
 	assignments.Post("/", h.create)
 	assignments.Put("/", h.update)
 	assignments.Delete("/", h.delete)
 }
 
-func getPlanIDFromIdentifier(ctx context.Context, idOrSlug string, planSvc *services.PlanManagementService) (string, error) {
-	_, err := uuid.Parse(idOrSlug)
+func getPlanIDFromIdentifier(ctx context.Context, idOrSlug string, planSvc *services.PlanManagementService) (*uuid.UUID, error) {
+	planId, err := uuid.Parse(idOrSlug)
 	if err != nil {
 		plan, err := planSvc.GetPlanByIDorSlug(ctx, idOrSlug)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		return plan.Slug, nil
+		return &plan.ID, nil
 	}
-	return idOrSlug, nil
+	return &planId, nil
 }

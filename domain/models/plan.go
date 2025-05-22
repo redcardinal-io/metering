@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -68,23 +69,24 @@ type ArchivePlanInput struct {
 type CreateAssignmentInput struct {
 	UserID         string
 	OrganizationID string
-	PlanID         string
+	PlanID         *uuid.UUID
 	ValidFrom      time.Time
 	ValidUntil     time.Time
 	CreatedBy      string
 }
 
 type UpdateAssignmentInput struct {
-	PlanID         string
-	UserID         string
-	OrganizationID string
-	ValidFrom      *time.Time
-	ValidUntil     *time.Time
-	UpdatedBy      string
+	PlanID              *uuid.UUID
+	UserID              string
+	OrganizationID      string
+	ValidFrom           *time.Time
+	ValidUntil          *time.Time
+	UpdatedBy           string
+	SetValidUntilToZero bool
 }
 
 type TerminateAssignmentInput struct {
-	PlanID         string
+	PlanID         *uuid.UUID
 	UserID         string
 	OrganizationID string
 }

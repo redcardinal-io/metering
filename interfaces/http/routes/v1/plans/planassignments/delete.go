@@ -11,6 +11,7 @@ import (
 )
 
 type terminatePlanRequest struct {
+	PlanIDOrSlug   string `json:"plan_idorslug" validate:"required"`
 	OrganizationID string `json:"organization_id"`
 	UserID         string `json:"user_id"`
 }
@@ -18,14 +19,6 @@ type terminatePlanRequest struct {
 func (h *httpHandler) delete(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
 	var req terminatePlanRequest
-
-	idOrSlug := ctx.Params("idOrSlug")
-
-	if idOrSlug == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan ID is required")
-		h.logger.Error("plan idOrSlug is required", zap.Reflect("error", errResp))
-		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
-	}
 
 	if err := ctx.BodyParser(&req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
@@ -54,7 +47,7 @@ func (h *httpHandler) delete(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
 
-	planID, getErr := getPlanIDFromIdentifier(c, idOrSlug, h.planSvc)
+	planID, getErr := getPlanIDFromIdentifier(c, req.PlanIDOrSlug, h.planSvc)
 	if getErr != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(getErr, domainerrors.EINVALID, "invalid plan id or slug")
 		h.logger.Error("invalid plan id or slug", zap.Reflect("error", errResp))

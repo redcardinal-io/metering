@@ -2,6 +2,7 @@ package planassignments
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -12,21 +13,21 @@ import (
 )
 
 func (p *PgPlanAssignmentsStoreRepository) UpdateAssignment(ctx context.Context, arg models.UpdateAssignmentInput) (*models.PlanAssignment, error) {
-	// using must parse because the http handler should have already validated the UUID
-	planId := uuid.MustParse(arg.PlanID)
 
 	validFrom := pgtype.Timestamptz{Valid: false}
-	if arg.ValidFrom != nil {
+	validUntil := pgtype.Timestamptz{Valid: false}
+	if !arg.ValidFrom.IsZero() {
 		validFrom = pgtype.Timestamptz{Time: *arg.ValidFrom, Valid: true}
 	}
 
-	validUntil := pgtype.Timestamptz{Valid: false}
-	if arg.ValidUntil != nil {
+	if !arg.ValidUntil.IsZero() {
 		validUntil = pgtype.Timestamptz{Time: *arg.ValidUntil, Valid: true}
+	} else if arg.SetValidUntilToZero {
+		validUntil = pgtype.Timestamptz{Time: time.Time{}, Valid: true}
 	}
 
 	m, err := p.q.UpdateAssignedPlan(ctx, gen.UpdateAssignedPlanParams{
-		PlanID:         pgtype.UUID{Bytes: planId, Valid: true},
+		PlanID:         pgtype.UUID{Bytes: *arg.PlanID, Valid: true},
 		OrganizationID: pgtype.Text{String: arg.OrganizationID, Valid: arg.OrganizationID != ""},
 		UserID:         pgtype.Text{String: arg.UserID, Valid: arg.UserID != ""},
 		UpdatedBy:      arg.UpdatedBy,

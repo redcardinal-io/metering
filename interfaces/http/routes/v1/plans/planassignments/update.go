@@ -12,24 +12,18 @@ import (
 )
 
 type upadateAssignedPlanRequest struct {
-	OrganizationID string     `json:"organization_id"`
-	UserID         string     `json:"user_id"`
-	ValidFrom      *time.Time `json:"valid_from" validate:"omitempty"`
-	ValidUntil     *time.Time `json:"valid_until" validate:"omitempty"`
-	UpdatedBy      string     `json:"updated_by" validate:"required"`
+	PlanIDOrSlug        string     `json:"plan_idorslug" validate:"required"`
+	OrganizationID      string     `json:"organization_id"`
+	UserID              string     `json:"user_id"`
+	ValidFrom           *time.Time `json:"valid_from"`
+	ValidUntil          *time.Time `json:"valid_until"`
+	UpdatedBy           string     `json:"updated_by" validate:"required"`
+	SetValidUntilToZero bool       `json:"set_validuntil_tozero"`
 }
 
 func (h *httpHandler) update(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
 	var req upadateAssignedPlanRequest
-
-	idOrSlug := ctx.Params("idOrSlug")
-
-	if idOrSlug == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan ID is required")
-		h.logger.Error("plan idOrSlug is required", zap.Reflect("error", errResp))
-		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
-	}
 
 	if err := ctx.BodyParser(&req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
@@ -58,7 +52,7 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
 
-	planId, getErr := getPlanIDFromIdentifier(c, idOrSlug, h.planSvc)
+	planId, getErr := getPlanIDFromIdentifier(c, req.PlanIDOrSlug, h.planSvc)
 	if getErr != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(getErr, domainerrors.EINVALID, "invalid plan id or slug")
 		h.logger.Error("invalid plan id or slug", zap.Reflect("error", errResp))
@@ -74,12 +68,13 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 	}
 
 	updatedAssignment, err := h.planSvc.UpdateAssignment(c, models.UpdateAssignmentInput{
-		PlanID:         planId,
-		OrganizationID: req.OrganizationID,
-		UserID:         req.UserID,
-		ValidFrom:      &utcValidFrom,
-		ValidUntil:     &utcValidUntil,
-		UpdatedBy:      req.UpdatedBy,
+		PlanID:              planId,
+		OrganizationID:      req.OrganizationID,
+		UserID:              req.UserID,
+		ValidFrom:           &utcValidFrom,
+		ValidUntil:          &utcValidUntil,
+		UpdatedBy:           req.UpdatedBy,
+		SetValidUntilToZero: req.SetValidUntilToZero,
 	})
 	if err != nil {
 		h.logger.Error("failed to update plan assignment", zap.Reflect("error", err))

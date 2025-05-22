@@ -12,6 +12,7 @@ import (
 )
 
 type createAssignmentRequest struct {
+	PlanIDOrSlug   string    `json:"plan_idorslug" validate:"required"`
 	OrganizationID string    `json:"organization_id"`
 	UserID         string    `json:"user_id"`
 	ValidFrom      time.Time `json:"valid_from" validate:"required"`
@@ -22,14 +23,6 @@ type createAssignmentRequest struct {
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	var req createAssignmentRequest
-
-	idOrSlug := ctx.Params("idOrSlug")
-
-	if idOrSlug == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "plan idOrSlug is required")
-		h.logger.Error("plan idOrSlug is required", zap.Reflect("error", errResp))
-		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
-	}
 
 	if err := ctx.BodyParser(&req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
@@ -62,6 +55,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
+	//TODO  CHECK OrganizationID OR USERID IS VALID FROM AUTH SERVICE
 	if req.OrganizationID != "" && req.UserID != "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "organization_id and user_id are mutually exclusive, provide any one")
 		h.logger.Error("organization_id and user_id are mutually exclusive, provide any one", zap.Reflect("error", errResp))
@@ -76,7 +70,7 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
-	planID, err := getPlanIDFromIdentifier(c, idOrSlug, h.planSvc)
+	planID, err := getPlanIDFromIdentifier(c, req.PlanIDOrSlug, h.planSvc)
 	if err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid plan id or slug")
 		h.logger.Error("invalid plan id or slug", zap.Reflect("error", errResp))
