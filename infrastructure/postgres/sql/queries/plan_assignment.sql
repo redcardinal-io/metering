@@ -17,8 +17,8 @@ $1, $2, $3, $4, $5, $6, $7
 delete from plan_assignment
 where plan_id = $1
 and (
-    (organization_id = $2 and $2 is not null) or
-    (user_id = $3 and $3 is not null)
+    (organization_id = $2 or $2 is null) and 
+    (user_id = $3 or $3 is null)
 );
 
 -- name: UpdateAssignedPlan :one
@@ -29,7 +29,7 @@ set valid_until = coalesce(sqlc.narg('valid_until'), valid_until),
     updated_by = $2
 where (plan_id = $1)
 and (
-    (organization_id = $3 or $3 is null) or
+    (organization_id = $3 or $3 is null) and
     (user_id = $4 or $4 is null)
 )
 returning *;
@@ -46,12 +46,20 @@ OFFSET $3;
 SELECT *
 FROM plan_assignment
 WHERE (
-    (organization_id = $1 or $1 is null) or
+    (organization_id = $1 or $1 is null) and
     (user_id = $2 or $2 is null)
 )
 ORDER BY created_at DESC
 LIMIT $3
 OFFSET $4;
+
+-- name: CountOrgOrUserAssignments :one
+SELECT count(*)
+FROM plan_assignment
+WHERE (
+    (organization_id = $1 or $1 is null) and 
+    (user_id = $2 or $2 is null)
+);
 
 -- name: ListAllAssignmentsPaginated :many
 SELECT

@@ -1,0 +1,19 @@
+meta {
+  name: list_assignments_by_org
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/v1/plans/assignments?userId=9e0f820d-3a7f-4825-aa00-3b5c35969771
+  body: json
+  auth: inherit
+}
+
+params:query {
+  userId: 9e0f820d-3a7f-4825-aa00-3b5c35969771
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}

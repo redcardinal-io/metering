@@ -62,6 +62,27 @@ func (q *Queries) AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAss
 	return i, err
 }
 
+const countOrgOrUserAssignments = `-- name: CountOrgOrUserAssignments :one
+SELECT count(*)
+FROM plan_assignment
+WHERE (
+    (organization_id = $1 or $1 is null) and 
+    (user_id = $2 or $2 is null)
+)
+`
+
+type CountOrgOrUserAssignmentsParams struct {
+	OrganizationID pgtype.Text
+	UserID         pgtype.Text
+}
+
+func (q *Queries) CountOrgOrUserAssignments(ctx context.Context, arg CountOrgOrUserAssignmentsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countOrgOrUserAssignments, arg.OrganizationID, arg.UserID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listAllAssignmentsPaginated = `-- name: ListAllAssignmentsPaginated :many
 SELECT
     pa.id,
@@ -124,7 +145,7 @@ const listOrgOrUserAssignmentsPaginated = `-- name: ListOrgOrUserAssignmentsPagi
 SELECT id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
 FROM plan_assignment
 WHERE (
-    (organization_id = $1 or $1 is null) or
+    (organization_id = $1 or $1 is null) and
     (user_id = $2 or $2 is null)
 )
 ORDER BY created_at DESC
@@ -225,8 +246,8 @@ const terminateAssignedPlan = `-- name: TerminateAssignedPlan :exec
 delete from plan_assignment
 where plan_id = $1
 and (
-    (organization_id = $2 and $2 is not null) or
-    (user_id = $3 and $3 is not null)
+    (organization_id = $2 or $2 is null) and 
+    (user_id = $3 or $3 is null)
 )
 `
 
@@ -249,7 +270,7 @@ set valid_until = coalesce($5, valid_until),
     updated_by = $2
 where (plan_id = $1)
 and (
-    (organization_id = $3 or $3 is null) or
+    (organization_id = $3 or $3 is null) and
     (user_id = $4 or $4 is null)
 )
 returning id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by

@@ -19,6 +19,7 @@ type Querier interface {
 	CountFeatures(ctx context.Context, arg CountFeaturesParams) (int64, error)
 	CountMeters(ctx context.Context, tenantSlug string) (int64, error)
 	CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error)
+	CountOrgOrUserAssignments(ctx context.Context, arg CountOrgOrUserAssignmentsParams) (int64, error)
 	CountPlans(ctx context.Context, arg CountPlansParams) (int64, error)
 	CreateFeature(ctx context.Context, arg CreateFeatureParams) (Feature, error)
 	CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error)
