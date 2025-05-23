@@ -70,18 +70,12 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	var validUntil *time.Time
-
-	if !req.ValidUntil.IsZero() {
-		validUntil = &req.ValidUntil
-	}
-
 	planAssignment, err := h.planSvc.CreateAssignment(c, models.CreateAssignmentInput{
 		PlanID:         planID,
 		OrganizationID: req.OrganizationID,
 		UserID:         req.UserID,
 		ValidFrom:      req.ValidFrom.UTC(),
-		ValidUntil:     validUntil,
+		ValidUntil:     req.ValidUntil.UTC(),
 		CreatedBy:      req.CreatedBy,
 	})
 	if err != nil {

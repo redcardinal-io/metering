@@ -15,14 +15,13 @@ const assignPlan = `-- name: AssignPlan :one
 insert into plan_assignment (
     plan_id,
     organization_id,
-
     user_id,
     valid_from,
     valid_until,
     created_by,
     updated_by
 ) values (
-$1, $2, $3, $4, $7, $5, $6
+$1, $2, $3, $4, $5, $6, $7
 ) returning id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
 `
 
@@ -31,9 +30,9 @@ type AssignPlanParams struct {
 	OrganizationID pgtype.Text
 	UserID         pgtype.Text
 	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
 	CreatedBy      string
 	UpdatedBy      string
-	ValidUntil     pgtype.Timestamptz
 }
 
 // assigns a plan to either an organization or a user based on which id is provided
@@ -43,9 +42,9 @@ func (q *Queries) AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAss
 		arg.OrganizationID,
 		arg.UserID,
 		arg.ValidFrom,
+		arg.ValidUntil,
 		arg.CreatedBy,
 		arg.UpdatedBy,
-		arg.ValidUntil,
 	)
 	var i PlanAssignment
 	err := row.Scan(
@@ -61,6 +60,165 @@ func (q *Queries) AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAss
 		&i.UpdatedBy,
 	)
 	return i, err
+}
+
+const listAllAssignmentsPaginated = `-- name: ListAllAssignmentsPaginated :many
+SELECT
+    pa.id,
+    pa.plan_id,
+    pa.organization_id,
+    pa.user_id,
+    pa.valid_from,
+    pa.valid_until,
+    pa.created_at,
+    pa.updated_at,
+    pa.created_by,
+    pa.updated_by
+FROM plan_assignment pa
+INNER JOIN plan p ON pa.plan_id = p.id
+WHERE p.tenant_slug = $1
+AND p.archived_at IS NULL
+ORDER BY pa.created_at DESC
+LIMIT $2
+OFFSET $3
+`
+
+type ListAllAssignmentsPaginatedParams struct {
+	TenantSlug string
+	Limit      int32
+	Offset     int32
+}
+
+func (q *Queries) ListAllAssignmentsPaginated(ctx context.Context, arg ListAllAssignmentsPaginatedParams) ([]PlanAssignment, error) {
+	rows, err := q.db.Query(ctx, listAllAssignmentsPaginated, arg.TenantSlug, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PlanAssignment
+	for rows.Next() {
+		var i PlanAssignment
+		if err := rows.Scan(
+			&i.ID,
+			&i.PlanID,
+			&i.OrganizationID,
+			&i.UserID,
+			&i.ValidFrom,
+			&i.ValidUntil,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listOrgOrUserAssignmentsPaginated = `-- name: ListOrgOrUserAssignmentsPaginated :many
+SELECT id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
+FROM plan_assignment
+WHERE (
+    (organization_id = $1 or $1 is null) or
+    (user_id = $2 or $2 is null)
+)
+ORDER BY created_at DESC
+LIMIT $3
+OFFSET $4
+`
+
+type ListOrgOrUserAssignmentsPaginatedParams struct {
+	OrganizationID pgtype.Text
+	UserID         pgtype.Text
+	Limit          int32
+	Offset         int32
+}
+
+func (q *Queries) ListOrgOrUserAssignmentsPaginated(ctx context.Context, arg ListOrgOrUserAssignmentsPaginatedParams) ([]PlanAssignment, error) {
+	rows, err := q.db.Query(ctx, listOrgOrUserAssignmentsPaginated,
+		arg.OrganizationID,
+		arg.UserID,
+		arg.Limit,
+		arg.Offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PlanAssignment
+	for rows.Next() {
+		var i PlanAssignment
+		if err := rows.Scan(
+			&i.ID,
+			&i.PlanID,
+			&i.OrganizationID,
+			&i.UserID,
+			&i.ValidFrom,
+			&i.ValidUntil,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listPlanAssignmentsPaginated = `-- name: ListPlanAssignmentsPaginated :many
+SELECT id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
+FROM plan_assignment
+WHERE plan_id = $1
+ORDER BY created_at DESC
+LIMIT $2
+OFFSET $3
+`
+
+type ListPlanAssignmentsPaginatedParams struct {
+	PlanID pgtype.UUID
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) ListPlanAssignmentsPaginated(ctx context.Context, arg ListPlanAssignmentsPaginatedParams) ([]PlanAssignment, error) {
+	rows, err := q.db.Query(ctx, listPlanAssignmentsPaginated, arg.PlanID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PlanAssignment
+	for rows.Next() {
+		var i PlanAssignment
+		if err := rows.Scan(
+			&i.ID,
+			&i.PlanID,
+			&i.OrganizationID,
+			&i.UserID,
+			&i.ValidFrom,
+			&i.ValidUntil,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const terminateAssignedPlan = `-- name: TerminateAssignedPlan :exec

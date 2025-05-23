@@ -3,14 +3,13 @@
 insert into plan_assignment (
     plan_id,
     organization_id,
-
     user_id,
     valid_from,
     valid_until,
     created_by,
     updated_by
 ) values (
-$1, $2, $3, $4, sqlc.narg('valid_until'), $5, $6
+$1, $2, $3, $4, $5, $6, $7
 ) returning *;
 
 -- name: TerminateAssignedPlan :exec
@@ -34,3 +33,42 @@ and (
     (user_id = $4 or $4 is null)
 )
 returning *;
+
+-- name: ListPlanAssignmentsPaginated :many
+SELECT *
+FROM plan_assignment
+WHERE plan_id = $1
+ORDER BY created_at DESC
+LIMIT $2
+OFFSET $3;
+
+-- name: ListOrgOrUserAssignmentsPaginated :many
+SELECT *
+FROM plan_assignment
+WHERE (
+    (organization_id = $1 or $1 is null) or
+    (user_id = $2 or $2 is null)
+)
+ORDER BY created_at DESC
+LIMIT $3
+OFFSET $4;
+
+-- name: ListAllAssignmentsPaginated :many
+SELECT
+    pa.id,
+    pa.plan_id,
+    pa.organization_id,
+    pa.user_id,
+    pa.valid_from,
+    pa.valid_until,
+    pa.created_at,
+    pa.updated_at,
+    pa.created_by,
+    pa.updated_by
+FROM plan_assignment pa
+INNER JOIN plan p ON pa.plan_id = p.id
+WHERE p.tenant_slug = $1
+AND p.archived_at IS NULL
+ORDER BY pa.created_at DESC
+LIMIT $2
+OFFSET $3;
