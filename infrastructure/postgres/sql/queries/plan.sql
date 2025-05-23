@@ -21,10 +21,10 @@ SELECT * FROM plan
 WHERE slug = $1
 AND tenant_slug = $2;
 
-
 -- name: ListPlansPaginated :many
 SELECT * FROM plan
 WHERE tenant_slug = $1
+and (sqlc.narg('type')::plan_type_enum is null or type = sqlc.narg('type')::plan_type_enum)
 ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3;
@@ -73,7 +73,8 @@ RETURNING *;
 
 -- name: CountPlans :one
 SELECT count(*) FROM plan
-WHERE tenant_slug = $1;
+WHERE tenant_slug = $1
+AND (sqlc.narg('type')::plan_type_enum is null or type = sqlc.narg('type')::plan_type_enum);
 
 -- name: UpdatePlanByID :one
 UPDATE plan

@@ -10,17 +10,32 @@ import (
 )
 
 type PlanManagementService struct {
-	planStore        repositories.PlanStoreRepository
-	featureStore     repositories.FeatureStoreRepository
-	planFeatureStore repositories.PlanFeatureStoreRepository
+	planStore            repositories.PlanStoreRepository
+	planAssignmentsStore repositories.PlanAssignmentsStoreRepository
+	featureStore         repositories.FeatureStoreRepository
+	planFeatureStore     repositories.PlanFeatureStoreRepository
 }
 
-func NewPlanService(planStore repositories.PlanStoreRepository, featureStore repositories.FeatureStoreRepository, planFeatureStore repositories.PlanFeatureStoreRepository) *PlanManagementService {
+func NewPlanService(planStore repositories.PlanStoreRepository, featureStore repositories.FeatureStoreRepository, planFeatureStore repositories.PlanFeatureStoreRepository, planAssignmentsStore repositories.PlanAssignmentsStoreRepository) *PlanManagementService {
 	return &PlanManagementService{
-		planStore:        planStore,
-		featureStore:     featureStore,
-		planFeatureStore: planFeatureStore,
+		planStore:            planStore,
+		featureStore:         featureStore,
+		planFeatureStore:     planFeatureStore,
+		planAssignmentsStore: planAssignmentsStore,
 	}
+}
+
+func (s *PlanManagementService) CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error) {
+	// Assign the plan based on isOrg parameter in the database
+	return s.planAssignmentsStore.CreateAssignment(ctx, arg)
+}
+
+func (s *PlanManagementService) TerminateAssignment(ctx context.Context, arg models.TerminateAssignmentInput) error {
+	return s.planAssignmentsStore.TerminateAssignment(ctx, arg)
+}
+
+func (s *PlanManagementService) UpdateAssignment(ctx context.Context, arg models.UpdateAssignmentInput) (*models.PlanAssignment, error) {
+	return s.planAssignmentsStore.UpdateAssignment(ctx, arg)
 }
 
 func (s *PlanManagementService) CreatePlan(ctx context.Context, arg models.CreatePlanInput) (*models.Plan, error) {

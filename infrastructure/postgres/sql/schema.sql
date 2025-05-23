@@ -66,6 +66,28 @@ create table if not exists feature (
 	unique (tenant_slug, slug)
 );
 
+create table if not exists plan_assignment (
+	id uuid primary key default uuid_generate_v4(),
+	plan_id uuid not null,
+	organization_id varchar default null,
+	user_id varchar default null,
+	valid_from timestamp with time zone not null,
+	valid_until timestamp with time zone default null,
+	created_at timestamp with time zone not null default current_timestamp,
+	updated_at timestamp with time zone not null default current_timestamp,
+	created_by varchar not null,
+	updated_by varchar not null,
+
+	FOREIGN KEY (plan_id) REFERENCES plan(id)
+	ON DELETE CASCADE,
+
+	CONSTRAINT only_one_entity CHECK (
+	(organization_id IS NULL AND user_id IS NOT NULL)
+	OR
+	(organization_id IS NOT NULL AND user_id IS NULL)
+	)
+);
+
 create table if not exists plan_feature (
 	id uuid primary key default uuid_generate_v4(),
 	plan_id uuid not null references plan(id) on delete cascade,
@@ -76,6 +98,7 @@ create table if not exists plan_feature (
   updated_by varchar not null,
   config jsonb default null
 );
+
 
 create type metered_reset_period_enum as enum (
   'day',
@@ -102,4 +125,19 @@ create table if not exists plan_feature_quota (
   action_at_limit metered_action_at_limit_enum not null default 'none',
   created_at timestamp with time zone not null default now(),
   updated_at timestamp with time zone not null default now()
+);
+
+create table if not exists plan_assignment_history (
+    id uuid primary key default uuid_generate_v4(),
+    plan_assignment_id uuid,
+    action varchar not null,
+    plan_id uuid,
+    organization_id uuid default null,
+    user_id uuid default null,
+    valid_from timestamp with time zone not null,
+    valid_until timestamp with time zone not null,
+    created_at timestamp with time zone not null default current_timestamp,
+    updated_at timestamp with time zone not null default current_timestamp,
+    created_by varchar not null,
+    updated_by varchar not null
 );

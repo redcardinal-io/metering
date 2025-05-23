@@ -14,10 +14,12 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/features"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/meters"
+	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planassignments"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planfeatures"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/plans"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
+	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/assignments"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/events"
 	featuresRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/features"
 	meterRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/meters"
@@ -86,12 +88,13 @@ func ServeHttp() error {
 	meterStore := meters.NewPostgresMeterStoreRepository(store.GetDB(), logger)
 	planStore := plans.NewPostgresPlanStoreRepository(store.GetDB(), logger)
 	featureStore := features.NewPgFeatureStoreRepository(store.GetDB(), logger)
+	planAssignmentsStore := planassignments.NewPostgresPlanAssignmentsStoreRepository(store.GetDB(), logger)
 	planFeatureStore := planfeatures.NewPgPlanFeatureStoreRepository(store.GetDB(), logger)
 
 	// intialize services
 	producerService := services.NewProducerService(producer, meterStore)
 	meterService := services.NewMeterService(olap, meterStore)
-	planMangementService := services.NewPlanService(planStore, featureStore, planFeatureStore)
+	planMangementService := services.NewPlanService(planStore, featureStore, planFeatureStore, planAssignmentsStore)
 
 	// Register routes
 	routes := routes.NewHTTPHandler(logger)
@@ -110,6 +113,10 @@ func ServeHttp() error {
 	// meter routes
 	meterRoutes := meterRoutes.NewHTTPHandler(logger, meterService)
 	meterRoutes.RegisterRoutes(v1)
+
+	// plan assignment routes
+	assignmentsRoutes := assignments.NewHTTPHandler(logger, planMangementService)
+	assignmentsRoutes.RegisterRoutes(v1)
 
 	// plan routes
 	planRoutes := planRoutes.NewHTTPHandler(logger, planMangementService)

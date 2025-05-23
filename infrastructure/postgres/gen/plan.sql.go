@@ -82,10 +82,16 @@ func (q *Queries) ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugPa
 const countPlans = `-- name: CountPlans :one
 SELECT count(*) FROM plan
 WHERE tenant_slug = $1
+AND ($2::plan_type_enum is null or type = $2::plan_type_enum)
 `
 
-func (q *Queries) CountPlans(ctx context.Context, tenantSlug string) (int64, error) {
-	row := q.db.QueryRow(ctx, countPlans, tenantSlug)
+type CountPlansParams struct {
+	TenantSlug string
+	Type       NullPlanTypeEnum
+}
+
+func (q *Queries) CountPlans(ctx context.Context, arg CountPlansParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countPlans, arg.TenantSlug, arg.Type)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -237,6 +243,7 @@ func (q *Queries) GetPlanBySlug(ctx context.Context, arg GetPlanBySlugParams) (P
 const listPlansPaginated = `-- name: ListPlansPaginated :many
 SELECT id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by FROM plan
 WHERE tenant_slug = $1
+and ($4::plan_type_enum is null or type = $4::plan_type_enum)
 ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3
@@ -246,10 +253,16 @@ type ListPlansPaginatedParams struct {
 	TenantSlug string
 	Limit      int32
 	Offset     int32
+	Type       NullPlanTypeEnum
 }
 
 func (q *Queries) ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error) {
-	rows, err := q.db.Query(ctx, listPlansPaginated, arg.TenantSlug, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, listPlansPaginated,
+		arg.TenantSlug,
+		arg.Limit,
+		arg.Offset,
+		arg.Type,
+	)
 	if err != nil {
 		return nil, err
 	}

@@ -80,7 +80,7 @@ func MapError(err error, op string) error {
 
 		case PgErrCheckViolation:
 			constraint := extractConstraintName(pgErr.Detail)
-			msg := "Value out of allowed range"
+			msg := "Constraint check failed"
 			if constraint != "" {
 				msg = humanizeConstraint(constraint) + " check failed"
 			}

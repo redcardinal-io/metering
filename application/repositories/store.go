@@ -33,6 +33,12 @@ type PlanStoreRepository interface {
 	ArchivePlanByIDorSlug(ctx context.Context, idOrSlug string, arg models.ArchivePlanInput) error
 }
 
+type PlanAssignmentsStoreRepository interface {
+	CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error)
+	TerminateAssignment(ctx context.Context, arg models.TerminateAssignmentInput) error
+	UpdateAssignment(ctx context.Context, arg models.UpdateAssignmentInput) (*models.PlanAssignment, error)
+}
+
 type FeatureStoreRepository interface {
 	CreateFeature(ctx context.Context, arg models.CreateFeatureInput) (*models.Feature, error)
 	GetFeatureByIDorSlug(ctx context.Context, idOrSlug string) (*models.Feature, error)

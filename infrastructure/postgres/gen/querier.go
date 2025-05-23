@@ -13,11 +13,12 @@ import (
 type Querier interface {
 	ArchivePlanByID(ctx context.Context, arg ArchivePlanByIDParams) (Plan, error)
 	ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugParams) (Plan, error)
+	AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAssignment, error)
 	CheckPlanAndFeatureForTenant(ctx context.Context, arg CheckPlanAndFeatureForTenantParams) (bool, error)
 	CountFeatures(ctx context.Context, arg CountFeaturesParams) (int64, error)
 	CountMeters(ctx context.Context, tenantSlug string) (int64, error)
 	CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error)
-	CountPlans(ctx context.Context, tenantSlug string) (int64, error)
+	CountPlans(ctx context.Context, arg CountPlansParams) (int64, error)
 	CreateFeature(ctx context.Context, arg CreateFeatureParams) (Feature, error)
 	CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error)
 	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
@@ -42,8 +43,12 @@ type Querier interface {
 	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)
 	ListPlanFeaturesByPlan(ctx context.Context, arg ListPlanFeaturesByPlanParams) ([]ListPlanFeaturesByPlanRow, error)
 	ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error)
+	// removes a plan assignment for either an organization or user
+	TerminateAssignedPlan(ctx context.Context, arg TerminateAssignedPlanParams) error
 	UnArchivePlanByID(ctx context.Context, arg UnArchivePlanByIDParams) (Plan, error)
 	UnArchivePlanBySlug(ctx context.Context, arg UnArchivePlanBySlugParams) (Plan, error)
+	// updates the validity period of a plan assignment for either organization or user
+	UpdateAssignedPlan(ctx context.Context, arg UpdateAssignedPlanParams) (PlanAssignment, error)
 	UpdateFeatureByID(ctx context.Context, arg UpdateFeatureByIDParams) (Feature, error)
 	UpdateFeatureBySlug(ctx context.Context, arg UpdateFeatureBySlugParams) (Feature, error)
 	UpdateMeterByID(ctx context.Context, arg UpdateMeterByIDParams) (Meter, error)

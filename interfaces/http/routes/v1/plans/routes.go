@@ -32,13 +32,12 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	plans.Post("/", h.create)
 	plans.Get("/", h.list)
 
-	// Single Plan routes with id parameter
-	plans.Get("/:idOrSlug", h.getByIDorSlug)
-	plans.Put("/:idOrSlug", h.updateByIDorSlug)
-	plans.Delete("/:idOrSlug", h.deleteByIDorSlug)
-
-	// Toggle Plan Archive
-	plans.Put("/:idOrSlug/archive", h.archive)
+	// Single Plan routes with id or slug parameter
+	plan := plans.Group("/:idOrSlug")
+	plan.Get("/", h.details)
+	plan.Put("/", h.update)
+	plan.Delete("/", h.delete_h)
+	plan.Put("/archive", h.archive)
 
 	// Plan Features routes
 	planFeatures := plans.Group("/:planID/features")

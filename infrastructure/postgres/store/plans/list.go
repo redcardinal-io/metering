@@ -18,8 +18,8 @@ func (p *PgPlanStoreRepository) ListPlans(ctx context.Context, page pagination.P
 		Limit:      int32(page.Limit),
 		Offset:     int32(page.GetOffset()),
 		TenantSlug: ctx.Value(constants.TenantSlugKey).(string),
+		Type:       createPlanTypeEnum(page.Queries["type"]),
 	})
-
 	if err != nil {
 		p.logger.Error("Error listing plans: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListPlans")
@@ -49,7 +49,10 @@ func (p *PgPlanStoreRepository) ListPlans(ctx context.Context, page pagination.P
 		})
 	}
 
-	count, err := p.q.CountPlans(ctx, tenantSlug)
+	count, err := p.q.CountPlans(ctx, gen.CountPlansParams{
+		TenantSlug: tenantSlug,
+		Type:       createPlanTypeEnum(page.Queries["type"]),
+	})
 	if err != nil {
 		p.logger.Error("Error counting plans: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.CountMeters")
@@ -58,4 +61,11 @@ func (p *PgPlanStoreRepository) ListPlans(ctx context.Context, page pagination.P
 	result := pagination.FormatWith(page, int(count), plans)
 
 	return &result, nil
+}
+
+func createPlanTypeEnum(planType string) gen.NullPlanTypeEnum {
+	return gen.NullPlanTypeEnum{
+		PlanTypeEnum: gen.PlanTypeEnum(planType),
+		Valid:        planType != "",
+	}
 }

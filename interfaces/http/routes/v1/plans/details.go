@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (h *httpHandler) getByIDorSlug(ctx *fiber.Ctx) error {
+func (h *httpHandler) details(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	idOrSlug := ctx.Params("idOrSlug")
 

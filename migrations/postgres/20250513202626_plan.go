@@ -44,6 +44,8 @@ func upPlan(ctx context.Context, tx *sql.Tx) error {
 		  
       perform goose_manage_updated_at('plan');
 			create index if not exists idx_plan_tenant_slug on plan(tenant_slug);
+			create index if not exists idx_plan_tenant_slug_and_type on plan(tenant_slug, type);
+			create index if not exists idx_plan_slug on plan(slug);
 		end;
 		$$;
 	`)

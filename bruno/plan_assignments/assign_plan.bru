@@ -1,0 +1,24 @@
+meta {
+  name: assign_plan
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/v1/plans/assignments/
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "plan_id_or_slug":"free_plan",
+    "organization_id": "1f140541-d707-4da6-908e-1f9c9eae53d",
+    "valid_from": "2025-05-20T18:13:43.478615Z",
+    "created_by": "rc_tenant_admin_user"
+  }
+}
