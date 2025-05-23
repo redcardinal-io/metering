@@ -22,7 +22,7 @@ insert into plan_assignment (
     created_by,
     updated_by
 ) values (
-    $1, $2, $3, $4, $5, $6, $7
+$1, $2, $3, $4, $7, $5, $6
 ) returning id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
 `
 
@@ -31,9 +31,9 @@ type AssignPlanParams struct {
 	OrganizationID pgtype.Text
 	UserID         pgtype.Text
 	ValidFrom      pgtype.Timestamptz
-	ValidUntil     pgtype.Timestamptz
 	CreatedBy      string
 	UpdatedBy      string
+	ValidUntil     pgtype.Timestamptz
 }
 
 // assigns a plan to either an organization or a user based on which id is provided
@@ -43,9 +43,9 @@ func (q *Queries) AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAss
 		arg.OrganizationID,
 		arg.UserID,
 		arg.ValidFrom,
-		arg.ValidUntil,
 		arg.CreatedBy,
 		arg.UpdatedBy,
+		arg.ValidUntil,
 	)
 	var i PlanAssignment
 	err := row.Scan(

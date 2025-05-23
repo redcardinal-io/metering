@@ -1,8 +1,7 @@
-package planassignments
+package assignments
 
 import (
 	"context"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
@@ -11,19 +10,15 @@ import (
 	"go.uber.org/zap"
 )
 
-type updateAssignedPlanRequest struct {
-	PlanIDOrSlug        string     `json:"plan_idorslug" validate:"required"`
-	OrganizationID      string     `json:"organization_id"`
-	UserID              string     `json:"user_id"`
-	ValidFrom           *time.Time `json:"valid_from"`
-	ValidUntil          *time.Time `json:"valid_until"`
-	UpdatedBy           string     `json:"updated_by" validate:"required"`
-	SetValidUntilToZero bool       `json:"set_validuntil_tozero"`
+type terminatePlanRequest struct {
+	PlanIDOrSlug   string `json:"plan_idorslug" validate:"required"`
+	OrganizationID string `json:"organization_id"`
+	UserID         string `json:"user_id"`
 }
 
-func (h *httpHandler) update(ctx *fiber.Ctx) error {
+func (h *httpHandler) delete(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
-	var req updateAssignedPlanRequest
+	var req terminatePlanRequest
 
 	if err := ctx.BodyParser(&req); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
@@ -52,36 +47,23 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
 
-	planId, getErr := getPlanIDFromIdentifier(c, req.PlanIDOrSlug, h.planSvc)
+	planID, getErr := getPlanIDFromIdentifier(c, req.PlanIDOrSlug, h.planSvc)
 	if getErr != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(getErr, domainerrors.EINVALID, "invalid plan id or slug")
 		h.logger.Error("invalid plan id or slug", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	var utcValidFrom, utcValidUntil time.Time
-	if req.ValidFrom != nil {
-		utcValidFrom = req.ValidFrom.UTC()
-	}
-	if req.ValidUntil != nil {
-		utcValidUntil = req.ValidUntil.UTC()
-	}
-
-	updatedAssignment, err := h.planSvc.UpdateAssignment(c, models.UpdateAssignmentInput{
-		PlanID:              planId,
-		OrganizationID:      req.OrganizationID,
-		UserID:              req.UserID,
-		ValidFrom:           &utcValidFrom,
-		ValidUntil:          &utcValidUntil,
-		UpdatedBy:           req.UpdatedBy,
-		SetValidUntilToZero: req.SetValidUntilToZero,
+	err := h.planSvc.TerminateAssignment(c, models.TerminateAssignmentInput{
+		PlanID:         planID,
+		OrganizationID: req.OrganizationID,
+		UserID:         req.UserID,
 	})
 	if err != nil {
-		h.logger.Error("failed to update plan assignment", zap.Reflect("error", err))
-		errResp := domainerrors.NewErrorResponse(err)
+		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to terminate plan assignment")
+		h.logger.Error("failed to terminate plan assignment", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	return ctx.
-		Status(fiber.StatusCreated).JSON(models.NewHttpResponse(updatedAssignment, "updated assignment successfully", fiber.StatusCreated))
+	return ctx.SendStatus(fiber.StatusNoContent)
 }

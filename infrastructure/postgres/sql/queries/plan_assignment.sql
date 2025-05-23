@@ -10,7 +10,7 @@ insert into plan_assignment (
     created_by,
     updated_by
 ) values (
-    $1, $2, $3, $4, $5, $6, $7
+$1, $2, $3, $4, sqlc.narg('valid_until'), $5, $6
 ) returning *;
 
 -- name: TerminateAssignedPlan :exec

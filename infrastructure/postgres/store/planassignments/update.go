@@ -13,14 +13,13 @@ import (
 )
 
 func (p *PgPlanAssignmentsStoreRepository) UpdateAssignment(ctx context.Context, arg models.UpdateAssignmentInput) (*models.PlanAssignment, error) {
-
 	validFrom := pgtype.Timestamptz{Valid: false}
 	validUntil := pgtype.Timestamptz{Valid: false}
 	if !arg.ValidFrom.IsZero() {
 		validFrom = pgtype.Timestamptz{Time: *arg.ValidFrom, Valid: true}
 	}
 
-	if !arg.ValidUntil.IsZero() {
+	if arg.ValidUntil != nil {
 		validUntil = pgtype.Timestamptz{Time: *arg.ValidUntil, Valid: true}
 	} else if arg.SetValidUntilToZero {
 		validUntil = pgtype.Timestamptz{Time: time.Time{}, Valid: true}
@@ -57,7 +56,7 @@ func (p *PgPlanAssignmentsStoreRepository) UpdateAssignment(ctx context.Context,
 		OrganizationID: m.OrganizationID.String,
 		UserID:         m.UserID.String,
 		ValidFrom:      m.ValidFrom.Time,
-		ValidUntil:     m.ValidUntil.Time,
+		ValidUntil:     &m.ValidUntil.Time,
 	}
 
 	return planAssignment, nil

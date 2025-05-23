@@ -1,4 +1,4 @@
-package planassignments
+package assignments
 
 import (
 	"context"

@@ -18,11 +18,11 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/plans"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
+	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/assignments"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/events"
 	featuresRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/features"
 	meterRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/meters"
 	planRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans"
-	planAssignmentsRoutes "github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans/planassignments"
 	"go.uber.org/zap"
 )
 
@@ -113,8 +113,8 @@ func ServeHttp() error {
 	meterRoutes.RegisterRoutes(v1)
 
 	// plan assignment routes
-	planAssignmentsRoutes := planAssignmentsRoutes.NewHTTPHandler(logger, planMangementService)
-	planAssignmentsRoutes.RegisterRoutes(v1)
+	assignmentsRoutes := assignments.NewHTTPHandler(logger, planMangementService)
+	assignmentsRoutes.RegisterRoutes(v1)
 
 	// plan routes
 	planRoutes := planRoutes.NewHTTPHandler(logger, planMangementService)
