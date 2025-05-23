@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/application/repositories"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
@@ -12,13 +13,14 @@ type PlanManagementService struct {
 	planStore            repositories.PlanStoreRepository
 	planAssignmentsStore repositories.PlanAssignmentsStoreRepository
 	featureStore         repositories.FeatureStoreRepository
+	planFeatureStore     repositories.PlanFeatureStoreRepository
 }
 
-// NewPlanService creates a new PlanManagementService with the provided plan and feature repositories.
-func NewPlanService(planStore repositories.PlanStoreRepository, featureStore repositories.FeatureStoreRepository, planAssignmentsStore repositories.PlanAssignmentsStoreRepository) *PlanManagementService {
+func NewPlanService(planStore repositories.PlanStoreRepository, featureStore repositories.FeatureStoreRepository, planFeatureStore repositories.PlanFeatureStoreRepository, planAssignmentsStore repositories.PlanAssignmentsStoreRepository) *PlanManagementService {
 	return &PlanManagementService{
 		planStore:            planStore,
 		featureStore:         featureStore,
+		planFeatureStore:     planFeatureStore,
 		planAssignmentsStore: planAssignmentsStore,
 	}
 }
@@ -111,4 +113,25 @@ func (s *PlanManagementService) UpdateFeatureByIDorSlug(ctx context.Context, idO
 
 func (s *PlanManagementService) ListFeatures(ctx context.Context, pagination pagination.Pagination) (*pagination.PaginationView[models.Feature], error) {
 	return s.featureStore.ListFeatures(ctx, pagination)
+}
+
+// PlanFeature methods
+func (s *PlanManagementService) CreatePlanFeature(ctx context.Context, arg models.CreatePlanFeatureInput) (*models.PlanFeature, error) {
+	return s.planFeatureStore.CreatePlanFeature(ctx, arg)
+}
+
+func (s *PlanManagementService) UpdatePlanFeature(ctx context.Context, planID, featureID uuid.UUID, arg models.UpdatePlanFeatureInput) (*models.PlanFeature, error) {
+	return s.planFeatureStore.UpdatePlanFeature(ctx, planID, featureID, arg)
+}
+
+func (s *PlanManagementService) DeletePlanFeature(ctx context.Context, arg models.DeletePlanFeatureInput) error {
+	return s.planFeatureStore.DeletePlanFeature(ctx, arg)
+}
+
+func (s *PlanManagementService) ListPlanFeaturesByPlan(ctx context.Context, planID uuid.UUID, filter models.PlanFeatureListFilter) ([]models.PlanFeature, error) {
+	return s.planFeatureStore.ListPlanFeaturesByPlan(ctx, planID, filter)
+}
+
+func (s *PlanManagementService) CheckPlanAndFeatureForTenant(ctx context.Context, planID, featureID uuid.UUID) (bool, error) {
+	return s.planFeatureStore.CheckPlanAndFeatureForTenant(ctx, planID, featureID)
 }

@@ -88,6 +88,45 @@ create table if not exists plan_assignment (
 	)
 );
 
+create table if not exists plan_feature (
+	id uuid primary key default uuid_generate_v4(),
+	plan_id uuid not null references plan(id) on delete cascade,
+	feature_id uuid not null references feature(id) on delete cascade,
+	created_at timestamp with time zone not null default now(),
+	updated_at timestamp with time zone not null default now(),
+  created_by varchar not null,
+  updated_by varchar not null,
+  config jsonb default null
+);
+
+
+create type metered_reset_period_enum as enum (
+  'day',
+  'week',
+  'month',
+  'year',
+	'custom',
+	'rolling',
+	'never'
+);
+
+create type metered_action_at_limit_enum as enum (
+  'none',
+  'block',
+  'throttle'
+);
+
+create table if not exists plan_feature_quota (
+  id uuid primary key default uuid_generate_v4(),
+  plan_feature_id uuid not null references plan_feature(id) on delete cascade,
+  limit_value bigint not null,
+  reset_period metered_reset_period_enum not null,
+  custom_period_minutes bigint default null,
+  action_at_limit metered_action_at_limit_enum not null default 'none',
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now()
+);
+
 create table if not exists plan_assignment_history (
     id uuid primary key default uuid_generate_v4(),
     plan_assignment_id uuid,

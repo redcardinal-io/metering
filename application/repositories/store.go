@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
@@ -44,4 +45,12 @@ type FeatureStoreRepository interface {
 	ListFeatures(ctx context.Context, pagination pagination.Pagination) (*pagination.PaginationView[models.Feature], error)
 	DeleteFeatureByIDorSlug(ctx context.Context, idOrSlug string) error
 	UpdateFeatureByIDorSlug(ctx context.Context, idOrSlug string, arg models.UpdateFeatureInput) (*models.Feature, error)
+}
+
+type PlanFeatureStoreRepository interface {
+	CreatePlanFeature(ctx context.Context, arg models.CreatePlanFeatureInput) (*models.PlanFeature, error)
+	UpdatePlanFeature(ctx context.Context, planID, featureID uuid.UUID, arg models.UpdatePlanFeatureInput) (*models.PlanFeature, error)
+	DeletePlanFeature(ctx context.Context, arg models.DeletePlanFeatureInput) error
+	ListPlanFeaturesByPlan(ctx context.Context, planID uuid.UUID, filter models.PlanFeatureListFilter) ([]models.PlanFeature, error)
+	CheckPlanAndFeatureForTenant(ctx context.Context, planID, featureID uuid.UUID) (bool, error)
 }

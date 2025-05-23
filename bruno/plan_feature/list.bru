@@ -1,17 +1,13 @@
 meta {
   name: list
   type: http
-  seq: 5
+  seq: 2
 }
 
 get {
-  url: {{base_url}}/v1/features?
+  url: {{base_url}}/v1/plans/f1d43b61-edac-479d-9731-774cc33972cc/features
   body: none
   auth: inherit
-}
-
-params:query {
-  type: metered
 }
 
 headers {
