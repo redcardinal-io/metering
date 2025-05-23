@@ -2,7 +2,6 @@ package assignments
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -71,7 +70,6 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 	if req.ValidUntil != nil {
 		utcValidUntil = req.ValidUntil.UTC()
 	}
-	fmt.Println("validUntil", utcValidUntil)
 
 	updatedAssignment, err := h.planSvc.UpdateAssignment(c, models.UpdateAssignmentInput{
 		PlanID:              planId,
