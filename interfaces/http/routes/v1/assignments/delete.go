@@ -11,7 +11,7 @@ import (
 )
 
 type terminatePlanRequest struct {
-	PlanIDOrSlug   string `json:"plan_idorslug" validate:"required"`
+	PlanIDOrSlug   string `json:"plan_id_or_slug" validate:"required"`
 	OrganizationID string `json:"organization_id"`
 	UserID         string `json:"user_id"`
 }

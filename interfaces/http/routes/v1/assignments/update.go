@@ -12,7 +12,7 @@ import (
 )
 
 type updateAssignedPlanRequest struct {
-	PlanIDOrSlug        string     `json:"plan_idorslug" validate:"required"`
+	PlanIDOrSlug        string     `json:"plan_id_or_slug" validate:"required"`
 	OrganizationID      string     `json:"organization_id"`
 	UserID              string     `json:"user_id"`
 	ValidFrom           *time.Time `json:"valid_from"`
@@ -87,5 +87,5 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.
-		Status(fiber.StatusCreated).JSON(models.NewHttpResponse(updatedAssignment, "updated assignment successfully", fiber.StatusCreated))
+		Status(fiber.StatusOK).JSON(models.NewHttpResponse(updatedAssignment, "updated assignment successfully", fiber.StatusCreated))
 }
