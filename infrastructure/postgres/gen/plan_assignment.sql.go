@@ -62,22 +62,49 @@ func (q *Queries) AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAss
 	return i, err
 }
 
-const countOrgOrUserAssignments = `-- name: CountOrgOrUserAssignments :one
+const countAllAssignments = `-- name: CountAllAssignments :one
+SELECT count(pa.*)
+FROM plan_assignment pa
+INNER JOIN plan p ON pa.plan_id = p.id
+WHERE p.tenant_slug = $1
+AND p.archived_at IS NULL
+`
+
+func (q *Queries) CountAllAssignments(ctx context.Context, tenantSlug string) (int64, error) {
+	row := q.db.QueryRow(ctx, countAllAssignments, tenantSlug)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countAssignments = `-- name: CountAssignments :one
 SELECT count(*)
 FROM plan_assignment
 WHERE (
     (organization_id = $1 or $1 is null) and 
     (user_id = $2 or $2 is null)
 )
+AND (plan_id = $3 or $3 is null)
+AND (valid_from >= $4 or $4 is null)
+AND (valid_until <= $5 or $5 is null)
 `
 
-type CountOrgOrUserAssignmentsParams struct {
+type CountAssignmentsParams struct {
 	OrganizationID pgtype.Text
 	UserID         pgtype.Text
+	PlanID         pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
 }
 
-func (q *Queries) CountOrgOrUserAssignments(ctx context.Context, arg CountOrgOrUserAssignmentsParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countOrgOrUserAssignments, arg.OrganizationID, arg.UserID)
+func (q *Queries) CountAssignments(ctx context.Context, arg CountAssignmentsParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAssignments,
+		arg.OrganizationID,
+		arg.UserID,
+		arg.PlanID,
+		arg.ValidFrom,
+		arg.ValidUntil,
+	)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -141,78 +168,41 @@ func (q *Queries) ListAllAssignmentsPaginated(ctx context.Context, arg ListAllAs
 	return items, nil
 }
 
-const listOrgOrUserAssignmentsPaginated = `-- name: ListOrgOrUserAssignmentsPaginated :many
+const listAssignmentsPaginated = `-- name: ListAssignmentsPaginated :many
 SELECT id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
 FROM plan_assignment
 WHERE (
     (organization_id = $1 or $1 is null) and
     (user_id = $2 or $2 is null)
 )
+AND (plan_id = $7 or $7 is null)
+AND (valid_from >= $5 or $5 is null)
+AND (valid_until <= $6 or $6 is null)
 ORDER BY created_at DESC
 LIMIT $3
 OFFSET $4
 `
 
-type ListOrgOrUserAssignmentsPaginatedParams struct {
+type ListAssignmentsPaginatedParams struct {
 	OrganizationID pgtype.Text
 	UserID         pgtype.Text
 	Limit          int32
 	Offset         int32
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	PlanID         pgtype.UUID
 }
 
-func (q *Queries) ListOrgOrUserAssignmentsPaginated(ctx context.Context, arg ListOrgOrUserAssignmentsPaginatedParams) ([]PlanAssignment, error) {
-	rows, err := q.db.Query(ctx, listOrgOrUserAssignmentsPaginated,
+func (q *Queries) ListAssignmentsPaginated(ctx context.Context, arg ListAssignmentsPaginatedParams) ([]PlanAssignment, error) {
+	rows, err := q.db.Query(ctx, listAssignmentsPaginated,
 		arg.OrganizationID,
 		arg.UserID,
 		arg.Limit,
 		arg.Offset,
+		arg.ValidFrom,
+		arg.ValidUntil,
+		arg.PlanID,
 	)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []PlanAssignment
-	for rows.Next() {
-		var i PlanAssignment
-		if err := rows.Scan(
-			&i.ID,
-			&i.PlanID,
-			&i.OrganizationID,
-			&i.UserID,
-			&i.ValidFrom,
-			&i.ValidUntil,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.CreatedBy,
-			&i.UpdatedBy,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listPlanAssignmentsPaginated = `-- name: ListPlanAssignmentsPaginated :many
-SELECT id, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
-FROM plan_assignment
-WHERE plan_id = $1
-ORDER BY created_at DESC
-LIMIT $2
-OFFSET $3
-`
-
-type ListPlanAssignmentsPaginatedParams struct {
-	PlanID pgtype.UUID
-	Limit  int32
-	Offset int32
-}
-
-func (q *Queries) ListPlanAssignmentsPaginated(ctx context.Context, arg ListPlanAssignmentsPaginatedParams) ([]PlanAssignment, error) {
-	rows, err := q.db.Query(ctx, listPlanAssignmentsPaginated, arg.PlanID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

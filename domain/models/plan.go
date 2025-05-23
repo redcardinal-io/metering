@@ -46,6 +46,14 @@ type PlanAssignment struct {
 	ValidUntil     time.Time `json:"valid_until"`
 }
 
+type QueryPlanAssignmentInput struct {
+	PlanID         *uuid.UUID
+	OrganizationID string
+	UserID         string
+	ValidFrom      time.Time
+	ValidUntil     time.Time
+}
+
 // CreatePlanInput represents the input for creating a new plan
 type CreatePlanInput struct {
 	Name        string

@@ -34,32 +34,30 @@ and (
 )
 returning *;
 
--- name: ListPlanAssignmentsPaginated :many
-SELECT *
-FROM plan_assignment
-WHERE plan_id = $1
-ORDER BY created_at DESC
-LIMIT $2
-OFFSET $3;
-
--- name: ListOrgOrUserAssignmentsPaginated :many
+-- name: ListAssignmentsPaginated :many
 SELECT *
 FROM plan_assignment
 WHERE (
     (organization_id = $1 or $1 is null) and
     (user_id = $2 or $2 is null)
 )
+AND (plan_id = $7 or $7 is null)
+AND (valid_from >= $5 or $5 is null)
+AND (valid_until <= $6 or $6 is null)
 ORDER BY created_at DESC
 LIMIT $3
 OFFSET $4;
 
--- name: CountOrgOrUserAssignments :one
+-- name: CountAssignments :one
 SELECT count(*)
 FROM plan_assignment
 WHERE (
     (organization_id = $1 or $1 is null) and 
     (user_id = $2 or $2 is null)
-);
+)
+AND (plan_id = $3 or $3 is null)
+AND (valid_from >= $4 or $4 is null)
+AND (valid_until <= $5 or $5 is null);
 
 -- name: ListAllAssignmentsPaginated :many
 SELECT
@@ -80,3 +78,10 @@ AND p.archived_at IS NULL
 ORDER BY pa.created_at DESC
 LIMIT $2
 OFFSET $3;
+
+-- name: CountAllAssignments :one
+SELECT count(pa.*)
+FROM plan_assignment pa
+INNER JOIN plan p ON pa.plan_id = p.id
+WHERE p.tenant_slug = $1
+AND p.archived_at IS NULL;
