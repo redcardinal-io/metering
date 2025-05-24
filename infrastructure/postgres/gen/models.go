@@ -99,6 +99,49 @@ func (ns NullFeatureEnum) Value() (driver.Value, error) {
 	return string(ns.FeatureEnum), nil
 }
 
+type HistoryActionEnum string
+
+const (
+	HistoryActionEnumINSERT HistoryActionEnum = "INSERT"
+	HistoryActionEnumUPDATE HistoryActionEnum = "UPDATE"
+	HistoryActionEnumDELETE HistoryActionEnum = "DELETE"
+)
+
+func (e *HistoryActionEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = HistoryActionEnum(s)
+	case string:
+		*e = HistoryActionEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for HistoryActionEnum: %T", src)
+	}
+	return nil
+}
+
+type NullHistoryActionEnum struct {
+	HistoryActionEnum HistoryActionEnum
+	Valid             bool // Valid is true if HistoryActionEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullHistoryActionEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.HistoryActionEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.HistoryActionEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullHistoryActionEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.HistoryActionEnum), nil
+}
+
 type PlanTypeEnum string
 
 const (
@@ -187,6 +230,20 @@ type Plan struct {
 
 type PlanAssignment struct {
 	ID             pgtype.UUID
+	PlanID         pgtype.UUID
+	OrganizationID pgtype.Text
+	UserID         pgtype.Text
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	CreatedBy      string
+	UpdatedBy      string
+}
+
+type PlanAssignmentHistory struct {
+	ID             pgtype.UUID
+	Action         HistoryActionEnum
 	PlanID         pgtype.UUID
 	OrganizationID pgtype.Text
 	UserID         pgtype.Text

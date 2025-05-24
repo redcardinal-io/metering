@@ -15,13 +15,13 @@ import (
 
 func (h *httpHandler) list(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
-	var parsedValidFrom, parsedValinUntil time.Time
+	var parsedValidFrom, parsedValidUntil time.Time
 	var genErr error
 	var planId *uuid.UUID
 	var planassignments *pagination.PaginationView[models.PlanAssignment]
 	validFrom := ctx.Query("validFrom")
 	validUntil := ctx.Query("validUntil")
-	planIdOrSlug := ctx.Query("planIdorSlug")
+	planIdOrSlug := ctx.Query("planIdOrSlug")
 
 	// Create pagination input
 	paginationInput := pagination.ExtractPaginationFromContext(ctx)
@@ -50,7 +50,7 @@ func (h *httpHandler) list(ctx *fiber.Ctx) error {
 	}
 
 	if validUntil != "" {
-		parsedValinUntil, genErr = time.Parse(constants.TimeFormat, validUntil)
+		parsedValidUntil, genErr = time.Parse(constants.TimeFormat, validUntil)
 		if genErr != nil {
 			errResp := domainerrors.NewErrorResponseWithOpts(genErr, domainerrors.EINVALID, "invalid timestamp format")
 			h.logger.Error("invalid timestamp format", zap.Reflect("error", errResp))
@@ -72,7 +72,7 @@ func (h *httpHandler) list(ctx *fiber.Ctx) error {
 		OrganizationID: ctx.Query("orgId"),
 		UserID:         ctx.Query("userId"),
 		ValidFrom:      parsedValidFrom.UTC(),
-		ValidUntil:     parsedValinUntil.UTC(),
+		ValidUntil:     parsedValidUntil.UTC(),
 	}
 
 	if queryAssignments.OrganizationID != "" && queryAssignments.UserID != "" {
@@ -81,7 +81,7 @@ func (h *httpHandler) list(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	// Call service to list org assignments
+	// Call service to list assignments
 	planassignments, err := h.planSvc.ListAssignments(c, queryAssignments, paginationInput)
 	if err != nil {
 		h.logger.Error("failed to list assignments", zap.Reflect("error", err))

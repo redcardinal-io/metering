@@ -110,6 +110,48 @@ func (q *Queries) CountAssignments(ctx context.Context, arg CountAssignmentsPara
 	return count, err
 }
 
+const countAssignmentsHistory = `-- name: CountAssignmentsHistory :one
+SELECT count(*)
+FROM plan_assignment_history
+WHERE (
+    (organization_id = $1 or $1 is null) and
+    (user_id = $2 or $2 is null)
+)
+AND (plan_id = $3 or $3 is null)
+AND (valid_from < $4 or $4 is null)
+AND (valid_from >= $5 or $5 is null)
+AND (valid_until < $6 or $6 is null)
+AND (valid_until >= $7 or $7 is null)
+AND (action = $8)
+`
+
+type CountAssignmentsHistoryParams struct {
+	OrganizationID pgtype.Text
+	UserID         pgtype.Text
+	PlanID         pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidFrom_2    pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	ValidUntil_2   pgtype.Timestamptz
+	Action         HistoryActionEnum
+}
+
+func (q *Queries) CountAssignmentsHistory(ctx context.Context, arg CountAssignmentsHistoryParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countAssignmentsHistory,
+		arg.OrganizationID,
+		arg.UserID,
+		arg.PlanID,
+		arg.ValidFrom,
+		arg.ValidFrom_2,
+		arg.ValidUntil,
+		arg.ValidUntil_2,
+		arg.Action,
+	)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const listAllAssignmentsPaginated = `-- name: ListAllAssignmentsPaginated :many
 SELECT
     pa.id,
@@ -148,6 +190,80 @@ func (q *Queries) ListAllAssignmentsPaginated(ctx context.Context, arg ListAllAs
 		var i PlanAssignment
 		if err := rows.Scan(
 			&i.ID,
+			&i.PlanID,
+			&i.OrganizationID,
+			&i.UserID,
+			&i.ValidFrom,
+			&i.ValidUntil,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CreatedBy,
+			&i.UpdatedBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listAssignmentsHistoryPaginated = `-- name: ListAssignmentsHistoryPaginated :many
+SELECT id, action, plan_id, organization_id, user_id, valid_from, valid_until, created_at, updated_at, created_by, updated_by
+FROM plan_assignment_history
+WHERE (
+    (organization_id = $1 or $1 is null) and
+    (user_id = $2 or $2 is null)
+)
+AND (plan_id = $3 or $3 is null)
+AND (valid_from < $4 or $4 is null)
+AND (valid_from >= $5 or $5 is null)
+AND (valid_until < $6 or $6 is null)
+AND (valid_until >= $7 or $7 is null)
+AND (action = $10)
+ORDER BY created_at DESC
+LIMIT $8
+OFFSET $9
+`
+
+type ListAssignmentsHistoryPaginatedParams struct {
+	OrganizationID pgtype.Text
+	UserID         pgtype.Text
+	PlanID         pgtype.UUID
+	ValidFrom      pgtype.Timestamptz
+	ValidFrom_2    pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	ValidUntil_2   pgtype.Timestamptz
+	Limit          int32
+	Offset         int32
+	Action         HistoryActionEnum
+}
+
+func (q *Queries) ListAssignmentsHistoryPaginated(ctx context.Context, arg ListAssignmentsHistoryPaginatedParams) ([]PlanAssignmentHistory, error) {
+	rows, err := q.db.Query(ctx, listAssignmentsHistoryPaginated,
+		arg.OrganizationID,
+		arg.UserID,
+		arg.PlanID,
+		arg.ValidFrom,
+		arg.ValidFrom_2,
+		arg.ValidUntil,
+		arg.ValidUntil_2,
+		arg.Limit,
+		arg.Offset,
+		arg.Action,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PlanAssignmentHistory
+	for rows.Next() {
+		var i PlanAssignmentHistory
+		if err := rows.Scan(
+			&i.ID,
+			&i.Action,
 			&i.PlanID,
 			&i.OrganizationID,
 			&i.UserID,

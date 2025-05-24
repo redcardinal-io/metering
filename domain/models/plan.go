@@ -15,6 +15,25 @@ const (
 	Custom   PlanTypeEnum = "custom"
 )
 
+// PlanAssignmentHistoryActionEnum represents the possible actions in plan_assignment_history
+type HistoryActionEnum string
+
+const (
+	Insert HistoryActionEnum = "INSERT"
+	Update HistoryActionEnum = "UPDATE"
+	Delete HistoryActionEnum = "DELETE"
+)
+
+// ValidateHistoryAction checks whether the given string matches a defined HistoryActionEnum value.
+func ValidateHistoryAction(value string) bool {
+	switch HistoryActionEnum(value) {
+	case Insert, Update, Delete:
+		return true
+	default:
+		return false
+	}
+}
+
 // ValidatePlanType checks whether the given string matches a defined PlanTypeEnum value.
 func ValidatePlanType(value string) bool {
 	switch PlanTypeEnum(value) {
@@ -46,12 +65,34 @@ type PlanAssignment struct {
 	ValidUntil     time.Time `json:"valid_until"`
 }
 
+// PlanAssignmentHistory represents a plan_assignment_history entity from the database
+type PlanAssignmentHistory struct {
+	Base
+	PlanID         string            `json:"plan_id"`
+	Action         HistoryActionEnum `json:"action"`
+	OrganizationID string            `json:"organization_id"`
+	UserID         string            `json:"user_id"`
+	ValidFrom      time.Time         `json:"valid_from"`
+	ValidUntil     time.Time         `json:"valid_until"`
+}
+
 type QueryPlanAssignmentInput struct {
 	PlanID         *uuid.UUID
 	OrganizationID string
 	UserID         string
 	ValidFrom      time.Time
 	ValidUntil     time.Time
+}
+
+type QueryPlanAssignmentHistoryInput struct {
+	PlanID           *uuid.UUID
+	Action           HistoryActionEnum
+	OrganizationID   string
+	UserID           string
+	ValidFromBefore  time.Time
+	ValidFromAfter   time.Time
+	ValidUntilBefore time.Time
+	ValidUntilAfter  time.Time
 }
 
 // CreatePlanInput represents the input for creating a new plan

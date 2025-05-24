@@ -85,3 +85,34 @@ FROM plan_assignment pa
 INNER JOIN plan p ON pa.plan_id = p.id
 WHERE p.tenant_slug = $1
 AND p.archived_at IS NULL;
+
+-- name: ListAssignmentsHistoryPaginated :many
+SELECT *
+FROM plan_assignment_history
+WHERE (
+    (organization_id = $1 or $1 is null) and
+    (user_id = $2 or $2 is null)
+)
+AND (plan_id = $3 or $3 is null)
+AND (valid_from < $4 or $4 is null)
+AND (valid_from >= $5 or $5 is null)
+AND (valid_until < $6 or $6 is null)
+AND (valid_until >= $7 or $7 is null)
+AND (action = $10)
+ORDER BY created_at DESC
+LIMIT $8
+OFFSET $9;
+
+-- name: CountAssignmentsHistory :one
+SELECT count(*)
+FROM plan_assignment_history
+WHERE (
+    (organization_id = $1 or $1 is null) and
+    (user_id = $2 or $2 is null)
+)
+AND (plan_id = $3 or $3 is null)
+AND (valid_from < $4 or $4 is null)
+AND (valid_from >= $5 or $5 is null)
+AND (valid_until < $6 or $6 is null)
+AND (valid_until >= $7 or $7 is null)
+AND (action = $8);

@@ -1,0 +1,20 @@
+meta {
+  name: list_assignments_history
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/v1/plans/assignments/history?action=INSERT&planIdOrSlug=free_plan
+  body: json
+  auth: inherit
+}
+
+params:query {
+  action: INSERT
+  planIdOrSlug: free_plan
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
