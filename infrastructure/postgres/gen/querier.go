@@ -13,8 +13,12 @@ import (
 type Querier interface {
 	ArchivePlanByID(ctx context.Context, arg ArchivePlanByIDParams) (Plan, error)
 	ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugParams) (Plan, error)
+	// assigns a plan to either an organization or a user based on which id is provided
 	AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAssignment, error)
 	CheckPlanAndFeatureForTenant(ctx context.Context, arg CheckPlanAndFeatureForTenantParams) (bool, error)
+	CountAllAssignments(ctx context.Context, tenantSlug string) (int64, error)
+	CountAssignments(ctx context.Context, arg CountAssignmentsParams) (int64, error)
+	CountAssignmentsHistory(ctx context.Context, arg CountAssignmentsHistoryParams) (int64, error)
 	CountFeatures(ctx context.Context, arg CountFeaturesParams) (int64, error)
 	CountMeters(ctx context.Context, tenantSlug string) (int64, error)
 	CountMetersByEventType(ctx context.Context, arg CountMetersByEventTypeParams) (int64, error)
@@ -38,6 +42,9 @@ type Querier interface {
 	GetPlanBySlug(ctx context.Context, arg GetPlanBySlugParams) (Plan, error)
 	GetPropertiesByEventType(ctx context.Context, arg GetPropertiesByEventTypeParams) ([]interface{}, error)
 	GetValuePropertiesByEventType(ctx context.Context, arg GetValuePropertiesByEventTypeParams) ([]pgtype.Text, error)
+	ListAllAssignmentsPaginated(ctx context.Context, arg ListAllAssignmentsPaginatedParams) ([]PlanAssignment, error)
+	ListAssignmentsHistoryPaginated(ctx context.Context, arg ListAssignmentsHistoryPaginatedParams) ([]PlanAssignmentHistory, error)
+	ListAssignmentsPaginated(ctx context.Context, arg ListAssignmentsPaginatedParams) ([]PlanAssignment, error)
 	ListFeaturesPaginated(ctx context.Context, arg ListFeaturesPaginatedParams) ([]Feature, error)
 	ListMetersByEventTypes(ctx context.Context, arg ListMetersByEventTypesParams) ([]Meter, error)
 	ListMetersPaginated(ctx context.Context, arg ListMetersPaginatedParams) ([]Meter, error)

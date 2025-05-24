@@ -37,6 +37,9 @@ type PlanAssignmentsStoreRepository interface {
 	CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error)
 	TerminateAssignment(ctx context.Context, arg models.TerminateAssignmentInput) error
 	UpdateAssignment(ctx context.Context, arg models.UpdateAssignmentInput) (*models.PlanAssignment, error)
+	ListAssignments(ctx context.Context, arg models.QueryPlanAssignmentInput, pagination pagination.Pagination) (*pagination.PaginationView[models.PlanAssignment], error)
+	ListAssignmentsHistory(ctx context.Context, arg models.QueryPlanAssignmentHistoryInput, pagination pagination.Pagination) (*pagination.PaginationView[models.PlanAssignmentHistory], error)
+	ListAllAssignments(ctx context.Context, pagination pagination.Pagination) (*pagination.PaginationView[models.PlanAssignment], error)
 }
 
 type FeatureStoreRepository interface {

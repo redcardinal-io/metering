@@ -28,6 +28,8 @@ func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanManagementServi
 func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	assignments := r.Group("/plans/assignments")
 
+	assignments.Get("/", h.list)
+	assignments.Get("/history", h.listhistory)
 	assignments.Post("/", h.create)
 	assignments.Put("/", h.update)
 	assignments.Delete("/", h.delete)

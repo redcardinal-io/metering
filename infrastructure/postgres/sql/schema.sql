@@ -127,13 +127,18 @@ create table if not exists plan_feature_quota (
   updated_at timestamp with time zone not null default now()
 );
 
+create type history_action_enum as enum (
+    'INSERT',
+    'UPDATE',
+    'DELETE'
+  );
+
 create table if not exists plan_assignment_history (
     id uuid primary key default uuid_generate_v4(),
-    plan_assignment_id uuid,
-    action varchar not null,
+    action history_action_enum not null,
     plan_id uuid,
-    organization_id uuid default null,
-    user_id uuid default null,
+    organization_id varchar default null,
+    user_id varchar default null,
     valid_from timestamp with time zone not null,
     valid_until timestamp with time zone not null,
     created_at timestamp with time zone not null default current_timestamp,

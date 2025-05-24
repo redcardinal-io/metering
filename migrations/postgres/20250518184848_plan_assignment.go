@@ -24,7 +24,7 @@ func upPlanAssignment(ctx context.Context, tx *sql.Tx) error {
 				organization_id varchar default null,
 				user_id varchar default null,
         valid_from timestamp with time zone not null,
-        valid_until timestamp with time zone default null,
+        valid_until timestamp with time zone not null,
         created_at timestamp with time zone not null default current_timestamp,
         updated_at timestamp with time zone not null default current_timestamp,
         created_by varchar not null,
