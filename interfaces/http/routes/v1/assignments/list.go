@@ -67,12 +67,12 @@ func (h *httpHandler) list(ctx *fiber.Ctx) error {
 		}
 	}
 
-	var queryAssignments = models.QueryPlanAssignmentInput{
+	queryAssignments := models.QueryPlanAssignmentInput{
 		PlanID:         planId,
 		OrganizationID: ctx.Query("orgId"),
 		UserID:         ctx.Query("userId"),
-		ValidFrom:      parsedValidFrom.UTC(),
-		ValidUntil:     parsedValidUntil.UTC(),
+		ValidFrom:      parsedValidFrom,
+		ValidUntil:     parsedValidUntil,
 	}
 
 	if queryAssignments.OrganizationID != "" && queryAssignments.UserID != "" {

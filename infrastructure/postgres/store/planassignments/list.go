@@ -14,7 +14,6 @@ import (
 )
 
 func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, arg models.QueryPlanAssignmentInput, page pagination.Pagination) (*pagination.PaginationView[models.PlanAssignment], error) {
-
 	planId := pgtype.UUID{Valid: false}
 	validFrom := pgtype.Timestamptz{Valid: false}
 	validUntil := pgtype.Timestamptz{Valid: false}
@@ -40,7 +39,6 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, 
 		ValidFrom:      validFrom,
 		ValidUntil:     validUntil,
 	})
-
 	if err != nil {
 		p.logger.Error("Error listing assignments: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListAssignments")
@@ -49,6 +47,9 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, 
 	planassignments := make([]models.PlanAssignment, 0, len(m))
 	for _, planassignment := range m {
 		id, _ := uuid.FromBytes(planassignment.ID.Bytes[:])
+		if planassignment.ValidUntil.Time.IsZero() {
+			planassignment.ValidUntil.Time = planassignment.ValidUntil.Time.UTC()
+		}
 		planassignments = append(planassignments, models.PlanAssignment{
 			Base: models.Base{
 				ID:        id,
@@ -63,6 +64,7 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, 
 			ValidFrom:      planassignment.ValidFrom.Time,
 			ValidUntil:     planassignment.ValidUntil.Time,
 		})
+
 	}
 
 	count, err := p.q.CountAssignments(ctx, gen.CountAssignmentsParams{
@@ -72,7 +74,6 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, 
 		ValidFrom:      validFrom,
 		ValidUntil:     validUntil,
 	})
-
 	if err != nil {
 		p.logger.Error("Error counting assignments: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.CountAssignments")
@@ -84,7 +85,6 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, 
 }
 
 func (p *PgPlanAssignmentsStoreRepository) ListAllAssignments(ctx context.Context, page pagination.Pagination) (*pagination.PaginationView[models.PlanAssignment], error) {
-
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 
 	m, err := p.q.ListAllAssignmentsPaginated(ctx, gen.ListAllAssignmentsPaginatedParams{
@@ -92,7 +92,6 @@ func (p *PgPlanAssignmentsStoreRepository) ListAllAssignments(ctx context.Contex
 		Offset:     int32(page.GetOffset()),
 		TenantSlug: tenantSlug,
 	})
-
 	if err != nil {
 		p.logger.Error("Error listing assignments: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListAssignments")
@@ -129,7 +128,6 @@ func (p *PgPlanAssignmentsStoreRepository) ListAllAssignments(ctx context.Contex
 }
 
 func (p *PgPlanAssignmentsStoreRepository) ListAssignmentsHistory(ctx context.Context, arg models.QueryPlanAssignmentHistoryInput, page pagination.Pagination) (*pagination.PaginationView[models.PlanAssignmentHistory], error) {
-
 	planId := pgtype.UUID{Valid: false}
 	validFromBefore := pgtype.Timestamptz{Valid: false}
 	validFromAfter := pgtype.Timestamptz{Valid: false}
@@ -167,7 +165,6 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignmentsHistory(ctx context.Co
 		ValidUntil:     validUntilBefore,
 		ValidUntil_2:   validUntilAfter,
 	})
-
 	if err != nil {
 		p.logger.Error("Error listing assignments history: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListAssignmentsHistory")
@@ -203,7 +200,6 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignmentsHistory(ctx context.Co
 		ValidUntil:     validUntilBefore,
 		ValidUntil_2:   validUntilAfter,
 	})
-
 	if err != nil {
 		p.logger.Error("Error counting assignments history ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.CountAssignmentsHistory")

@@ -87,15 +87,15 @@ func (h *httpHandler) listhistory(ctx *fiber.Ctx) error {
 		}
 	}
 
-	var queryAssignments = models.QueryPlanAssignmentHistoryInput{
+	queryAssignments := models.QueryPlanAssignmentHistoryInput{
 		PlanID:           planId,
 		OrganizationID:   ctx.Query("orgId"),
 		UserID:           ctx.Query("userId"),
 		Action:           models.HistoryActionEnum(action),
-		ValidFromBefore:  parsedValidFromBefore.UTC(),
-		ValidFromAfter:   parsedValidFromAfter.UTC(),
-		ValidUntilBefore: parsedValidUntilBefore.UTC(),
-		ValidUntilAfter:  parsedValidUntilAfter.UTC(),
+		ValidFromBefore:  parsedValidFromBefore,
+		ValidFromAfter:   parsedValidFromAfter,
+		ValidUntilBefore: parsedValidUntilBefore,
+		ValidUntilAfter:  parsedValidUntilAfter,
 	}
 
 	if queryAssignments.OrganizationID != "" && queryAssignments.UserID != "" {

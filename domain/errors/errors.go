@@ -123,10 +123,10 @@ func New(err error, code ErrorCode, message string, opts ...ErrorOption) *AppErr
 		message = err.Error()
 	}
 
-    data := make(map[string]any)
-    if appErr != nil && appErr.Data != nil {
-        data = appErr.Data
-    }
+	data := make(map[string]any)
+	if appErr != nil && appErr.Data != nil {
+		data = appErr.Data
+	}
 
 	ae := &AppError{
 		Err:        err,
@@ -298,6 +298,6 @@ func (e *ErrorResponse) ToJson() fiber.Map {
 }
 
 func NewErrorResponseWithOpts(err error, code ErrorCode, message string, opts ...ErrorOption) ErrorResponse {
-    appErr := New(err, code, message, opts...)
-    return NewErrorResponse(appErr)
+	appErr := New(err, code, message, opts...)
+	return NewErrorResponse(appErr)
 }

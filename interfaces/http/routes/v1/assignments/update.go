@@ -69,8 +69,8 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		PlanID:              planId,
 		OrganizationID:      req.OrganizationID,
 		UserID:              req.UserID,
-		ValidFrom:           req.ValidFrom.UTC(),
-		ValidUntil:          req.ValidUntil.UTC(),
+		ValidFrom:           req.ValidFrom,
+		ValidUntil:          req.ValidUntil,
 		UpdatedBy:           req.UpdatedBy,
 		SetValidUntilToZero: req.SetValidUntilToZero,
 	})

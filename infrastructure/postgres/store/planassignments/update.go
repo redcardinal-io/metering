@@ -60,5 +60,9 @@ func (p *PgPlanAssignmentsStoreRepository) UpdateAssignment(ctx context.Context,
 		ValidUntil:     m.ValidUntil.Time,
 	}
 
+	if planAssignment.ValidUntil.IsZero() {
+		planAssignment.ValidUntil = planAssignment.ValidUntil.UTC()
+	}
+
 	return planAssignment, nil
 }
