@@ -126,6 +126,7 @@ AND (valid_from >= $5 or $5 is null)
 AND (valid_until < $6 or $6 is null)
 AND (valid_until >= $7 or $7 is null)
 AND (action = $8 or $8 is null)
+AND EXISTS (SELECT 1 FROM plan where id = plan_id and tenant_slug = $9)
 `
 
 type CountAssignmentsHistoryParams struct {
@@ -137,6 +138,7 @@ type CountAssignmentsHistoryParams struct {
 	ValidUntil     pgtype.Timestamptz
 	ValidUntil_2   pgtype.Timestamptz
 	Action         pgtype.Text
+	TenantSlug     string
 }
 
 func (q *Queries) CountAssignmentsHistory(ctx context.Context, arg CountAssignmentsHistoryParams) (int64, error) {
@@ -149,6 +151,7 @@ func (q *Queries) CountAssignmentsHistory(ctx context.Context, arg CountAssignme
 		arg.ValidUntil,
 		arg.ValidUntil_2,
 		arg.Action,
+		arg.TenantSlug,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -226,6 +229,7 @@ AND (valid_from >= $5 or $5 is null)
 AND (valid_until < $6 or $6 is null)
 AND (valid_until >= $7 or $7 is null)
 AND (action = $10 or $10 is null)
+AND EXISTS (SELECT 1 FROM plan where id = plan_id and tenant_slug = $11)
 ORDER BY created_at DESC
 LIMIT $8
 OFFSET $9
@@ -242,6 +246,7 @@ type ListAssignmentsHistoryPaginatedParams struct {
 	Limit          int32
 	Offset         int32
 	Action         pgtype.Text
+	TenantSlug     string
 }
 
 func (q *Queries) ListAssignmentsHistoryPaginated(ctx context.Context, arg ListAssignmentsHistoryPaginatedParams) ([]PlanAssignmentHistory, error) {
@@ -256,6 +261,7 @@ func (q *Queries) ListAssignmentsHistoryPaginated(ctx context.Context, arg ListA
 		arg.Limit,
 		arg.Offset,
 		arg.Action,
+		arg.TenantSlug,
 	)
 	if err != nil {
 		return nil, err

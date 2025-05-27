@@ -131,6 +131,7 @@ func (p *PgPlanAssignmentsStoreRepository) ListAllAssignments(ctx context.Contex
 }
 
 func (p *PgPlanAssignmentsStoreRepository) ListAssignmentsHistory(ctx context.Context, arg models.QueryPlanAssignmentHistoryInput, page pagination.Pagination) (*pagination.PaginationView[models.PlanAssignmentHistory], error) {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	planId := pgtype.UUID{Valid: false}
 	validFromBefore := pgtype.Timestamptz{Valid: false}
 	validFromAfter := pgtype.Timestamptz{Valid: false}
@@ -167,6 +168,7 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignmentsHistory(ctx context.Co
 		ValidFrom_2:    validFromAfter,
 		ValidUntil:     validUntilBefore,
 		ValidUntil_2:   validUntilAfter,
+		TenantSlug:     tenantSlug,
 	})
 	if err != nil {
 		p.logger.Error("Error listing assignments history: ", zap.Error(err))
@@ -202,6 +204,7 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignmentsHistory(ctx context.Co
 		ValidFrom_2:    validFromAfter,
 		ValidUntil:     validUntilBefore,
 		ValidUntil_2:   validUntilAfter,
+		TenantSlug:     tenantSlug,
 	})
 	if err != nil {
 		p.logger.Error("Error counting assignments history ", zap.Error(err))

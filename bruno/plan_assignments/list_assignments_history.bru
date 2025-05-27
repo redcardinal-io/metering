@@ -5,14 +5,9 @@ meta {
 }
 
 get {
-  url: {{base_url}}/v1/plans/assignments/history?action=INSERT&planIdOrSlug=free_plan
+  url: {{base_url}}/v1/plans/assignments/history/
   body: json
   auth: inherit
-}
-
-params:query {
-  action: INSERT
-  planIdOrSlug: free_plan
 }
 
 headers {
