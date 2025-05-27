@@ -14,6 +14,7 @@ import (
 )
 
 func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, arg models.QueryPlanAssignmentInput, page pagination.Pagination) (*pagination.PaginationView[models.PlanAssignment], error) {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	planId := pgtype.UUID{Valid: false}
 	validFrom := pgtype.Timestamptz{Valid: false}
 	validUntil := pgtype.Timestamptz{Valid: false}
@@ -38,6 +39,7 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, 
 		UserID:         pgtype.Text{String: arg.UserID, Valid: arg.UserID != ""},
 		ValidFrom:      validFrom,
 		ValidUntil:     validUntil,
+		TenantSlug:     tenantSlug,
 	})
 	if err != nil {
 		p.logger.Error("Error listing assignments: ", zap.Error(err))
@@ -73,6 +75,7 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, 
 		UserID:         pgtype.Text{String: arg.UserID, Valid: arg.UserID != ""},
 		ValidFrom:      validFrom,
 		ValidUntil:     validUntil,
+		TenantSlug:     tenantSlug,
 	})
 	if err != nil {
 		p.logger.Error("Error counting assignments: ", zap.Error(err))
@@ -157,7 +160,7 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignmentsHistory(ctx context.Co
 		Limit:          int32(page.Limit),
 		Offset:         int32(page.GetOffset()),
 		OrganizationID: pgtype.Text{String: arg.OrganizationID, Valid: arg.OrganizationID != ""},
-		Action:         gen.HistoryActionEnum(arg.Action),
+		Action:         pgtype.Text{String: arg.Action, Valid: arg.Action != ""},
 		PlanID:         planId,
 		UserID:         pgtype.Text{String: arg.UserID, Valid: arg.UserID != ""},
 		ValidFrom:      validFromBefore,
@@ -186,13 +189,13 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignmentsHistory(ctx context.Co
 			UserID:         planassignment.UserID.String,
 			ValidFrom:      planassignment.ValidFrom.Time,
 			ValidUntil:     planassignment.ValidUntil.Time,
-			Action:         models.HistoryActionEnum(planassignment.Action),
+			Action:         planassignment.Action.String,
 		})
 	}
 
 	count, err := p.q.CountAssignmentsHistory(ctx, gen.CountAssignmentsHistoryParams{
 		OrganizationID: pgtype.Text{String: arg.OrganizationID, Valid: arg.OrganizationID != ""},
-		Action:         gen.HistoryActionEnum(arg.Action),
+		Action:         pgtype.Text{String: arg.Action, Valid: arg.Action != ""},
 		PlanID:         planId,
 		UserID:         pgtype.Text{String: arg.UserID, Valid: arg.UserID != ""},
 		ValidFrom:      validFromBefore,

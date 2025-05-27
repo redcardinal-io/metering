@@ -19,7 +19,7 @@ const (
 type HistoryActionEnum string
 
 const (
-	Insert HistoryActionEnum = "INSERT"
+	Insert HistoryActionEnum = "CREATE"
 	Update HistoryActionEnum = "UPDATE"
 	Delete HistoryActionEnum = "DELETE"
 )
@@ -68,12 +68,12 @@ type PlanAssignment struct {
 // PlanAssignmentHistory represents a plan_assignment_history entity from the database
 type PlanAssignmentHistory struct {
 	Base
-	PlanID         string            `json:"plan_id"`
-	Action         HistoryActionEnum `json:"action"`
-	OrganizationID string            `json:"organization_id"`
-	UserID         string            `json:"user_id"`
-	ValidFrom      time.Time         `json:"valid_from"`
-	ValidUntil     time.Time         `json:"valid_until"`
+	PlanID         string    `json:"plan_id"`
+	Action         string    `json:"action"`
+	OrganizationID string    `json:"organization_id"`
+	UserID         string    `json:"user_id"`
+	ValidFrom      time.Time `json:"valid_from"`
+	ValidUntil     time.Time `json:"valid_until"`
 }
 
 type QueryPlanAssignmentInput struct {
@@ -86,7 +86,7 @@ type QueryPlanAssignmentInput struct {
 
 type QueryPlanAssignmentHistoryInput struct {
 	PlanID           *uuid.UUID
-	Action           HistoryActionEnum
+	Action           string
 	OrganizationID   string
 	UserID           string
 	ValidFromBefore  time.Time

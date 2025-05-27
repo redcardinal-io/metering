@@ -36,13 +36,10 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 }
 
 func getPlanIDFromIdentifier(ctx context.Context, idOrSlug string, planSvc *services.PlanManagementService) (*uuid.UUID, error) {
-	planId, err := uuid.Parse(idOrSlug)
+	plan, err := planSvc.GetPlanByIDorSlug(ctx, idOrSlug)
 	if err != nil {
-		plan, err := planSvc.GetPlanByIDorSlug(ctx, idOrSlug)
-		if err != nil {
-			return nil, err
-		}
-		return &plan.ID, nil
+		return nil, err
 	}
-	return &planId, nil
+
+	return &plan.ID, nil
 }

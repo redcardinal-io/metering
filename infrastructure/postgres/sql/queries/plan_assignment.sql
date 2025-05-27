@@ -44,6 +44,7 @@ WHERE (
 AND (plan_id = $7 or $7 is null)
 AND (valid_from >= $5 or $5 is null)
 AND (valid_until <= $6 or $6 is null)
+AND EXISTS (SELECT 1 FROM plan where id = plan_id and tenant_slug = $8)
 ORDER BY created_at DESC
 LIMIT $3
 OFFSET $4;
@@ -57,7 +58,8 @@ WHERE (
 )
 AND (plan_id = $3 or $3 is null)
 AND (valid_from >= $4 or $4 is null)
-AND (valid_until <= $5 or $5 is null);
+AND (valid_until <= $5 or $5 is null)
+AND EXISTS (SELECT 1 FROM plan where id = plan_id and tenant_slug = $6);
 
 -- name: ListAllAssignmentsPaginated :many
 SELECT
@@ -98,7 +100,7 @@ AND (valid_from < $4 or $4 is null)
 AND (valid_from >= $5 or $5 is null)
 AND (valid_until < $6 or $6 is null)
 AND (valid_until >= $7 or $7 is null)
-AND (action = $10)
+AND (action = $10 or $10 is null)
 ORDER BY created_at DESC
 LIMIT $8
 OFFSET $9;
@@ -115,4 +117,4 @@ AND (valid_from < $4 or $4 is null)
 AND (valid_from >= $5 or $5 is null)
 AND (valid_until < $6 or $6 is null)
 AND (valid_until >= $7 or $7 is null)
-AND (action = $8);
+AND (action = $8 or $8 is null);

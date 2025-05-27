@@ -87,6 +87,7 @@ WHERE (
 AND (plan_id = $3 or $3 is null)
 AND (valid_from >= $4 or $4 is null)
 AND (valid_until <= $5 or $5 is null)
+AND EXISTS (SELECT 1 FROM plan where id = plan_id and tenant_slug = $6)
 `
 
 type CountAssignmentsParams struct {
@@ -95,6 +96,7 @@ type CountAssignmentsParams struct {
 	PlanID         pgtype.UUID
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
+	TenantSlug     string
 }
 
 func (q *Queries) CountAssignments(ctx context.Context, arg CountAssignmentsParams) (int64, error) {
@@ -104,6 +106,7 @@ func (q *Queries) CountAssignments(ctx context.Context, arg CountAssignmentsPara
 		arg.PlanID,
 		arg.ValidFrom,
 		arg.ValidUntil,
+		arg.TenantSlug,
 	)
 	var count int64
 	err := row.Scan(&count)
@@ -122,7 +125,7 @@ AND (valid_from < $4 or $4 is null)
 AND (valid_from >= $5 or $5 is null)
 AND (valid_until < $6 or $6 is null)
 AND (valid_until >= $7 or $7 is null)
-AND (action = $8)
+AND (action = $8 or $8 is null)
 `
 
 type CountAssignmentsHistoryParams struct {
@@ -133,7 +136,7 @@ type CountAssignmentsHistoryParams struct {
 	ValidFrom_2    pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
 	ValidUntil_2   pgtype.Timestamptz
-	Action         HistoryActionEnum
+	Action         pgtype.Text
 }
 
 func (q *Queries) CountAssignmentsHistory(ctx context.Context, arg CountAssignmentsHistoryParams) (int64, error) {
@@ -222,7 +225,7 @@ AND (valid_from < $4 or $4 is null)
 AND (valid_from >= $5 or $5 is null)
 AND (valid_until < $6 or $6 is null)
 AND (valid_until >= $7 or $7 is null)
-AND (action = $10)
+AND (action = $10 or $10 is null)
 ORDER BY created_at DESC
 LIMIT $8
 OFFSET $9
@@ -238,7 +241,7 @@ type ListAssignmentsHistoryPaginatedParams struct {
 	ValidUntil_2   pgtype.Timestamptz
 	Limit          int32
 	Offset         int32
-	Action         HistoryActionEnum
+	Action         pgtype.Text
 }
 
 func (q *Queries) ListAssignmentsHistoryPaginated(ctx context.Context, arg ListAssignmentsHistoryPaginatedParams) ([]PlanAssignmentHistory, error) {
@@ -294,6 +297,7 @@ WHERE (
 AND (plan_id = $7 or $7 is null)
 AND (valid_from >= $5 or $5 is null)
 AND (valid_until <= $6 or $6 is null)
+AND EXISTS (SELECT 1 FROM plan where id = plan_id and tenant_slug = $8)
 ORDER BY created_at DESC
 LIMIT $3
 OFFSET $4
@@ -307,6 +311,7 @@ type ListAssignmentsPaginatedParams struct {
 	ValidFrom      pgtype.Timestamptz
 	ValidUntil     pgtype.Timestamptz
 	PlanID         pgtype.UUID
+	TenantSlug     string
 }
 
 func (q *Queries) ListAssignmentsPaginated(ctx context.Context, arg ListAssignmentsPaginatedParams) ([]PlanAssignment, error) {
@@ -318,6 +323,7 @@ func (q *Queries) ListAssignmentsPaginated(ctx context.Context, arg ListAssignme
 		arg.ValidFrom,
 		arg.ValidUntil,
 		arg.PlanID,
+		arg.TenantSlug,
 	)
 	if err != nil {
 		return nil, err

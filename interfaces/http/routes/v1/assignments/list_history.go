@@ -30,14 +30,8 @@ func (h *httpHandler) listhistory(ctx *fiber.Ctx) error {
 	paginationInput := pagination.ExtractPaginationFromContext(ctx)
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 
-	if action == "" {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "action filter is mandatory: Insert, Update and Delete")
-		h.logger.Error("action filter is mandaotry: Insert, Update and Delete", zap.Reflect("error", errResp))
-		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
-	}
-
-	if !models.ValidateHistoryAction(action) {
-		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "provide valid action : Insert, Update and Delete")
+	if action != "" && !models.ValidateHistoryAction(action) {
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "provide valid action : Create, Update and Delete")
 		h.logger.Error("provide valid action : Insert, Update and Delete", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
@@ -91,7 +85,7 @@ func (h *httpHandler) listhistory(ctx *fiber.Ctx) error {
 		PlanID:           planId,
 		OrganizationID:   ctx.Query("orgId"),
 		UserID:           ctx.Query("userId"),
-		Action:           models.HistoryActionEnum(action),
+		Action:           action,
 		ValidFromBefore:  parsedValidFromBefore,
 		ValidFromAfter:   parsedValidFromAfter,
 		ValidUntilBefore: parsedValidUntilBefore,
