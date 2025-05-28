@@ -12,15 +12,10 @@ import (
 )
 
 func (p *PgPlanAssignmentsStoreRepository) CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error) {
-	validUntil := pgtype.Timestamptz{Valid: false}
-	if arg.ValidUntil != nil {
-		validUntil = pgtype.Timestamptz{Time: *arg.ValidUntil, Valid: true}
-	}
-
 	m, err := p.q.AssignPlan(ctx, gen.AssignPlanParams{
 		PlanID:         pgtype.UUID{Bytes: *arg.PlanID, Valid: true},
 		ValidFrom:      pgtype.Timestamptz{Time: arg.ValidFrom, Valid: true},
-		ValidUntil:     validUntil,
+		ValidUntil:     pgtype.Timestamptz{Time: arg.ValidUntil, Valid: true},
 		OrganizationID: pgtype.Text{String: arg.OrganizationID, Valid: arg.OrganizationID != ""},
 		UserID:         pgtype.Text{String: arg.UserID, Valid: arg.UserID != ""},
 		CreatedBy:      arg.CreatedBy,
@@ -49,10 +44,12 @@ func (p *PgPlanAssignmentsStoreRepository) CreateAssignment(ctx context.Context,
 		OrganizationID: m.OrganizationID.String,
 		UserID:         m.UserID.String,
 		ValidFrom:      m.ValidFrom.Time,
-		ValidUntil:     &m.ValidUntil.Time,
+		ValidUntil:     m.ValidUntil.Time,
 	}
 
-	p.logger.Debug("planAssignment-->", zap.String("validUntil", planAssignment.ValidUntil.String()))
+	if planAssignment.ValidUntil.IsZero() {
+		planAssignment.ValidUntil = planAssignment.ValidUntil.UTC()
+	}
 
 	return planAssignment, nil
 }

@@ -16,10 +16,10 @@ func init() {
 func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
   -- Function to handle INSERT operations
-  CREATE OR REPLACE FUNCTION fn_plan_assignment_insert_trigger()
-  RETURNS TRIGGER AS $$
-  BEGIN
-  INSERT INTO plan_assignment_history (
+  create or replace function fn_plan_assignment_insert_trigger()
+  returns trigger as $$
+  begin
+  insert into plan_assignment_history (
     action,
     plan_id,
     organization_id,
@@ -30,27 +30,27 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
     updated_at,
     created_by,
     updated_by
-  ) VALUES (
-    'INSERT',
-    NEW.plan_id,
-    NEW.organization_id,
-    NEW.user_id,
-    NEW.valid_from,
-    NEW.valid_until,
-    NEW.created_at,
-    NEW.updated_at,
-    NEW.created_by,
-    NEW.updated_by
+  ) values (
+    'CREATE',
+    new.plan_id,
+    new.organization_id,
+    new.user_id,
+    new.valid_from,
+    new.valid_until,
+    new.created_at,
+    new.updated_at,
+    new.created_by,
+    new.updated_by
   );
-  RETURN NEW;
-  END;
-  $$ LANGUAGE plpgsql;
+  return new;
+  end;
+  $$ language plpgsql;
 
   -- Function to handle UPDATE operations
-  CREATE OR REPLACE FUNCTION fn_plan_assignment_update_trigger()
-  RETURNS TRIGGER AS $$
-  BEGIN
-  INSERT INTO plan_assignment_history (
+  create or replace function fn_plan_assignment_update_trigger()
+  returns trigger as $$
+  begin
+  insert into plan_assignment_history (
     action,
     plan_id,
     organization_id,
@@ -61,27 +61,27 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
     updated_at,
     created_by,
     updated_by
-  ) VALUES (
+  ) values (
     'UPDATE',
-    NEW.plan_id,
-    NEW.organization_id,
-    NEW.user_id,
-    NEW.valid_from,
-    NEW.valid_until,
-    NEW.created_at,
-    NEW.updated_at,
-    NEW.created_by,
-    NEW.updated_by
+    new.plan_id,
+    new.organization_id,
+    new.user_id,
+    new.valid_from,
+    new.valid_until,
+    new.created_at,
+    new.updated_at,
+    new.created_by,
+    new.updated_by
   );
-  RETURN NEW;
-  END;
+  return new;
+  end;
   $$ LANGUAGE plpgsql;
 
   -- Function to handle DELETE operations
-  CREATE OR REPLACE FUNCTION fn_plan_assignment_delete_trigger()
-  RETURNS TRIGGER AS $$
-  BEGIN
-  INSERT INTO plan_assignment_history (
+  create or replace function fn_plan_assignment_delete_trigger()
+  returns TRIGGER AS $$
+  begin
+  insert into plan_assignment_history (
     action,
     plan_id,
     organization_id,
@@ -94,53 +94,40 @@ func upPlanAssignmentHistory(ctx context.Context, tx *sql.Tx) error {
     updated_by
   ) VALUES (
     'DELETE',
-    OLD.plan_id,
-    OLD.organization_id,
-    OLD.user_id,
-    OLD.valid_from,
-    OLD.valid_until,
-    OLD.created_at,
-    OLD.updated_at,
-    OLD.created_by,
-    OLD.updated_by
+    old.plan_id,
+    old.organization_id,
+    old.user_id,
+    old.valid_from,
+    old.valid_until,
+    old.created_at,
+    old.updated_at,
+    old.created_by,
+    old.updated_by
   );
-  RETURN OLD;
-  END;
-  $$ LANGUAGE plpgsql;
+  return old;
+  end;
+  $$ language plpgsql;
 
-  -- Create triggers for INSERT, UPDATE, and DELETE operations
-  CREATE TRIGGER trg_plan_assignment_insert
-  AFTER INSERT ON plan_assignment
-  FOR EACH ROW
-  EXECUTE FUNCTION fn_plan_assignment_insert_trigger();
+  -- Create triggers for CREATE, UPDATE, and DELETE operations
+  create trigger trg_plan_assignment_insert
+  after insert on plan_assignment
+  for each row
+  execute function fn_plan_assignment_insert_trigger();
 
-  CREATE TRIGGER trg_plan_assignment_update
-  AFTER UPDATE ON plan_assignment
-  FOR EACH ROW
-  EXECUTE FUNCTION fn_plan_assignment_update_trigger();
+  create trigger trg_plan_assignment_update
+  after update on plan_assignment
+  for each row
+  execute function fn_plan_assignment_update_trigger();
 
-  CREATE TRIGGER trg_plan_assignment_delete
-  AFTER DELETE ON plan_assignment
-  FOR EACH ROW
-  EXECUTE FUNCTION fn_plan_assignment_delete_trigger();
-
-  -- check if history_action exists and create it if it doesn't
-  do $$
-  begin
-  if not exists (select 1 from pg_type where typname = 'history_action_enum') then
-  create type history_action_enum as enum (
-    'INSERT',
-    'UPDATE',
-    'DELETE'
-  );
-  end if;
-  end
-  $$;
+  create trigger trg_plan_assignment_delete
+  after delete on plan_assignment
+  for each row
+  execute function fn_plan_assignment_delete_trigger();
 
   -- create table and indexes
   create table if not exists plan_assignment_history (
     id uuid primary key default uuid_generate_v4(),
-    action history_action_enum not null,
+    action varchar not null,
     plan_id uuid,
     organization_id varchar default null,
     user_id varchar default null,

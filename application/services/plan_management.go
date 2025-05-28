@@ -38,6 +38,36 @@ func (s *PlanManagementService) UpdateAssignment(ctx context.Context, arg models
 	return s.planAssignmentsStore.UpdateAssignment(ctx, arg)
 }
 
+func (s *PlanManagementService) ListAssignments(ctx context.Context, arg models.QueryPlanAssignmentInput, pagination pagination.Pagination) (*pagination.PaginationView[models.PlanAssignment], error) {
+	// Call the store repository to list the assignments
+	m, err := s.planAssignmentsStore.ListAssignments(ctx, arg, pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+func (s *PlanManagementService) ListAssignmentsHistory(ctx context.Context, arg models.QueryPlanAssignmentHistoryInput, pagination pagination.Pagination) (*pagination.PaginationView[models.PlanAssignmentHistory], error) {
+	// Call the store repository to list the assignments history
+	m, err := s.planAssignmentsStore.ListAssignmentsHistory(ctx, arg, pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
+func (s *PlanManagementService) ListAllAssignments(ctx context.Context, pagination pagination.Pagination) (*pagination.PaginationView[models.PlanAssignment], error) {
+	// Call the store repository to list all assignments
+	m, err := s.planAssignmentsStore.ListAllAssignments(ctx, pagination)
+	if err != nil {
+		return nil, err
+	}
+
+	return m, nil
+}
+
 func (s *PlanManagementService) CreatePlan(ctx context.Context, arg models.CreatePlanInput) (*models.Plan, error) {
 	// Store the plan in the database
 	m, err := s.planStore.CreatePlan(ctx, arg)

@@ -12,13 +12,13 @@ import (
 )
 
 type updateAssignedPlanRequest struct {
-	PlanIDOrSlug        string     `json:"plan_id_or_slug" validate:"required"`
-	OrganizationID      string     `json:"organization_id"`
-	UserID              string     `json:"user_id"`
-	ValidFrom           *time.Time `json:"valid_from"`
-	ValidUntil          *time.Time `json:"valid_until"`
-	UpdatedBy           string     `json:"updated_by" validate:"required"`
-	SetValidUntilToZero bool       `json:"set_valid_until_to_zero" validate:"omitempty"`
+	PlanIDOrSlug        string    `json:"plan_id_or_slug" validate:"required"`
+	OrganizationID      string    `json:"organization_id"`
+	UserID              string    `json:"user_id"`
+	ValidFrom           time.Time `json:"valid_from"`
+	ValidUntil          time.Time `json:"valid_until"`
+	UpdatedBy           string    `json:"updated_by" validate:"required"`
+	SetValidUntilToZero bool      `json:"set_valid_until_to_zero" validate:"omitempty"`
 }
 
 func (h *httpHandler) update(ctx *fiber.Ctx) error {
@@ -50,6 +50,12 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
+	if !req.ValidUntil.IsZero() && req.SetValidUntilToZero {
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "cannot set value to valid_unitl if set_valid_until_to_zero is true")
+		h.logger.Error("cannot set value to valid_unitl if set_valid_until_to_zero is true", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
 
 	planId, getErr := getPlanIDFromIdentifier(c, req.PlanIDOrSlug, h.planSvc)
@@ -59,24 +65,12 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.SetValidUntilToZero {
-		req.ValidUntil = nil
-	}
-
-	var utcValidFrom, utcValidUntil time.Time
-	if req.ValidFrom != nil {
-		utcValidFrom = req.ValidFrom.UTC()
-	}
-	if req.ValidUntil != nil {
-		utcValidUntil = req.ValidUntil.UTC()
-	}
-
 	updatedAssignment, err := h.planSvc.UpdateAssignment(c, models.UpdateAssignmentInput{
 		PlanID:              planId,
 		OrganizationID:      req.OrganizationID,
 		UserID:              req.UserID,
-		ValidFrom:           &utcValidFrom,
-		ValidUntil:          &utcValidUntil,
+		ValidFrom:           req.ValidFrom,
+		ValidUntil:          req.ValidUntil,
 		UpdatedBy:           req.UpdatedBy,
 		SetValidUntilToZero: req.SetValidUntilToZero,
 	})

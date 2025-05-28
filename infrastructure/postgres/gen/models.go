@@ -197,3 +197,17 @@ type PlanAssignment struct {
 	CreatedBy      string
 	UpdatedBy      string
 }
+
+type PlanAssignmentHistory struct {
+	ID             pgtype.UUID
+	Action         pgtype.Text
+	PlanID         pgtype.UUID
+	OrganizationID pgtype.Text
+	UserID         pgtype.Text
+	ValidFrom      pgtype.Timestamptz
+	ValidUntil     pgtype.Timestamptz
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	CreatedBy      string
+	UpdatedBy      string
+}
