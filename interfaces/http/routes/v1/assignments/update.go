@@ -8,6 +8,7 @@ import (
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
+	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 	"go.uber.org/zap"
 )
 
@@ -56,6 +57,12 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
+	if !req.ValidFrom.IsZero() && !req.ValidUntil.IsZero() && req.ValidFrom.After(req.ValidUntil) {
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "valid_until must be after valid_from")
+		h.logger.Error("valid_until must be after valid_from", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
 
 	planId, getErr := getPlanIDFromIdentifier(c, req.PlanIDOrSlug, h.planSvc)
@@ -63,6 +70,36 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		errResp := domainerrors.NewErrorResponseWithOpts(getErr, domainerrors.EINVALID, "invalid plan id or slug")
 		h.logger.Error("invalid plan id or slug", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
+	if !req.ValidFrom.IsZero() && req.ValidUntil.IsZero() && !req.SetValidUntilToZero {
+		paginationInput := pagination.ExtractPaginationFromContext(ctx)
+		isValidTime, err := isTimeValidToSet(c, paginationInput, planId, req.OrganizationID, req.UserID, req.ValidFrom, true, h.planSvc)
+		if err != nil {
+			errResp := domainerrors.NewErrorResponseWithOpts(getErr, domainerrors.EINVALID, "unable to fetch plan_assignment")
+			h.logger.Error("unable to fetch plan_assignment", zap.Reflect("error", errResp))
+			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+		}
+		if !isValidTime {
+			errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "valid_from must be before valid_until")
+			h.logger.Error("valid_from must be before valid_until", zap.Reflect("error", errResp))
+			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+		}
+	}
+
+	if req.ValidFrom.IsZero() && !req.ValidUntil.IsZero() && !req.SetValidUntilToZero {
+		paginationInput := pagination.ExtractPaginationFromContext(ctx)
+		isValidTime, err := isTimeValidToSet(c, paginationInput, planId, req.OrganizationID, req.UserID, req.ValidUntil, false, h.planSvc)
+		if err != nil {
+			errResp := domainerrors.NewErrorResponseWithOpts(getErr, domainerrors.EINVALID, "unable to fetch plan_assignment")
+			h.logger.Error("unable to fetch plan_assignment", zap.Reflect("error", errResp))
+			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+		}
+		if !isValidTime {
+			errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "valid_until must be after valid_from")
+			h.logger.Error("valid_until must be after valid_from", zap.Reflect("error", errResp))
+			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+		}
 	}
 
 	updatedAssignment, err := h.planSvc.UpdateAssignment(c, models.UpdateAssignmentInput{
