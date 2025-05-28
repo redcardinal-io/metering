@@ -230,7 +230,7 @@ AND (valid_until < $6 or $6 is null)
 AND (valid_until >= $7 or $7 is null)
 AND (action = $10 or $10 is null)
 AND EXISTS (SELECT 1 FROM plan where id = plan_id and tenant_slug = $11)
-ORDER BY created_at DESC
+ORDER BY created_at asc
 LIMIT $8
 OFFSET $9
 `

@@ -12,8 +12,6 @@ import (
 )
 
 func (p *PgPlanAssignmentsStoreRepository) CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error) {
-	p.logger.Debug("before planAssignment-->", zap.String("validUntil", arg.ValidUntil.String()))
-
 	m, err := p.q.AssignPlan(ctx, gen.AssignPlanParams{
 		PlanID:         pgtype.UUID{Bytes: *arg.PlanID, Valid: true},
 		ValidFrom:      pgtype.Timestamptz{Time: arg.ValidFrom, Valid: true},
