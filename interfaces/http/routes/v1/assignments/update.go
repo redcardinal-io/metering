@@ -56,6 +56,12 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
+	if !req.ValidFrom.IsZero() && !req.ValidUntil.IsZero() && req.ValidFrom.After(req.ValidUntil) {
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "valid_until must be after valid_from")
+		h.logger.Error("valid_until must be after valid_from", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenant_slug)
 
 	planId, getErr := getPlanIDFromIdentifier(c, req.PlanIDOrSlug, h.planSvc)
@@ -63,6 +69,36 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		errResp := domainerrors.NewErrorResponseWithOpts(getErr, domainerrors.EINVALID, "invalid plan id or slug")
 		h.logger.Error("invalid plan id or slug", zap.Reflect("error", errResp))
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
+	if req.SetValidUntilToZero {
+		req.ValidUntil = time.Time{} // set valid_until to zero
+	}
+
+	// if valid_until is passed
+	// check if current  valid_from is before valid_until
+	// if valid_from is passed
+	// check if current valid_until is after valid_from
+	if !req.ValidFrom.IsZero() || !req.ValidUntil.IsZero() {
+		validFrom, validUntil, err := getPlanTimeRange(c, planId, req.OrganizationID, req.UserID, h.planSvc)
+		if err != nil {
+			errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to get time range for plan assignment")
+			h.logger.Error("failed to get time range for plan assignment", zap.Reflect("error", errResp))
+			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+		}
+
+		// validFrom will not be nil if the plan has an assignment
+		if !req.ValidFrom.IsZero() && req.ValidFrom.Before(*validFrom) {
+			errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "valid_from must be after the current valid_from")
+			h.logger.Error("valid_from must be after the current valid_from", zap.Reflect("error", errResp))
+			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+		}
+
+		if !req.ValidUntil.IsZero() && validUntil != nil && req.ValidUntil.After(*validUntil) {
+			errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "valid_until must be before the current valid_until")
+			h.logger.Error("valid_until must be before the current valid_until", zap.Reflect("error", errResp))
+			return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+		}
 	}
 
 	updatedAssignment, err := h.planSvc.UpdateAssignment(c, models.UpdateAssignmentInput{
