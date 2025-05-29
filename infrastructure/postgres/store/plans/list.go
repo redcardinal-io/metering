@@ -3,7 +3,6 @@ package plans
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
@@ -27,26 +26,7 @@ func (p *PgPlanStoreRepository) ListPlans(ctx context.Context, page pagination.P
 
 	plans := make([]models.Plan, 0, len(m))
 	for _, plan := range m {
-		id, err := uuid.FromBytes(plan.ID.Bytes[:])
-		if err != nil {
-			p.logger.Error("failed to parse UUID from bytes", zap.Error(err))
-			return nil, postgres.MapError(err, "Postgres.ParseUUID")
-		}
-		plans = append(plans, models.Plan{
-			Name:        plan.Name,
-			Slug:        plan.Slug,
-			Type:        models.PlanTypeEnum(plan.Type),
-			ArchivedAt:  plan.ArchivedAt,
-			Description: plan.Description.String,
-			TenantSlug:  plan.TenantSlug,
-			Base: models.Base{
-				ID:        id,
-				CreatedAt: plan.CreatedAt,
-				CreatedBy: plan.CreatedBy,
-				UpdatedBy: plan.UpdatedBy,
-				UpdatedAt: plan.UpdatedAt,
-			},
-		})
+		plans = append(plans, *toPlanModel(plan))
 	}
 
 	count, err := p.q.CountPlans(ctx, gen.CountPlansParams{

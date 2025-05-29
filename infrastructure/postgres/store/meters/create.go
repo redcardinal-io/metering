@@ -3,7 +3,6 @@ package meters
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
@@ -26,35 +25,10 @@ func (p *PgMeterStoreRepository) CreateMeter(ctx context.Context, arg models.Cre
 		CreatedBy:     arg.CreatedBy,
 		UpdatedBy:     arg.CreatedBy,
 	})
-
 	if err != nil {
 		p.logger.Error("failed to create meter", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.CreateMeter")
 	}
 
-	id, err := uuid.FromBytes(m.ID.Bytes[:])
-	if err != nil {
-		p.logger.Error("failed to parse UUID from bytes", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.ParseUUID")
-	}
-
-	meter := &models.Meter{
-		Name:          m.Name,
-		Slug:          m.Slug,
-		ValueProperty: m.ValueProperty.String,
-		EventType:     m.EventType,
-		Description:   m.Description.String,
-		Properties:    m.Properties,
-		Aggregation:   models.AggregationEnum(m.Aggregation),
-		TenantSlug:    m.TenantSlug,
-		Base: models.Base{
-			ID:        id,
-			CreatedAt: m.CreatedAt,
-			CreatedBy: m.CreatedBy,
-			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
-		},
-	}
-
-	return meter, nil
+	return toMeterModel(m), nil
 }

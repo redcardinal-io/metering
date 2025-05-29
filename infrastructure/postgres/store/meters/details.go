@@ -36,26 +36,5 @@ func (p *PgMeterStoreRepository) GetMeterByIDorSlug(ctx context.Context, idOrSlu
 		return nil, postgres.MapError(detailsErr, "Postgres.GetMeterByIDorSlug")
 	}
 
-	uuid, err := uuid.FromBytes(m.ID.Bytes[:])
-	if err != nil {
-		return nil, postgres.MapError(err, "Postgres.ParseUUID")
-	}
-
-	return &models.Meter{
-		Name:          m.Name,
-		Slug:          m.Slug,
-		ValueProperty: m.ValueProperty.String,
-		EventType:     m.EventType,
-		Description:   m.Description.String,
-		Properties:    m.Properties,
-		Aggregation:   models.AggregationEnum(m.Aggregation),
-		TenantSlug:    m.TenantSlug,
-		Base: models.Base{
-			ID:        uuid,
-			CreatedAt: m.CreatedAt,
-			CreatedBy: m.CreatedBy,
-			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
-		},
-	}, nil
+	return toMeterModel(m), nil
 }

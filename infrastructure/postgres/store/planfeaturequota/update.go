@@ -25,11 +25,7 @@ func (r *PlanFeatureQuotaRepository) UpdatePlanFeatureQuota(ctx context.Context,
 
 	// Parse the plan feature ID
 	planFeatureIDStr := arg.PlanFeatureID
-	planFeatureID, err := uuid.Parse(planFeatureIDStr)
-	if err != nil {
-		r.logger.Error("invalid plan feature ID format", zap.String("planFeatureID", planFeatureIDStr), zap.Error(err))
-		return nil, postgres.MapError(err, "invalid plan feature ID format")
-	}
+	planFeatureID := uuid.MustParse(planFeatureIDStr)
 
 	// Prepare the update parameters
 	params := gen.UpdatePlanFeatureQuotaParams{

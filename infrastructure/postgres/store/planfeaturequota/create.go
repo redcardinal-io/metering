@@ -24,10 +24,7 @@ func (r *PlanFeatureQuotaRepository) CreatePlanFeatureQuota(ctx context.Context,
 		return nil, errors.New("quota can only be set for metered features")
 	}
 
-	planFeatureID, err := uuid.Parse(arg.PlanFeatureID)
-	if err != nil {
-		return nil, err
-	}
+	planFeatureID := uuid.MustParse(arg.PlanFeatureID)
 
 	// Convert reset period to the generated enum type
 	resetPeriod := gen.MeteredResetPeriodEnum(arg.ResetPeriod)

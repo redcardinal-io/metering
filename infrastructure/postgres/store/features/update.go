@@ -48,27 +48,5 @@ func (p *PgFeatureRepository) UpdateFeatureByIDorSlug(ctx context.Context, idOrS
 		return nil, postgres.MapError(updateErr, "Postgres.UpdateFeatureByID")
 	}
 
-	uuid, parseErr := uuid.FromBytes(m.ID.Bytes[:])
-	if parseErr != nil {
-		return nil, postgres.MapError(parseErr, "Postgres.ParseUUID")
-	}
-
-	config := make(map[string]any)
-	_ = json.Unmarshal(m.Config, &config)
-
-	return &models.Feature{
-		Name:        m.Name,
-		Description: m.Description.String,
-		Slug:        m.Slug,
-		TenantSlug:  m.TenantSlug,
-		Type:        models.FeatureTypeEnum(m.Type),
-		Config:      config,
-		Base: models.Base{
-			ID:        uuid,
-			CreatedAt: m.CreatedAt,
-			CreatedBy: m.CreatedBy,
-			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
-		},
-	}, nil
+	return toFeatureModel(m), nil
 }

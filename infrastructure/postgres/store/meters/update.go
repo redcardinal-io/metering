@@ -40,27 +40,6 @@ func (s *PgMeterStoreRepository) UpdateMeterByIDorSlug(ctx context.Context, idOr
 		return nil, postgres.MapError(updateErr, "Postgres.UpdateMeterByIDorSlug")
 	}
 
-	uuid, err := uuid.FromBytes(m.ID.Bytes[:])
-	if err != nil {
-		return nil, postgres.MapError(err, "Postgres.ParseUUID")
-	}
-
 	// Valid UUID, delete by ID
-	return &models.Meter{
-		Name:          m.Name,
-		Slug:          m.Slug,
-		ValueProperty: m.ValueProperty.String,
-		EventType:     m.EventType,
-		Description:   m.Description.String,
-		Properties:    m.Properties,
-		Aggregation:   models.AggregationEnum(m.Aggregation),
-		TenantSlug:    m.TenantSlug,
-		Base: models.Base{
-			ID:        uuid,
-			CreatedAt: m.CreatedAt,
-			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
-			CreatedBy: m.CreatedBy,
-		},
-	}, nil
+	return toMeterModel(m), nil
 }

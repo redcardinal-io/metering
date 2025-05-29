@@ -2,7 +2,6 @@ package planfeaturequota
 
 import (
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redcardinal-io/metering/application/repositories"
 	"github.com/redcardinal-io/metering/domain/models"
@@ -23,28 +22,14 @@ func NewPlanFeatureQuotaRepository(db any, logger *logger.Logger) repositories.P
 }
 
 func toPlanFeatureQuotaModel(quota gen.PlanFeatureQuotum) *models.PlanFeatureQuota {
-	// Convert UUID to string
-	var planFeatureID string
-	if quota.PlanFeatureID.Valid {
-		if id, err := uuid.FromBytes(quota.PlanFeatureID.Bytes[:]); err == nil {
-			planFeatureID = id.String()
-		}
-	}
-
 	// Initialize the result with the database values
 	result := &models.PlanFeatureQuota{
 		Base: models.Base{
-			ID: quota.ID.Bytes,
-			CreatedAt: pgtype.Timestamptz{
-				Time:  quota.CreatedAt.Time,
-				Valid: quota.CreatedAt.Valid,
-			},
-			UpdatedAt: pgtype.Timestamptz{
-				Time:  quota.UpdatedAt.Time,
-				Valid: quota.UpdatedAt.Valid,
-			},
+			ID:        uuid.UUID(quota.ID.Bytes),
+			CreatedAt: quota.CreatedAt.Time,
+			UpdatedAt: quota.UpdatedAt.Time,
 		},
-		PlanFeatureID: planFeatureID,
+		PlanFeatureID: quota.PlanFeatureID.String(),
 		LimitValue:    quota.LimitValue,
 		ResetPeriod:   models.MeteredResetPeriod(quota.ResetPeriod),
 		ActionAtLimit: models.MeteredActionAtLimit(quota.ActionAtLimit),

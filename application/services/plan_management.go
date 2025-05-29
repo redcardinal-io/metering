@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/application/repositories"
@@ -178,33 +177,6 @@ func (s *PlanManagementService) CheckPlanAndFeatureForTenant(ctx context.Context
 
 // CreatePlanFeatureQuota creates a new quota for a plan feature
 func (s *PlanManagementService) CreatePlanFeatureQuota(ctx context.Context, input models.CreatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error) {
-	// Check if the feature is metered
-	planFeatureID, err := uuid.Parse(input.PlanFeatureID)
-	if err != nil {
-		return nil, errors.New("invalid plan feature ID format")
-	}
-
-	// Get the plan feature to check if it's a metered feature
-	planFeatures, err := s.planFeatureStore.ListPlanFeaturesByPlan(ctx, planFeatureID, models.PlanFeatureListFilter{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to get plan feature: %w", err)
-	}
-
-	if len(planFeatures) == 0 {
-		return nil, errors.New("plan feature not found")
-	}
-
-	// Get the feature to check its type
-	feature, err := s.featureStore.GetFeatureByIDorSlug(ctx, planFeatures[0].FeatureID.String())
-	if err != nil {
-		return nil, fmt.Errorf("failed to get feature: %w", err)
-	}
-
-	if feature.Type != models.FeatureTypeMetered {
-		return nil, errors.New("quota can only be set for metered features")
-	}
-
-	// Create the quota
 	return s.planFeatureQuotaRepo.CreatePlanFeatureQuota(ctx, input)
 }
 

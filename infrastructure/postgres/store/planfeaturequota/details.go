@@ -15,11 +15,6 @@ func (r *PlanFeatureQuotaRepository) GetPlanFeatureQuota(ctx context.Context, pl
 
 	quota, err := r.q.GetPlanFeatureQuotaByPlanFeatureID(ctx, pgtype.UUID{Bytes: pfID, Valid: true})
 	if err != nil {
-		// Check for no rows error using pgx error checking
-		if err.Error() == "no rows in result set" {
-			r.logger.Debug("plan feature quota not found", zap.String("planFeatureID", planFeatureID))
-			return nil, nil
-		}
 		r.logger.Error("failed to get plan feature quota", zap.Error(err), zap.String("planFeatureID", planFeatureID))
 		return nil, postgres.MapError(err, "failed to get plan feature quota")
 	}

@@ -60,10 +60,10 @@ func (p *PgPlanFeatureStoreRepository) CreatePlanFeature(ctx context.Context, ar
 		Config:    m.Config,
 		Base: models.Base{
 			ID:        id,
-			CreatedAt: m.CreatedAt,
+			CreatedAt: m.CreatedAt.Time,
 			CreatedBy: m.CreatedBy,
 			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
+			UpdatedAt: m.UpdatedAt.Time,
 		},
 	}
 

@@ -36,24 +36,5 @@ func (p *PgPlanStoreRepository) GetPlanByIDorSlug(ctx context.Context, idOrSlug 
 		return nil, postgres.MapError(detailsErr, "Postgres.GetPlanByIDorSlug")
 	}
 
-	uuid, err := uuid.FromBytes(m.ID.Bytes[:])
-	if err != nil {
-		return nil, postgres.MapError(err, "Postgres.ParseUUID")
-	}
-
-	return &models.Plan{
-		Name:        m.Name,
-		Description: m.Description.String,
-		Slug:        m.Slug,
-		Type:        models.PlanTypeEnum(m.Type),
-		TenantSlug:  m.TenantSlug,
-		ArchivedAt:  m.ArchivedAt,
-		Base: models.Base{
-			ID:        uuid,
-			CreatedAt: m.CreatedAt,
-			CreatedBy: m.CreatedBy,
-			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
-		},
-	}, nil
+	return toPlanModel(m), nil
 }
