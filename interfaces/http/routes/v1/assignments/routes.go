@@ -2,8 +2,6 @@ package assignments
 
 import (
 	"context"
-	"errors"
-
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -49,36 +47,19 @@ func getPlanIDFromIdentifier(ctx context.Context, idOrSlug string, planSvc *serv
 	return &plan.ID, nil
 }
 
-func isTimeValidToSet(ctx context.Context, pagination pagination.Pagination, planId *uuid.UUID, orgId string, userId string, t time.Time, isValidFrom bool, planSvc *services.PlanManagementService) (bool, error) {
+func getPlanTimeRange(ctx context.Context, planId *uuid.UUID, orgId string, userId string, planSvc *services.PlanManagementService) (*time.Time, *time.Time, error) {
 	assignmentQueryInput := models.QueryPlanAssignmentInput{
 		PlanID:         planId,
 		OrganizationID: orgId,
 		UserID:         userId,
 	}
-	plan, err := planSvc.ListAssignments(ctx, assignmentQueryInput, pagination)
+	plan, err := planSvc.ListAssignments(ctx, assignmentQueryInput, pagination.Pagination{Limit: 1, Page: 0})
 	if err != nil {
-		return false, err
+		return nil, nil, err
 	}
 
-	if len(plan.Results) != 1 {
-		return false, errors.New("")
-	}
-
-	// A planId and a orgId or userId should result only one plan assignment
 	validFrom := plan.Results[0].ValidFrom
 	validUntil := plan.Results[0].ValidUntil
 
-	if isValidFrom {
-		if !t.After(validUntil) {
-			return true, nil
-		} else {
-			return false, nil
-		}
-	} else {
-		if !t.Before(validFrom) {
-			return true, nil
-		} else {
-			return false, nil
-		}
-	}
+	return &validFrom, &validUntil, nil
 }
