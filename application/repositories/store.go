@@ -57,3 +57,11 @@ type PlanFeatureStoreRepository interface {
 	ListPlanFeaturesByPlan(ctx context.Context, planID uuid.UUID, filter models.PlanFeatureListFilter) ([]models.PlanFeature, error)
 	CheckPlanAndFeatureForTenant(ctx context.Context, planID, featureID uuid.UUID) (bool, error)
 }
+
+type PlanFeatureQuotaStoreRepository interface {
+	CreatePlanFeatureQuota(ctx context.Context, arg models.CreatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error)
+	GetPlanFeatureQuota(ctx context.Context, planFeatureID string) (*models.PlanFeatureQuota, error)
+	UpdatePlanFeatureQuota(ctx context.Context, arg models.UpdatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error)
+	DeletePlanFeatureQuota(ctx context.Context, planFeatureID string) error
+	CheckMeteredFeature(ctx context.Context, planFeatureID string) (bool, error)
+}

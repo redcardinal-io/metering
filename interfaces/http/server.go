@@ -15,6 +15,7 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/features"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/meters"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planassignments"
+	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planfeaturequota"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planfeatures"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/plans"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
@@ -90,11 +91,18 @@ func ServeHttp() error {
 	featureStore := features.NewPgFeatureStoreRepository(store.GetDB(), logger)
 	planAssignmentsStore := planassignments.NewPostgresPlanAssignmentsStoreRepository(store.GetDB(), logger)
 	planFeatureStore := planfeatures.NewPgPlanFeatureStoreRepository(store.GetDB(), logger)
+	plannFeatureQuotaStore := planfeaturequota.NewPlanFeatureQuotaRepository(store.GetDB(), logger)
 
-	// intialize services
+	// initialize services
 	producerService := services.NewProducerService(producer, meterStore)
 	meterService := services.NewMeterService(olap, meterStore)
-	planMangementService := services.NewPlanService(planStore, featureStore, planFeatureStore, planAssignmentsStore)
+	planMangementService := services.NewPlanService(
+		planStore,
+		featureStore,
+		planFeatureStore,
+		planAssignmentsStore,
+		plannFeatureQuotaStore,
+	)
 
 	// Register routes
 	routes := routes.NewHTTPHandler(logger)

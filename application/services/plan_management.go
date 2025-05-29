@@ -2,6 +2,8 @@ package services
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/application/repositories"
@@ -14,14 +16,22 @@ type PlanManagementService struct {
 	planAssignmentsStore repositories.PlanAssignmentsStoreRepository
 	featureStore         repositories.FeatureStoreRepository
 	planFeatureStore     repositories.PlanFeatureStoreRepository
+	planFeatureQuotaRepo repositories.PlanFeatureQuotaStoreRepository
 }
 
-func NewPlanService(planStore repositories.PlanStoreRepository, featureStore repositories.FeatureStoreRepository, planFeatureStore repositories.PlanFeatureStoreRepository, planAssignmentsStore repositories.PlanAssignmentsStoreRepository) *PlanManagementService {
+func NewPlanService(
+	planStore repositories.PlanStoreRepository,
+	featureStore repositories.FeatureStoreRepository,
+	planFeatureStore repositories.PlanFeatureStoreRepository,
+	planAssignmentsStore repositories.PlanAssignmentsStoreRepository,
+	planFeatureQuotaRepo repositories.PlanFeatureQuotaStoreRepository,
+) *PlanManagementService {
 	return &PlanManagementService{
 		planStore:            planStore,
 		featureStore:         featureStore,
 		planFeatureStore:     planFeatureStore,
 		planAssignmentsStore: planAssignmentsStore,
+		planFeatureQuotaRepo: planFeatureQuotaRepo,
 	}
 }
 
@@ -164,4 +174,71 @@ func (s *PlanManagementService) ListPlanFeaturesByPlan(ctx context.Context, plan
 
 func (s *PlanManagementService) CheckPlanAndFeatureForTenant(ctx context.Context, planID, featureID uuid.UUID) (bool, error) {
 	return s.planFeatureStore.CheckPlanAndFeatureForTenant(ctx, planID, featureID)
+}
+
+// CreatePlanFeatureQuota creates a new quota for a plan feature
+func (s *PlanManagementService) CreatePlanFeatureQuota(ctx context.Context, input models.CreatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error) {
+	// Check if the feature is metered
+	planFeatureID, err := uuid.Parse(input.PlanFeatureID)
+	if err != nil {
+		return nil, errors.New("invalid plan feature ID format")
+	}
+
+	// Get the plan feature to check if it's a metered feature
+	planFeatures, err := s.planFeatureStore.ListPlanFeaturesByPlan(ctx, planFeatureID, models.PlanFeatureListFilter{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get plan feature: %w", err)
+	}
+
+	if len(planFeatures) == 0 {
+		return nil, errors.New("plan feature not found")
+	}
+
+	// Get the feature to check its type
+	feature, err := s.featureStore.GetFeatureByIDorSlug(ctx, planFeatures[0].FeatureID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to get feature: %w", err)
+	}
+
+	if feature.Type != models.FeatureTypeMetered {
+		return nil, errors.New("quota can only be set for metered features")
+	}
+
+	// Create the quota
+	return s.planFeatureQuotaRepo.CreatePlanFeatureQuota(ctx, input)
+}
+
+// GetPlanFeatureQuota retrieves a quota by plan feature ID
+func (s *PlanManagementService) GetPlanFeatureQuota(ctx context.Context, planFeatureID string) (*models.PlanFeatureQuota, error) {
+	// Validate input
+	if _, err := uuid.Parse(planFeatureID); err != nil {
+		return nil, errors.New("invalid plan feature ID format")
+	}
+
+	return s.planFeatureQuotaRepo.GetPlanFeatureQuota(ctx, planFeatureID)
+}
+
+// UpdatePlanFeatureQuota updates an existing quota
+func (s *PlanManagementService) UpdatePlanFeatureQuota(ctx context.Context, input models.UpdatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error) {
+	// Check if the quota exists
+	existing, err := s.planFeatureQuotaRepo.GetPlanFeatureQuota(ctx, input.PlanFeatureID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, errors.New("plan feature quota not found")
+	}
+
+	// Update the quota
+	return s.planFeatureQuotaRepo.UpdatePlanFeatureQuota(ctx, input)
+}
+
+// DeletePlanFeatureQuota deletes a quota by plan feature ID
+func (s *PlanManagementService) DeletePlanFeatureQuota(ctx context.Context, planFeatureID string) error {
+	// Validate input
+	if _, err := uuid.Parse(planFeatureID); err != nil {
+		return errors.New("invalid plan feature ID format")
+	}
+
+	return s.planFeatureQuotaRepo.DeletePlanFeatureQuota(ctx, planFeatureID)
 }

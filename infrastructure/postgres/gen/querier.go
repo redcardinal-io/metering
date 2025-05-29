@@ -15,6 +15,7 @@ type Querier interface {
 	ArchivePlanBySlug(ctx context.Context, arg ArchivePlanBySlugParams) (Plan, error)
 	// assigns a plan to either an organization or a user based on which id is provided
 	AssignPlan(ctx context.Context, arg AssignPlanParams) (PlanAssignment, error)
+	CheckMeteredFeature(ctx context.Context, id pgtype.UUID) (bool, error)
 	CheckPlanAndFeatureForTenant(ctx context.Context, arg CheckPlanAndFeatureForTenantParams) (bool, error)
 	CountAllAssignments(ctx context.Context, tenantSlug string) (int64, error)
 	CountAssignments(ctx context.Context, arg CountAssignmentsParams) (int64, error)
@@ -27,6 +28,7 @@ type Querier interface {
 	CreateMeter(ctx context.Context, arg CreateMeterParams) (Meter, error)
 	CreatePlan(ctx context.Context, arg CreatePlanParams) (Plan, error)
 	CreatePlanFeature(ctx context.Context, arg CreatePlanFeatureParams) (CreatePlanFeatureRow, error)
+	CreatePlanFeatureQuota(ctx context.Context, arg CreatePlanFeatureQuotaParams) (PlanFeatureQuotum, error)
 	DeleteFeatureByID(ctx context.Context, arg DeleteFeatureByIDParams) error
 	DeleteFeatureBySlug(ctx context.Context, arg DeleteFeatureBySlugParams) error
 	DeleteMeterByID(ctx context.Context, arg DeleteMeterByIDParams) error
@@ -34,12 +36,14 @@ type Querier interface {
 	DeletePlanByID(ctx context.Context, arg DeletePlanByIDParams) error
 	DeletePlanBySlug(ctx context.Context, arg DeletePlanBySlugParams) error
 	DeletePlanFeature(ctx context.Context, arg DeletePlanFeatureParams) error
+	DeletePlanFeatureQuota(ctx context.Context, planFeatureID pgtype.UUID) error
 	GetFeatureByID(ctx context.Context, arg GetFeatureByIDParams) (Feature, error)
 	GetFeatureBySlug(ctx context.Context, arg GetFeatureBySlugParams) (Feature, error)
 	GetMeterByID(ctx context.Context, arg GetMeterByIDParams) (Meter, error)
 	GetMeterBySlug(ctx context.Context, arg GetMeterBySlugParams) (Meter, error)
 	GetPlanByID(ctx context.Context, arg GetPlanByIDParams) (Plan, error)
 	GetPlanBySlug(ctx context.Context, arg GetPlanBySlugParams) (Plan, error)
+	GetPlanFeatureQuotaByPlanFeatureID(ctx context.Context, planFeatureID pgtype.UUID) (PlanFeatureQuotum, error)
 	GetPropertiesByEventType(ctx context.Context, arg GetPropertiesByEventTypeParams) ([]interface{}, error)
 	GetValuePropertiesByEventType(ctx context.Context, arg GetValuePropertiesByEventTypeParams) ([]pgtype.Text, error)
 	ListAllAssignmentsPaginated(ctx context.Context, arg ListAllAssignmentsPaginatedParams) ([]PlanAssignment, error)
@@ -63,6 +67,7 @@ type Querier interface {
 	UpdatePlanByID(ctx context.Context, arg UpdatePlanByIDParams) (Plan, error)
 	UpdatePlanBySlug(ctx context.Context, arg UpdatePlanBySlugParams) (Plan, error)
 	UpdatePlanFeatureConfigByPlan(ctx context.Context, arg UpdatePlanFeatureConfigByPlanParams) (UpdatePlanFeatureConfigByPlanRow, error)
+	UpdatePlanFeatureQuota(ctx context.Context, arg UpdatePlanFeatureQuotaParams) (PlanFeatureQuotum, error)
 }
 
 var _ Querier = (*Queries)(nil)
