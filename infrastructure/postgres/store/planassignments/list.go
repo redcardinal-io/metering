@@ -48,25 +48,11 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignments(ctx context.Context, 
 
 	planassignments := make([]models.PlanAssignment, 0, len(m))
 	for _, planassignment := range m {
-		id, _ := uuid.FromBytes(planassignment.ID.Bytes[:])
-		if planassignment.ValidUntil.Time.IsZero() {
-			planassignment.ValidUntil.Time = planassignment.ValidUntil.Time.UTC()
+		planAssignment := toPlanAssignmentModel(planassignment)
+		if planAssignment.ValidUntil.IsZero() {
+			planAssignment.ValidUntil = planAssignment.ValidUntil.UTC()
 		}
-		planassignments = append(planassignments, models.PlanAssignment{
-			Base: models.Base{
-				ID:        id,
-				CreatedAt: planassignment.CreatedAt,
-				CreatedBy: planassignment.CreatedBy,
-				UpdatedBy: planassignment.UpdatedBy,
-				UpdatedAt: planassignment.UpdatedAt,
-			},
-			PlanID:         planassignment.PlanID.String(),
-			OrganizationID: planassignment.OrganizationID.String,
-			UserID:         planassignment.UserID.String,
-			ValidFrom:      planassignment.ValidFrom.Time,
-			ValidUntil:     planassignment.ValidUntil.Time,
-		})
-
+		planassignments = append(planassignments, *planAssignment)
 	}
 
 	count, err := p.q.CountAssignments(ctx, gen.CountAssignmentsParams{
@@ -102,21 +88,11 @@ func (p *PgPlanAssignmentsStoreRepository) ListAllAssignments(ctx context.Contex
 
 	planassignments := make([]models.PlanAssignment, 0, len(m))
 	for _, planassignment := range m {
-		id, _ := uuid.FromBytes(planassignment.ID.Bytes[:])
-		planassignments = append(planassignments, models.PlanAssignment{
-			Base: models.Base{
-				ID:        id,
-				CreatedAt: planassignment.CreatedAt,
-				CreatedBy: planassignment.CreatedBy,
-				UpdatedBy: planassignment.UpdatedBy,
-				UpdatedAt: planassignment.UpdatedAt,
-			},
-			PlanID:         planassignment.PlanID.String(),
-			OrganizationID: planassignment.OrganizationID.String,
-			UserID:         planassignment.UserID.String,
-			ValidFrom:      planassignment.ValidFrom.Time,
-			ValidUntil:     planassignment.ValidUntil.Time,
-		})
+		planAssignment := toPlanAssignmentModel(planassignment)
+		if planAssignment.ValidUntil.IsZero() {
+			planAssignment.ValidUntil = planAssignment.ValidUntil.UTC()
+		}
+		planassignments = append(planassignments, *planAssignment)
 	}
 
 	count, err := p.q.CountAllAssignments(ctx, tenantSlug)
@@ -181,10 +157,10 @@ func (p *PgPlanAssignmentsStoreRepository) ListAssignmentsHistory(ctx context.Co
 		planassignments = append(planassignments, models.PlanAssignmentHistory{
 			Base: models.Base{
 				ID:        id,
-				CreatedAt: planassignment.CreatedAt,
+				CreatedAt: planassignment.CreatedAt.Time,
 				CreatedBy: planassignment.CreatedBy,
 				UpdatedBy: planassignment.UpdatedBy,
-				UpdatedAt: planassignment.UpdatedAt,
+				UpdatedAt: planassignment.UpdatedAt.Time,
 			},
 			PlanID:         planassignment.PlanID.String(),
 			OrganizationID: planassignment.OrganizationID.String,

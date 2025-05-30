@@ -3,7 +3,6 @@ package meters
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
@@ -19,7 +18,6 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 		Offset:     int32(page.GetOffset()),
 		TenantSlug: ctx.Value(constants.TenantSlugKey).(string),
 	})
-
 	if err != nil {
 		p.logger.Error("Error listing meters: ", zap.Error(err))
 		return nil, postgres.MapError(err, "Postgres.ListMeters")
@@ -27,24 +25,7 @@ func (p *PgMeterStoreRepository) ListMeters(ctx context.Context, page pagination
 
 	meters := make([]models.Meter, 0, len(m))
 	for _, meter := range m {
-		id, _ := uuid.FromBytes(meter.ID.Bytes[:])
-		meters = append(meters, models.Meter{
-			Name:          meter.Name,
-			Slug:          meter.Slug,
-			ValueProperty: meter.ValueProperty.String,
-			EventType:     meter.EventType,
-			Description:   meter.Description.String,
-			Properties:    meter.Properties,
-			Aggregation:   models.AggregationEnum(meter.Aggregation),
-			TenantSlug:    meter.TenantSlug,
-			Base: models.Base{
-				ID:        id,
-				CreatedAt: meter.CreatedAt,
-				CreatedBy: meter.CreatedBy,
-				UpdatedBy: meter.UpdatedBy,
-				UpdatedAt: meter.UpdatedAt,
-			},
-		})
+		meters = append(meters, *toMeterModel(meter))
 	}
 
 	count, err := p.q.CountMeters(ctx, tenantSlug)
@@ -75,24 +56,7 @@ func (p *PgMeterStoreRepository) ListMetersByEventTypes(
 
 	meters := make([]*models.Meter, 0, len(metesrs))
 	for _, meter := range metesrs {
-		id, _ := uuid.FromBytes(meter.ID.Bytes[:])
-		meters = append(meters, &models.Meter{
-			Name:          meter.Name,
-			Slug:          meter.Slug,
-			ValueProperty: meter.ValueProperty.String,
-			EventType:     meter.EventType,
-			Description:   meter.Description.String,
-			Properties:    meter.Properties,
-			Aggregation:   models.AggregationEnum(meter.Aggregation),
-			TenantSlug:    meter.TenantSlug,
-			Base: models.Base{
-				ID:        id,
-				CreatedAt: meter.CreatedAt,
-				CreatedBy: meter.CreatedBy,
-				UpdatedBy: meter.UpdatedBy,
-				UpdatedAt: meter.UpdatedAt,
-			},
-		})
+		meters = append(meters, toMeterModel(meter))
 	}
 
 	return meters, nil

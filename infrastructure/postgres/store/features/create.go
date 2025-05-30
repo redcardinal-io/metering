@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
@@ -37,27 +36,5 @@ func (p *PgFeatureRepository) CreateFeature(ctx context.Context, arg models.Crea
 		return nil, postgres.MapError(err, "Postgres.CreateFeature")
 	}
 
-	id, err := uuid.FromBytes(m.ID.Bytes[:])
-	if err != nil {
-		p.logger.Error("failed to parse UUID from bytes", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.ParseUUID")
-	}
-
-	config := make(map[string]any)
-	_ = json.Unmarshal(m.Config, &config)
-	return &models.Feature{
-		Name:        m.Name,
-		Description: m.Description.String,
-		Slug:        m.Slug,
-		TenantSlug:  m.TenantSlug,
-		Type:        models.FeatureTypeEnum(m.Type),
-		Config:      config,
-		Base: models.Base{
-			ID:        id,
-			CreatedAt: m.CreatedAt,
-			CreatedBy: m.CreatedBy,
-			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
-		},
-	}, nil
+	return toFeatureModel(m), nil
 }

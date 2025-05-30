@@ -99,6 +99,96 @@ func (ns NullFeatureEnum) Value() (driver.Value, error) {
 	return string(ns.FeatureEnum), nil
 }
 
+type MeteredActionAtLimitEnum string
+
+const (
+	MeteredActionAtLimitEnumNone     MeteredActionAtLimitEnum = "none"
+	MeteredActionAtLimitEnumBlock    MeteredActionAtLimitEnum = "block"
+	MeteredActionAtLimitEnumThrottle MeteredActionAtLimitEnum = "throttle"
+)
+
+func (e *MeteredActionAtLimitEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MeteredActionAtLimitEnum(s)
+	case string:
+		*e = MeteredActionAtLimitEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MeteredActionAtLimitEnum: %T", src)
+	}
+	return nil
+}
+
+type NullMeteredActionAtLimitEnum struct {
+	MeteredActionAtLimitEnum MeteredActionAtLimitEnum
+	Valid                    bool // Valid is true if MeteredActionAtLimitEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMeteredActionAtLimitEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.MeteredActionAtLimitEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MeteredActionAtLimitEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMeteredActionAtLimitEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MeteredActionAtLimitEnum), nil
+}
+
+type MeteredResetPeriodEnum string
+
+const (
+	MeteredResetPeriodEnumDay     MeteredResetPeriodEnum = "day"
+	MeteredResetPeriodEnumWeek    MeteredResetPeriodEnum = "week"
+	MeteredResetPeriodEnumMonth   MeteredResetPeriodEnum = "month"
+	MeteredResetPeriodEnumYear    MeteredResetPeriodEnum = "year"
+	MeteredResetPeriodEnumCustom  MeteredResetPeriodEnum = "custom"
+	MeteredResetPeriodEnumRolling MeteredResetPeriodEnum = "rolling"
+	MeteredResetPeriodEnumNever   MeteredResetPeriodEnum = "never"
+)
+
+func (e *MeteredResetPeriodEnum) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = MeteredResetPeriodEnum(s)
+	case string:
+		*e = MeteredResetPeriodEnum(s)
+	default:
+		return fmt.Errorf("unsupported scan type for MeteredResetPeriodEnum: %T", src)
+	}
+	return nil
+}
+
+type NullMeteredResetPeriodEnum struct {
+	MeteredResetPeriodEnum MeteredResetPeriodEnum
+	Valid                  bool // Valid is true if MeteredResetPeriodEnum is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullMeteredResetPeriodEnum) Scan(value interface{}) error {
+	if value == nil {
+		ns.MeteredResetPeriodEnum, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.MeteredResetPeriodEnum.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullMeteredResetPeriodEnum) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.MeteredResetPeriodEnum), nil
+}
+
 type PlanTypeEnum string
 
 const (
@@ -210,4 +300,15 @@ type PlanAssignmentHistory struct {
 	UpdatedAt      pgtype.Timestamptz
 	CreatedBy      string
 	UpdatedBy      string
+}
+
+type PlanFeatureQuotum struct {
+	ID                  pgtype.UUID
+	PlanFeatureID       pgtype.UUID
+	LimitValue          int64
+	ResetPeriod         MeteredResetPeriodEnum
+	CustomPeriodMinutes pgtype.Int8
+	ActionAtLimit       MeteredActionAtLimitEnum
+	CreatedAt           pgtype.Timestamptz
+	UpdatedAt           pgtype.Timestamptz
 }

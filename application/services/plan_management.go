@@ -14,14 +14,23 @@ type PlanManagementService struct {
 	planAssignmentsStore repositories.PlanAssignmentsStoreRepository
 	featureStore         repositories.FeatureStoreRepository
 	planFeatureStore     repositories.PlanFeatureStoreRepository
+	planFeatureQuotaRepo repositories.PlanFeatureQuotaStoreRepository
 }
 
-func NewPlanService(planStore repositories.PlanStoreRepository, featureStore repositories.FeatureStoreRepository, planFeatureStore repositories.PlanFeatureStoreRepository, planAssignmentsStore repositories.PlanAssignmentsStoreRepository) *PlanManagementService {
+// NewPlanService creates a new PlanManagementService with the provided repository implementations for plans, features, plan features, plan assignments, and plan feature quotas.
+func NewPlanService(
+	planStore repositories.PlanStoreRepository,
+	featureStore repositories.FeatureStoreRepository,
+	planFeatureStore repositories.PlanFeatureStoreRepository,
+	planAssignmentsStore repositories.PlanAssignmentsStoreRepository,
+	planFeatureQuotaRepo repositories.PlanFeatureQuotaStoreRepository,
+) *PlanManagementService {
 	return &PlanManagementService{
 		planStore:            planStore,
 		featureStore:         featureStore,
 		planFeatureStore:     planFeatureStore,
 		planAssignmentsStore: planAssignmentsStore,
+		planFeatureQuotaRepo: planFeatureQuotaRepo,
 	}
 }
 
@@ -164,4 +173,48 @@ func (s *PlanManagementService) ListPlanFeaturesByPlan(ctx context.Context, plan
 
 func (s *PlanManagementService) CheckPlanAndFeatureForTenant(ctx context.Context, planID, featureID uuid.UUID) (bool, error) {
 	return s.planFeatureStore.CheckPlanAndFeatureForTenant(ctx, planID, featureID)
+}
+
+// CreatePlanFeatureQuota creates a new quota for a plan feature
+func (s *PlanManagementService) CreatePlanFeatureQuota(ctx context.Context, arg models.CreatePlanFeatureQuotaInput, planID, featureID string) (*models.PlanFeatureQuota, error) {
+	planFeatureID, err := s.planFeatureStore.GetPlanFeatureIDByPlanAndFeature(ctx, uuid.MustParse(planID), uuid.MustParse(featureID))
+	if err != nil {
+		return nil, err
+	}
+	arg.PlanFeatureID = planFeatureID.String()
+	return s.planFeatureQuotaRepo.CreatePlanFeatureQuota(ctx, arg)
+}
+
+// GetPlanFeatureQuota retrieves a quota by plan feature ID
+func (s *PlanManagementService) GetPlanFeatureQuota(ctx context.Context, planID, featureID string) (*models.PlanFeatureQuota, error) {
+	// Validate input
+	planFeatureID, err := s.planFeatureStore.GetPlanFeatureIDByPlanAndFeature(ctx, uuid.MustParse(planID), uuid.MustParse(featureID))
+	if err != nil {
+		return nil, err
+	}
+
+	return s.planFeatureQuotaRepo.GetPlanFeatureQuota(ctx, planFeatureID)
+}
+
+// UpdatePlanFeatureQuota updates an existing quota
+func (s *PlanManagementService) UpdatePlanFeatureQuota(ctx context.Context, input models.UpdatePlanFeatureQuotaInput, planID, featureID string) (*models.PlanFeatureQuota, error) {
+	// Check if the quota exists
+	planFeatureID, err := s.planFeatureStore.GetPlanFeatureIDByPlanAndFeature(ctx, uuid.MustParse(planID), uuid.MustParse(featureID))
+	if err != nil {
+		return nil, err
+	}
+
+	input.PlanFeatureID = planFeatureID.String()
+	// Update the quota
+	return s.planFeatureQuotaRepo.UpdatePlanFeatureQuota(ctx, input)
+}
+
+// DeletePlanFeatureQuota deletes a quota by plan feature ID
+func (s *PlanManagementService) DeletePlanFeatureQuota(ctx context.Context, planID, featureID string) error {
+	planFeatureID, err := s.planFeatureStore.GetPlanFeatureIDByPlanAndFeature(ctx, uuid.MustParse(planID), uuid.MustParse(featureID))
+	if err != nil {
+		return err
+	}
+
+	return s.planFeatureQuotaRepo.DeletePlanFeatureQuota(ctx, planFeatureID)
 }

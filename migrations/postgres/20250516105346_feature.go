@@ -12,7 +12,9 @@ func init() {
 	goose.AddMigrationContext(upFeature, downFeature)
 }
 
-// upFeature applies the database migration to create the feature_enum type, the feature table with its constraints, and related indexes if they do not already exist. Returns an error if the migration fails.
+// upFeature applies the database migration to create the feature_enum type, the feature table with its constraints, and related indexes if they do not already exist.
+// 
+// Returns an error if the migration fails.
 func upFeature(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
 		do $$
@@ -39,12 +41,12 @@ func upFeature(ctx context.Context, tx *sql.Tx) error {
 				created_by varchar not null,
 				updated_by varchar not null,
 				unique (tenant_slug, slug)
-
  			);
 
 			perform goose_manage_updated_at('feature');
 			create index if not exists idx_feature_on_slug on feature (slug);
 			create index if not exists idx_feature_on_tenant_slug on feature (tenant_slug);
+			create index if not exists idx_feature_on_type on feature (type);
  		end;
  		$$;
 	`)

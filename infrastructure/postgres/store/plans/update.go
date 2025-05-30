@@ -40,25 +40,6 @@ func (s *PgPlanStoreRepository) UpdatePlanByIDorSlug(ctx context.Context, idOrSl
 		return nil, postgres.MapError(updateErr, "Postgres.UpdatePlanByID")
 	}
 
-	uuid, err := uuid.FromBytes(m.ID.Bytes[:])
-	if err != nil {
-		return nil, postgres.MapError(err, "Postgres.ParseUUID")
-	}
-
 	// Valid UUID, delete by ID
-	return &models.Plan{
-		Name:        m.Name,
-		Description: m.Description.String,
-		Slug:        m.Slug,
-		Type:        models.PlanTypeEnum(m.Type),
-		ArchivedAt:  m.ArchivedAt,
-		TenantSlug:  m.TenantSlug,
-		Base: models.Base{
-			ID:        uuid,
-			CreatedAt: m.CreatedAt,
-			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
-			CreatedBy: m.CreatedBy,
-		},
-	}, nil
+	return toPlanModel(m), nil
 }

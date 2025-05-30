@@ -3,7 +3,6 @@ package planassignments
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/infrastructure/postgres"
@@ -26,27 +25,7 @@ func (p *PgPlanAssignmentsStoreRepository) CreateAssignment(ctx context.Context,
 		return nil, postgres.MapError(err, "Postgres.CreateAssignment")
 	}
 
-	id, err := uuid.FromBytes(m.ID.Bytes[:])
-	if err != nil {
-		p.logger.Error("failed to parse UUID from bytes", zap.Error(err))
-		return nil, postgres.MapError(err, "Postgres.ParseUUID")
-	}
-
-	planAssignment := &models.PlanAssignment{
-		Base: models.Base{
-			ID:        id,
-			CreatedAt: m.CreatedAt,
-			CreatedBy: m.CreatedBy,
-			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
-		},
-		PlanID:         m.PlanID.String(),
-		OrganizationID: m.OrganizationID.String,
-		UserID:         m.UserID.String,
-		ValidFrom:      m.ValidFrom.Time,
-		ValidUntil:     m.ValidUntil.Time,
-	}
-
+	planAssignment := toPlanAssignmentModel(m)
 	if planAssignment.ValidUntil.IsZero() {
 		planAssignment.ValidUntil = planAssignment.ValidUntil.UTC()
 	}

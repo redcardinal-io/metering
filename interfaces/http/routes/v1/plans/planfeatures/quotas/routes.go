@@ -1,11 +1,10 @@
-package planfeatures
+package quotas
 
 import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redcardinal-io/metering/application/services"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
-	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/plans/planfeatures/quotas"
 )
 
 type httpHandler struct {
@@ -14,7 +13,7 @@ type httpHandler struct {
 	validator *validator.Validate
 }
 
-// NewHTTPHandler creates and returns a new httpHandler configured with the given logger and plan management service.
+// NewHTTPHandler creates and returns a new httpHandler for managing quota-related HTTP requests.
 func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanManagementService) *httpHandler {
 	validator := validator.New()
 	return &httpHandler{
@@ -25,15 +24,8 @@ func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanManagementServi
 }
 
 func (h *httpHandler) RegisterRoutes(r fiber.Router) {
-	// Register plan feature routes
+	r.Get("/", h.details)
 	r.Post("/", h.create)
-	r.Get("/", h.list)
-	r.Put("/:featureID", h.TenantPlanFeatureMiddleware(), h.update)
-	r.Delete("/:featureID", h.TenantPlanFeatureMiddleware(), h.delete)
-
-	quotasRoutes := r.Group("/:featureID/quotas")
-	quotasRoutes.Use(h.TenantPlanFeatureMiddleware())
-	quotas.
-		NewHTTPHandler(h.logger, h.planSvc).
-		RegisterRoutes(quotasRoutes)
+	r.Put("/", h.update)
+	r.Delete("/", h.delete)
 }

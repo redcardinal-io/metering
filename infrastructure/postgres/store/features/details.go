@@ -2,7 +2,6 @@ package features
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -36,27 +35,5 @@ func (p *PgFeatureRepository) GetFeatureByIDorSlug(ctx context.Context, idOrSlug
 		return nil, postgres.MapError(detailsErr, "Postgres.GetFeatureByIDorSlug")
 	}
 
-	uuid, err := uuid.FromBytes(m.ID.Bytes[:])
-	if err != nil {
-		return nil, postgres.MapError(err, "Postgres.ParseUUID")
-	}
-
-	config := make(map[string]any)
-	_ = json.Unmarshal(m.Config, &config)
-
-	return &models.Feature{
-		Name:        m.Name,
-		Description: m.Description.String,
-		Slug:        m.Slug,
-		TenantSlug:  m.TenantSlug,
-		Type:        models.FeatureTypeEnum(m.Type),
-		Config:      config,
-		Base: models.Base{
-			ID:        uuid,
-			CreatedAt: m.CreatedAt,
-			CreatedBy: m.CreatedBy,
-			UpdatedBy: m.UpdatedBy,
-			UpdatedAt: m.UpdatedAt,
-		},
-	}, nil
+	return toFeatureModel(m), nil
 }

@@ -57,9 +57,9 @@ func (p *PgPlanFeatureStoreRepository) ListPlanFeaturesByPlan(ctx context.Contex
 			Type:        models.FeatureTypeEnum(row.FeatureType),
 			Base: models.Base{
 				ID:        id,
-				CreatedAt: row.CreatedAt,
+				CreatedAt: row.CreatedAt.Time,
 				CreatedBy: row.CreatedBy,
-				UpdatedAt: row.UpdatedAt,
+				UpdatedAt: row.UpdatedAt.Time,
 				UpdatedBy: row.UpdatedBy,
 			},
 		})

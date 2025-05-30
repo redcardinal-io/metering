@@ -125,8 +125,8 @@ func TestCreateMeter_Integration(t *testing.T) {
 		assert.Equal(t, input.CreatedBy, meter.UpdatedBy)
 		assert.NotEmpty(t, meter.CreatedAt)
 		assert.NotEmpty(t, meter.UpdatedAt)
-		assert.WithinDuration(t, time.Now(), meter.CreatedAt.Time, 10*time.Second)
-		assert.WithinDuration(t, time.Now(), meter.UpdatedAt.Time, 10*time.Second)
+		assert.WithinDuration(t, time.Now(), meter.CreatedAt, 10*time.Second)
+		assert.WithinDuration(t, time.Now(), meter.UpdatedAt, 10*time.Second)
 	})
 
 	t.Run("Success with minimum fields (empty properties array)", func(t *testing.T) {
@@ -263,7 +263,7 @@ func TestUpdateMeterByIDorSlug_Integration(t *testing.T) {
 		assert.Equal(t, createdMeter.Aggregation, updatedMeter.Aggregation)
 		assert.Equal(t, createdMeter.CreatedBy, updatedMeter.CreatedBy)
 		assert.Equal(t, createdMeter.CreatedAt, updatedMeter.CreatedAt)
-		assert.True(t, updatedMeter.UpdatedAt.Time.After(originalUpdatedAt.Time), "UpdatedAt (%v) should be newer than original (%v)", updatedMeter.UpdatedAt.Time, originalUpdatedAt.Time)
+		assert.True(t, updatedMeter.UpdatedAt.After(originalUpdatedAt), "UpdatedAt (%v) should be newer than original (%v)", updatedMeter.UpdatedAt, originalUpdatedAt)
 		originalUpdatedAt = updatedMeter.UpdatedAt
 	})
 
@@ -287,7 +287,7 @@ func TestUpdateMeterByIDorSlug_Integration(t *testing.T) {
 
 		assert.Equal(t, createdMeter.Slug, updatedMeter.Slug)
 		assert.Equal(t, createdMeter.EventType, updatedMeter.EventType)
-		assert.True(t, updatedMeter.UpdatedAt.Time.After(originalUpdatedAt.Time), "UpdatedAt (%v) should be newer than previous (%v)", updatedMeter.UpdatedAt.Time, originalUpdatedAt.Time)
+		assert.True(t, updatedMeter.UpdatedAt.After(originalUpdatedAt), "UpdatedAt (%v) should be newer than previous (%v)", updatedMeter.UpdatedAt, originalUpdatedAt)
 		originalUpdatedAt = updatedMeter.UpdatedAt
 	})
 
@@ -307,7 +307,7 @@ func TestUpdateMeterByIDorSlug_Integration(t *testing.T) {
 		assert.Equal(t, updateInput.Name, updatedMeter.Name)
 		assert.Equal(t, updateInput.UpdatedBy, updatedMeter.UpdatedBy)
 		assert.Equal(t, currentDescription, updatedMeter.Description)
-		assert.True(t, updatedMeter.UpdatedAt.Time.After(originalUpdatedAt.Time), "UpdatedAt (%v) should be newer than previous (%v)", updatedMeter.UpdatedAt.Time, originalUpdatedAt.Time)
+		assert.True(t, updatedMeter.UpdatedAt.After(originalUpdatedAt), "UpdatedAt (%v) should be newer than previous (%v)", updatedMeter.UpdatedAt, originalUpdatedAt)
 		originalUpdatedAt = updatedMeter.UpdatedAt
 	})
 
@@ -326,7 +326,7 @@ func TestUpdateMeterByIDorSlug_Integration(t *testing.T) {
 		assert.Equal(t, updateInput.Description, updatedMeter.Description)
 		assert.Equal(t, updateInput.UpdatedBy, updatedMeter.UpdatedBy)
 		assert.Equal(t, currentName, updatedMeter.Name)
-		assert.True(t, updatedMeter.UpdatedAt.Time.After(originalUpdatedAt.Time), "UpdatedAt (%v) should be newer than previous (%v)", updatedMeter.UpdatedAt.Time, originalUpdatedAt.Time)
+		assert.True(t, updatedMeter.UpdatedAt.After(originalUpdatedAt), "UpdatedAt (%v) should be newer than previous (%v)", updatedMeter.UpdatedAt, originalUpdatedAt)
 	})
 
 	t.Run("Error update non-existent ID", func(t *testing.T) {
@@ -377,7 +377,6 @@ func TestUpdateMeterByIDorSlug_Integration(t *testing.T) {
 }
 
 func TestPgErrorHandling(t *testing.T) {
-
 	t.Run("Handle duplicate key error (23505)", func(t *testing.T) {
 		pgErr := &pgconn.PgError{Code: "23505", Message: "duplicate key value violates unique constraint \"meter_slug_tenant_slug_key\""}
 		mappedErr := postgres.MapError(pgErr, "TestContext.DuplicateKey")

@@ -17,6 +17,7 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planassignments"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planfeatures"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/plans"
+	"github.com/redcardinal-io/metering/infrastructure/postgres/store/quotas"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/assignments"
@@ -33,6 +34,7 @@ import (
 //
 // It loads application configuration, sets up logging, connects to Kafka, ClickHouse, and Postgres, and registers event, meter, plan, and feature routes under the `/v1` API group. Resources are properly closed on shutdown.
 //
+// ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
 // Returns an error if any initialization or server startup step fails.
 func ServeHttp() error {
 	// Load configuration
@@ -85,16 +87,25 @@ func ServeHttp() error {
 		return fmt.Errorf("error connecting to Postgres: %w", err)
 	}
 	defer store.Close()
+
+	// initialize repositories
 	meterStore := meters.NewPostgresMeterStoreRepository(store.GetDB(), logger)
 	planStore := plans.NewPostgresPlanStoreRepository(store.GetDB(), logger)
 	featureStore := features.NewPgFeatureStoreRepository(store.GetDB(), logger)
 	planAssignmentsStore := planassignments.NewPostgresPlanAssignmentsStoreRepository(store.GetDB(), logger)
 	planFeatureStore := planfeatures.NewPgPlanFeatureStoreRepository(store.GetDB(), logger)
+	plannFeatureQuotaStore := quotas.NewPlanFeatureQuotaRepository(store.GetDB(), logger)
 
-	// intialize services
+	// initialize services
 	producerService := services.NewProducerService(producer, meterStore)
 	meterService := services.NewMeterService(olap, meterStore)
-	planMangementService := services.NewPlanService(planStore, featureStore, planFeatureStore, planAssignmentsStore)
+	planMangementService := services.NewPlanService(
+		planStore,
+		featureStore,
+		planFeatureStore,
+		planAssignmentsStore,
+		plannFeatureQuotaStore,
+	)
 
 	// Register routes
 	routes := routes.NewHTTPHandler(logger)

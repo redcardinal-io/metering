@@ -11,6 +11,11 @@ func init() {
 	goose.AddMigrationContext(upPlanFeatureQuota, downPlanFeatureQuota)
 }
 
+// upPlanFeatureQuota applies the database migration to create the plan_feature_quota table and its supporting enum types if they do not already exist.
+// 
+// This migration defines the metered_reset_period_enum and metered_action_at_limit_enum types, creates the plan_feature_quota table with appropriate constraints and indexes, and sets up automatic management of the updated_at timestamp.
+// 
+// Returns an error if the migration fails.
 func upPlanFeatureQuota(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
 		do $$
@@ -22,9 +27,9 @@ func upPlanFeatureQuota(ctx context.Context, tx *sql.Tx) error {
 	  		  'week',
 	  		  'month',
 	  		  'year',
-	  			'custom',
-	  			'rolling',
-	  			'never'
+	  		  'custom',
+	  		  'rolling',
+	  		  'never'
 	  		);
 	  	end if;
 

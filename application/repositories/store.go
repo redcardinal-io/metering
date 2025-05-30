@@ -56,4 +56,13 @@ type PlanFeatureStoreRepository interface {
 	DeletePlanFeature(ctx context.Context, arg models.DeletePlanFeatureInput) error
 	ListPlanFeaturesByPlan(ctx context.Context, planID uuid.UUID, filter models.PlanFeatureListFilter) ([]models.PlanFeature, error)
 	CheckPlanAndFeatureForTenant(ctx context.Context, planID, featureID uuid.UUID) (bool, error)
+	GetPlanFeatureIDByPlanAndFeature(ctx context.Context, planID, featureID uuid.UUID) (uuid.UUID, error)
+}
+
+type PlanFeatureQuotaStoreRepository interface {
+	CreatePlanFeatureQuota(ctx context.Context, arg models.CreatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error)
+	GetPlanFeatureQuota(ctx context.Context, planFeatureID uuid.UUID) (*models.PlanFeatureQuota, error)
+	UpdatePlanFeatureQuota(ctx context.Context, arg models.UpdatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error)
+	DeletePlanFeatureQuota(ctx context.Context, planFeatureID uuid.UUID) error
+	CheckMeteredFeature(ctx context.Context, planFeatureID uuid.UUID) (bool, error)
 }

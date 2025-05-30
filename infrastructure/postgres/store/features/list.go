@@ -2,9 +2,7 @@ package features
 
 import (
 	"context"
-	"encoding/json"
 
-	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
@@ -31,25 +29,7 @@ func (p *PgFeatureRepository) ListFeatures(ctx context.Context, page pagination.
 
 	features := make([]models.Feature, 0, len(m))
 	for _, feature := range m {
-		config := make(map[string]any)
-		_ = json.Unmarshal(feature.Config, &config)
-		id, _ := uuid.FromBytes(feature.ID.Bytes[:])
-
-		features = append(features, models.Feature{
-			Name:        feature.Name,
-			Description: feature.Description.String,
-			Slug:        feature.Slug,
-			TenantSlug:  feature.TenantSlug,
-			Type:        models.FeatureTypeEnum(feature.Type),
-			Config:      config,
-			Base: models.Base{
-				ID:        id,
-				CreatedAt: feature.CreatedAt,
-				CreatedBy: feature.CreatedBy,
-				UpdatedBy: feature.UpdatedBy,
-				UpdatedAt: feature.UpdatedAt,
-			},
-		})
+		features = append(features, *toFeatureModel(feature))
 	}
 
 	count, err := p.q.CountFeatures(ctx, gen.CountFeaturesParams{
