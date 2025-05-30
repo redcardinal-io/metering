@@ -39,12 +39,12 @@ func upFeature(ctx context.Context, tx *sql.Tx) error {
 				created_by varchar not null,
 				updated_by varchar not null,
 				unique (tenant_slug, slug)
-
  			);
 
 			perform goose_manage_updated_at('feature');
 			create index if not exists idx_feature_on_slug on feature (slug);
 			create index if not exists idx_feature_on_tenant_slug on feature (tenant_slug);
+			create index if not exists idx_feature_on_type on feature (type);
  		end;
  		$$;
 	`)

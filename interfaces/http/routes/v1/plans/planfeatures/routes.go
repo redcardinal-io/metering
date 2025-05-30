@@ -31,7 +31,8 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	r.Put("/:featureID", h.TenantPlanFeatureMiddleware(), h.update)
 	r.Delete("/:featureID", h.TenantPlanFeatureMiddleware(), h.delete)
 
-	quotasRoutes := r.Group("/featureID/quotas")
+	quotasRoutes := r.Group("/:featureID/quotas")
+	quotasRoutes.Use(h.TenantPlanFeatureMiddleware())
 	quotas.
 		NewHTTPHandler(h.logger, h.planSvc).
 		RegisterRoutes(quotasRoutes)

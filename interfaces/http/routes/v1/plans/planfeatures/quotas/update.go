@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
@@ -25,27 +24,8 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 
 	// Get plan ID from URL parameter
 	planID := ctx.Params("planID")
-	_, err := uuid.Parse(planID)
-	if err != nil {
-		errResp := domainerrors.NewErrorResponseWithOpts(
-			err,
-			domainerrors.EINVALID,
-			"invalid plan ID format",
-		)
-		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
-	}
-
 	// Get feature ID from URL parameter
 	featureID := ctx.Params("featureID")
-	_, err = uuid.Parse(featureID)
-	if err != nil {
-		errResp := domainerrors.NewErrorResponseWithOpts(
-			err,
-			domainerrors.EINVALID,
-			"invalid feature ID format",
-		)
-		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
-	}
 
 	var req updatePlanFeatureQuotaRequest
 	if err := ctx.BodyParser(&req); err != nil {
@@ -104,6 +84,14 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		ActionAtLimit:       &actionAtLimit,
 		UpdatedBy:           req.UpdatedBy,
 	}, planID, featureID)
+	if err != nil {
+		h.logger.Error("failed to update plan feature quota",
+			zap.String("plan_id", planID),
+			zap.String("feature_id", featureID),
+			zap.Error(err))
+		errResp := domainerrors.NewErrorResponse(err)
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
 
 	return ctx.JSON(models.NewHttpResponse(quota, "plan feature quota updated successfully", fiber.StatusOK))
 }
