@@ -14,6 +14,7 @@ type PlanFeatureQuotaRepository struct {
 	logger *logger.Logger
 }
 
+// NewPlanFeatureQuotaRepository creates a new PlanFeatureQuotaRepository using the provided database connection and logger.
 func NewPlanFeatureQuotaRepository(db any, logger *logger.Logger) repositories.PlanFeatureQuotaStoreRepository {
 	return &PlanFeatureQuotaRepository{
 		q:      gen.New(db.(*pgxpool.Pool)),
@@ -21,6 +22,8 @@ func NewPlanFeatureQuotaRepository(db any, logger *logger.Logger) repositories.P
 	}
 }
 
+// toPlanFeatureQuotaModel converts a PlanFeatureQuotum database record into a PlanFeatureQuota domain model.
+// It maps all relevant fields and sets CustomPeriodMinutes if present in the database record.
 func toPlanFeatureQuotaModel(quota gen.PlanFeatureQuotum) *models.PlanFeatureQuota {
 	// Initialize the result with the database values
 	result := &models.PlanFeatureQuota{

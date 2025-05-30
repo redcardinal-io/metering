@@ -14,6 +14,7 @@ type PgMeterStoreRepository struct {
 	logger *logger.Logger
 }
 
+// NewPostgresMeterStoreRepository creates a new MeterStoreRepository backed by PostgreSQL using the provided database connection and logger.
 func NewPostgresMeterStoreRepository(db any, logger *logger.Logger) repositories.MeterStoreRepository {
 	return &PgMeterStoreRepository{
 		q:      gen.New(db.(*pgxpool.Pool)),
@@ -21,6 +22,7 @@ func NewPostgresMeterStoreRepository(db any, logger *logger.Logger) repositories
 	}
 }
 
+// toMeterModel converts a gen.Meter database record into a domain models.Meter object.
 func toMeterModel(m gen.Meter) *models.Meter {
 	return &models.Meter{
 		Name:          m.Name,

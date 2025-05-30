@@ -17,6 +17,7 @@ type PlanManagementService struct {
 	planFeatureQuotaRepo repositories.PlanFeatureQuotaStoreRepository
 }
 
+// NewPlanService creates a new PlanManagementService with the provided repository implementations for plans, features, plan features, plan assignments, and plan feature quotas.
 func NewPlanService(
 	planStore repositories.PlanStoreRepository,
 	featureStore repositories.FeatureStoreRepository,
