@@ -17,6 +17,21 @@ type createQuotaRequest struct {
 	ActionAtLimit       string `json:"action_at_limit" validate:"required,oneof=none block throttle"`
 }
 
+// @Summary Create plan feature quota
+// @Description Adds a quota configuration to a plan feature
+// @Tags Plan Feature Quotas
+// @Accept json
+// @Produce json
+// @Param X-Tenant header string true "Tenant slug"
+// @Param planID path string true "Plan ID" format(uuid)
+// @Param featureID path string true "Feature ID" format(uuid)
+// @Param body body createQuotaRequest true "Quota configuration"
+// @Success 201 {object} models.HttpResponse[models.PlanFeatureQuota] "Quota created successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 401 {object} domainerrors.ErrorResponse "Unauthorized"
+// @Failure 409 {object} domainerrors.ErrorResponse "Quota already exists"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/{planID}/features/{featureID}/quotas [post]
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 

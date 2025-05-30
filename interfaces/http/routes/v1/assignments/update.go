@@ -21,6 +21,18 @@ type updateAssignedPlanRequest struct {
 	SetValidUntilToZero bool      `json:"set_valid_until_to_zero" validate:"omitempty"`
 }
 
+// @Summary Update a plan assignment
+// @Description Update the validity period for a plan assignment
+// @Tags plan-assignments
+// @Accept json
+// @Produce json
+// @Param X-Tenant-Slug header string true "Tenant Slug"
+// @Param assignment body updateAssignedPlanRequest true "Assignment update information"
+// @Success 200 {object} models.HttpResponse[models.PlanAssignment] "Assignment updated successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 404 {object} domainerrors.ErrorResponse "Plan assignment not found"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/assignments [put]
 func (h *httpHandler) update(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
 	var req updateAssignedPlanRequest

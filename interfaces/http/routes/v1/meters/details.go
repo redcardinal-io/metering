@@ -10,6 +10,18 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Get meter details
+// @Description Get details of a specific meter by ID or slug
+// @Tags meters
+// @Accept json
+// @Produce json
+// @Param X-Tenant-Slug header string true "Tenant Slug"
+// @Param idOrSlug path string true "Meter ID or slug"
+// @Success 200 {object} models.HttpResponse[models.Meter] "Meter retrieved successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 404 {object} domainerrors.ErrorResponse "Meter not found"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/meters/{idOrSlug} [get]
 func (h *httpHandler) getByIDorSlug(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	idOrSlug := ctx.Params("idOrSlug")

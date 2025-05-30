@@ -50,7 +50,7 @@ func (s *MeterService) GetMeterIDorSlug(ctx context.Context, IDorSlug string) (*
 	return m, nil
 }
 
-func (s *MeterService) QueryMeter(ctx context.Context, arg models.QueryMeterInput) (*models.QueryMeterOutput, error) {
+func (s *MeterService) QueryMeter(ctx context.Context, arg models.QueryMeterParams) (*models.QueryMeterResult, error) {
 	m, err := s.store.GetMeterByIDorSlug(ctx, arg.MeterSlug)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,6 @@ func (s *MeterService) QueryMeter(ctx context.Context, arg models.QueryMeterInpu
 
 // TODO: implement recovery if store deletion fails
 func (s *MeterService) DeleteMeter(ctx context.Context, iDorSlug string) error {
-
 	meter, err := s.store.GetMeterByIDorSlug(ctx, iDorSlug)
 	if err != nil {
 		return err

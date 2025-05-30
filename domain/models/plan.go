@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // PlanTypeEnum represents the possible types of a plan
@@ -47,12 +46,12 @@ func ValidatePlanType(value string) bool {
 // Plan represents a plan entity from the database
 type Plan struct {
 	Base
-	Name        string             `json:"name"`
-	Description string             `json:"description,omitempty"`
-	Slug        string             `json:"slug"`
-	Type        PlanTypeEnum       `json:"type"`
-	ArchivedAt  pgtype.Timestamptz `json:"archived_at"`
-	TenantSlug  string             `json:"tenant_slug"`
+	Name        string       `json:"name"`
+	Description string       `json:"description,omitempty"`
+	Slug        string       `json:"slug"`
+	Type        PlanTypeEnum `json:"type"`
+	ArchivedAt  time.Time    `json:"archived_at"`
+	TenantSlug  string       `json:"tenant_slug"`
 }
 
 // PlanAssignment represents a plan_assignment entity from the database

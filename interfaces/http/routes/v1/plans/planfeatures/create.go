@@ -17,6 +17,20 @@ type createPlanFeatureRequest struct {
 	CreatedBy string                 `json:"created_by" validate:"required"`
 }
 
+// @Summary Create plan feature
+// @Description Adds a new feature to a plan
+// @Tags Plan Features
+// @Accept json
+// @Produce json
+// @Param X-Tenant header string true "Tenant slug"
+// @Param planID path string true "Plan ID" format(uuid)
+// @Param body body createPlanFeatureRequest true "Plan feature details"
+// @Success 201 {object} models.HttpResponse[models.PlanFeature] "Plan feature created successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 401 {object} domainerrors.ErrorResponse "Unauthorized"
+// @Failure 409 {object} domainerrors.ErrorResponse "Plan feature already exists"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/{planID}/features [post]
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	// Get tenant slug from context
 	tenantSlug := ctx.Get(constants.TenantHeader)

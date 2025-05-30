@@ -20,6 +20,18 @@ type createAssignmentRequest struct {
 	CreatedBy      string    `json:"created_by" validate:"required"`
 }
 
+// @Summary Create a new plan assignment
+// @Description Assign a plan to either an organization or a user
+// @Tags plan-assignments
+// @Accept json
+// @Produce json
+// @Param X-Tenant-Slug header string true "Tenant Slug"
+// @Param assignment body createAssignmentRequest true "Assignment information"
+// @Success 201 {object} models.HttpResponse[models.PlanAssignment] "Plan assignment created successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 404 {object} domainerrors.ErrorResponse "Plan not found"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/assignments [post]
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	var req createAssignmentRequest

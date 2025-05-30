@@ -61,7 +61,7 @@ func ValidateAggregation(value string) bool {
 	}
 }
 
-type QueryMeterInput struct {
+type QueryMeterParams struct {
 	MeterSlug      string
 	FilterGroupBy  map[string][]string
 	From           *time.Time
@@ -71,7 +71,7 @@ type QueryMeterInput struct {
 	WindowTimeZone *string
 }
 
-type QueryMeterOutput struct {
+type QueryMeterResult struct {
 	WindowStart *time.Time      `json:"window_start"`
 	WindowEnd   *time.Time      `json:"window_end"`
 	WindowSize  *WindowSize     `json:"window_size,omitempty"`

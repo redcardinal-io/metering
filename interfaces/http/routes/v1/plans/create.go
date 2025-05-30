@@ -10,14 +10,27 @@ import (
 	"go.uber.org/zap"
 )
 
+// createPlanRequest defines the request body for creating a plan
 type createPlanRequest struct {
 	Name        string `json:"name" validate:"required"`
 	Slug        string `json:"slug" validate:"required"`
 	Type        string `json:"type" validate:"required,oneof=standard custom"`
-	Description string `json:"description,omitempty"`
+	Description string `json:"description,omitempty" validate:"omitempty,min=10,max=255"`
 	CreatedBy   string `json:"created_by" validate:"required"`
 }
 
+// @Summary Create a new plan
+// @Description Create a new plan for the tenant
+// @Tags plans
+// @Accept json
+// @Produce json
+// @Param X-Tenant-Slug header string true "Tenant Slug"
+// @Param plan body createPlanRequest true "Plan information"
+// @Success 201 {object} models.HttpResponse[models.Plan] "Plan created successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 409 {object} domainerrors.ErrorResponse "Plan already exists"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans [post]
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
 	var req createPlanRequest

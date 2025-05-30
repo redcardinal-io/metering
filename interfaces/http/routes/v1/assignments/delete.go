@@ -16,6 +16,18 @@ type terminatePlanRequest struct {
 	UserID         string `json:"user_id"`
 }
 
+// @Summary Delete a plan assignment
+// @Description Terminate a plan assignment for an organization or user
+// @Tags plan-assignments
+// @Accept json
+// @Produce json
+// @Param X-Tenant-Slug header string true "Tenant Slug"
+// @Param assignment body terminatePlanRequest true "Assignment termination information"
+// @Success 204 "No Content"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 404 {object} domainerrors.ErrorResponse "Plan assignment not found"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/assignments [delete]
 func (h *httpHandler) delete(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
 	var req terminatePlanRequest

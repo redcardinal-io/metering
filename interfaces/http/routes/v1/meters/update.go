@@ -16,6 +16,19 @@ type updateMeterRequest struct {
 	UpdatedBy   string `json:"updated_by" validate:"required,min=3,max=255"`
 }
 
+// @Summary Update a meter
+// @Description Update a meter's details by ID or slug
+// @Tags meters
+// @Accept json
+// @Produce json
+// @Param X-Tenant-Slug header string true "Tenant Slug"
+// @Param idOrSlug path string true "Meter ID or slug"
+// @Param meter body updateMeterRequest true "Meter update data"
+// @Success 200 {object} models.HttpResponse[models.Meter] "Meter updated successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 404 {object} domainerrors.ErrorResponse "Meter not found"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/meters/{idOrSlug} [put]
 func (h *httpHandler) updateByIDorSlug(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	idOrSlug := ctx.Params("idOrSlug")

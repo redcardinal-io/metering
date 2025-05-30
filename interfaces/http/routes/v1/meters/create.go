@@ -23,6 +23,17 @@ type createMeterRequest struct {
 	Populate      bool     `json:"populate" validate:"required"`
 }
 
+// @Summary Create a new meter
+// @Description Create a new meter for the tenant
+// @Tags meters
+// @Accept json
+// @Produce json
+// @Param X-Tenant-Slug header string true "Tenant Slug"
+// @Param meter body createMeterRequest true "Meter creation data"
+// @Success 201 {object} models.HttpResponse[models.Meter] "Meter created successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/meters [post]
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
 	var req createMeterRequest

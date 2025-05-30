@@ -1,8 +1,6 @@
 package models
 
 import (
-	"encoding/json"
-
 	"github.com/google/uuid"
 )
 
@@ -11,7 +9,7 @@ type PlanFeature struct {
 	Base
 	PlanID      uuid.UUID       `json:"plan_id"`
 	FeatureID   uuid.UUID       `json:"feature_id"`
-	Config      json.RawMessage `json:"config,omitempty"`
+	Config      any             `json:"config,omitempty"`
 	FeatureName string          `json:"feature_name,omitempty"`
 	FeatureSlug string          `json:"feature_slug,omitempty"`
 	Type        FeatureTypeEnum `json:"feature_type,omitempty"`

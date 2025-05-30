@@ -6,7 +6,9 @@ import (
 	"github.com/gofiber/contrib/fiberzap"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/swagger"
 	"github.com/redcardinal-io/metering/application/services"
+	_ "github.com/redcardinal-io/metering/docs"
 	"github.com/redcardinal-io/metering/domain/pkg/config"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
 	"github.com/redcardinal-io/metering/infrastructure/clickhouse"
@@ -28,14 +30,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
-//
-// ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
-//
-// It loads application configuration, sets up logging, connects to Kafka, ClickHouse, and Postgres, and registers event, meter, plan, and feature routes under the `/v1` API group. Resources are properly closed on shutdown.
-//
-// ServeHttp initializes and starts the HTTP server with configured middleware, repositories, services, and API routes.
-// Returns an error if any initialization or server startup step fails.
+// @title RedCardinal Metering API
+// @version 1.0.0
+// @description API for metering service that handles event tracking, plans, features, and quotas
+// @termsOfService http://swagger.io/terms/
+// @host localhost:8080
+// @BasePath /
 func ServeHttp() error {
 	// Load configuration
 	config, err := config.LoadConfig()
@@ -53,11 +53,23 @@ func ServeHttp() error {
 		zap.String("host", config.Server.Host),
 		zap.String("port", config.Server.Port))
 
-	// Set up Fiber app
+	// Create new Fiber instance
 	app := fiber.New(fiber.Config{
-		CaseSensitive: true,
-		AppName:       "rcmetering",
+		AppName: "RedCardinal Metering API v1.0.0",
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			// Handle the error
+			logger.Error("error handling request", zap.Error(err))
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Internal Server Error",
+			})
+		},
 	})
+
+	// Swagger documentation route
+	app.Get("/swagger/*", swagger.New(swagger.Config{
+		Title:        "RedCardinal Metering API",
+		DocExpansion: "list",
+	}))
 
 	// Configure middleware
 	app.Use(cors.New())
