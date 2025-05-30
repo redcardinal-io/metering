@@ -14,7 +14,7 @@ type PgPlanAssignmentsStoreRepository struct {
 	logger *logger.Logger
 }
 
-// NewPostgresPlanAssignmentsStoreRepository creates a new PostgreSQL-backed plan assignments store repository using the provided database connection and logger.
+// NewPostgresPlanAssignmentsStoreRepository returns a new PlanAssignmentsStoreRepository backed by PostgreSQL, initialized with the given database connection and logger.
 func NewPostgresPlanAssignmentsStoreRepository(db any, logger *logger.Logger) repositories.PlanAssignmentsStoreRepository {
 	return &PgPlanAssignmentsStoreRepository{
 		q:      gen.New(db.(*pgxpool.Pool)),
@@ -22,6 +22,7 @@ func NewPostgresPlanAssignmentsStoreRepository(db any, logger *logger.Logger) re
 	}
 }
 
+// toPlanAssignmentModel converts a gen.PlanAssignment database entity to a domain models.PlanAssignment struct.
 func toPlanAssignmentModel(m gen.PlanAssignment) *models.PlanAssignment {
 	return &models.PlanAssignment{
 		Base: models.Base{

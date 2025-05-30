@@ -12,7 +12,9 @@ func init() {
 	goose.AddMigrationContext(upFeature, downFeature)
 }
 
-// upFeature applies the database migration to create the feature_enum type, the feature table with its constraints, and related indexes if they do not already exist. Returns an error if the migration fails.
+// upFeature applies the database migration to create the feature_enum type, the feature table with its constraints, and related indexes if they do not already exist.
+// 
+// Returns an error if the migration fails.
 func upFeature(ctx context.Context, tx *sql.Tx) error {
 	_, err := tx.ExecContext(ctx, `
 		do $$

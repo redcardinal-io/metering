@@ -13,6 +13,7 @@ type httpHandler struct {
 	validator *validator.Validate
 }
 
+// NewHTTPHandler creates and returns a new httpHandler for managing quota-related HTTP requests.
 func NewHTTPHandler(logger *logger.Logger, planSvc *services.PlanManagementService) *httpHandler {
 	validator := validator.New()
 	return &httpHandler{

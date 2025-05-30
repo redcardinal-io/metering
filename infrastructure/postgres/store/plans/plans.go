@@ -14,7 +14,7 @@ type PgPlanStoreRepository struct {
 	logger *logger.Logger
 }
 
-// NewPostgresPlanStoreRepository creates a new PostgreSQL-backed plan store repository using the provided database connection and logger.
+// NewPostgresPlanStoreRepository returns a new plan store repository backed by PostgreSQL, initialized with the given database connection and logger.
 func NewPostgresPlanStoreRepository(db any, logger *logger.Logger) repositories.PlanStoreRepository {
 	return &PgPlanStoreRepository{
 		q:      gen.New(db.(*pgxpool.Pool)),
@@ -22,6 +22,7 @@ func NewPostgresPlanStoreRepository(db any, logger *logger.Logger) repositories.
 	}
 }
 
+// toPlanModel converts a database Plan entity to a domain Plan model, mapping all relevant fields and handling type conversions.
 func toPlanModel(m gen.Plan) *models.Plan {
 	return &models.Plan{
 		Name:        m.Name,
