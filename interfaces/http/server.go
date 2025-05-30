@@ -15,9 +15,9 @@ import (
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/features"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/meters"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planassignments"
-	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planfeaturequota"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/planfeatures"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/store/plans"
+	"github.com/redcardinal-io/metering/infrastructure/postgres/store/quotas"
 	"github.com/redcardinal-io/metering/interfaces/http/routes"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/middleware"
 	"github.com/redcardinal-io/metering/interfaces/http/routes/v1/assignments"
@@ -86,12 +86,14 @@ func ServeHttp() error {
 		return fmt.Errorf("error connecting to Postgres: %w", err)
 	}
 	defer store.Close()
+
+	// initialize repositories
 	meterStore := meters.NewPostgresMeterStoreRepository(store.GetDB(), logger)
 	planStore := plans.NewPostgresPlanStoreRepository(store.GetDB(), logger)
 	featureStore := features.NewPgFeatureStoreRepository(store.GetDB(), logger)
 	planAssignmentsStore := planassignments.NewPostgresPlanAssignmentsStoreRepository(store.GetDB(), logger)
 	planFeatureStore := planfeatures.NewPgPlanFeatureStoreRepository(store.GetDB(), logger)
-	plannFeatureQuotaStore := planfeaturequota.NewPlanFeatureQuotaRepository(store.GetDB(), logger)
+	plannFeatureQuotaStore := quotas.NewPlanFeatureQuotaRepository(store.GetDB(), logger)
 
 	// initialize services
 	producerService := services.NewProducerService(producer, meterStore)

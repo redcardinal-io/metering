@@ -88,11 +88,11 @@ func (p *PgPlanAssignmentsStoreRepository) ListAllAssignments(ctx context.Contex
 
 	planassignments := make([]models.PlanAssignment, 0, len(m))
 	for _, planassignment := range m {
-		planAssignmennt := toPlanAssignmentModel(planassignment)
-		if planAssignmennt.ValidUntil.IsZero() {
-			planAssignmennt.ValidUntil = planAssignmennt.ValidUntil.UTC()
+		planAssignment := toPlanAssignmentModel(planassignment)
+		if planAssignment.ValidUntil.IsZero() {
+			planAssignment.ValidUntil = planAssignment.ValidUntil.UTC()
 		}
-		planassignments = append(planassignments, *planAssignmennt)
+		planassignments = append(planassignments, *planAssignment)
 	}
 
 	count, err := p.q.CountAllAssignments(ctx, tenantSlug)

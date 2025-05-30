@@ -119,6 +119,34 @@ func (q *Queries) DeletePlanFeature(ctx context.Context, arg DeletePlanFeaturePa
 	return err
 }
 
+const getPlanFeatureIDByPlanAndFeature = `-- name: GetPlanFeatureIDByPlanAndFeature :one
+select
+    pf.id as plan_feature_id
+from
+    plan_feature pf
+join
+    plan p on pf.plan_id = p.id
+join
+    feature f on pf.feature_id = f.id
+where
+    p.id = $2::uuid
+    and f.id = $3::uuid
+    and p.tenant_slug = $1
+`
+
+type GetPlanFeatureIDByPlanAndFeatureParams struct {
+	TenantSlug string
+	PlanID     pgtype.UUID
+	FeatureID  pgtype.UUID
+}
+
+func (q *Queries) GetPlanFeatureIDByPlanAndFeature(ctx context.Context, arg GetPlanFeatureIDByPlanAndFeatureParams) (pgtype.UUID, error) {
+	row := q.db.QueryRow(ctx, getPlanFeatureIDByPlanAndFeature, arg.TenantSlug, arg.PlanID, arg.FeatureID)
+	var plan_feature_id pgtype.UUID
+	err := row.Scan(&plan_feature_id)
+	return plan_feature_id, err
+}
+
 const listPlanFeaturesByPlan = `-- name: ListPlanFeaturesByPlan :many
 select
     pf.id as plan_feature_id,

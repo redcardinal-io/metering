@@ -1,4 +1,4 @@
-package planfeaturequota
+package quotas
 
 import (
 	"github.com/google/uuid"

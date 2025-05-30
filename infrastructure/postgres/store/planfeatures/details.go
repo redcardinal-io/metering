@@ -23,3 +23,16 @@ func (s *PgPlanFeatureStoreRepository) CheckPlanAndFeatureForTenant(ctx context.
 
 	return m, nil
 }
+
+func (s *PgPlanFeatureStoreRepository) GetPlanFeatureIDByPlanAndFeature(ctx context.Context, planID, featureID uuid.UUID) (uuid.UUID, error) {
+	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
+	id, err := s.q.GetPlanFeatureIDByPlanAndFeature(ctx, gen.GetPlanFeatureIDByPlanAndFeatureParams{
+		PlanID:     pgtype.UUID{Bytes: planID, Valid: true},
+		FeatureID:  pgtype.UUID{Bytes: featureID, Valid: true},
+		TenantSlug: tenantSlug,
+	})
+	if err != nil {
+		return uuid.Nil, postgres.MapError(err, "Postgres.GetPlanFeatureIDByPlanAndFeature")
+	}
+	return id.Bytes, nil
+}

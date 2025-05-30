@@ -1,4 +1,4 @@
-package planfeaturequota
+package quotas
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 
 func (r *PlanFeatureQuotaRepository) UpdatePlanFeatureQuota(ctx context.Context, arg models.UpdatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error) {
 	// First get the existing quota to ensure it exists
-	existingQuota, err := r.GetPlanFeatureQuota(ctx, arg.PlanFeatureID)
+	existingQuota, err := r.GetPlanFeatureQuota(ctx, uuid.MustParse(arg.PlanFeatureID))
 	if err != nil {
 		return nil, err
 	}

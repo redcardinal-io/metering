@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/application/repositories"
+	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 )
@@ -176,29 +177,41 @@ func (s *PlanManagementService) CheckPlanAndFeatureForTenant(ctx context.Context
 }
 
 // CreatePlanFeatureQuota creates a new quota for a plan feature
-func (s *PlanManagementService) CreatePlanFeatureQuota(ctx context.Context, input models.CreatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error) {
-	return s.planFeatureQuotaRepo.CreatePlanFeatureQuota(ctx, input)
+func (s *PlanManagementService) CreatePlanFeatureQuota(ctx context.Context, arg models.CreatePlanFeatureQuotaInput, planID, featureID string) (*models.PlanFeatureQuota, error) {
+	planFeatureID, err := s.planFeatureStore.GetPlanFeatureIDByPlanAndFeature(ctx, uuid.MustParse(planID), uuid.MustParse(featureID))
+	if err != nil {
+		return nil, err
+	}
+	arg.PlanFeatureID = planFeatureID.String()
+	return s.planFeatureQuotaRepo.CreatePlanFeatureQuota(ctx, arg)
 }
 
 // GetPlanFeatureQuota retrieves a quota by plan feature ID
-func (s *PlanManagementService) GetPlanFeatureQuota(ctx context.Context, planFeatureID string) (*models.PlanFeatureQuota, error) {
+func (s *PlanManagementService) GetPlanFeatureQuota(ctx context.Context, planID, featureID string) (*models.PlanFeatureQuota, error) {
 	// Validate input
-	if _, err := uuid.Parse(planFeatureID); err != nil {
-		return nil, errors.New("invalid plan feature ID format")
+	planFeatureID, err := s.planFeatureStore.GetPlanFeatureIDByPlanAndFeature(ctx, uuid.MustParse(planID), uuid.MustParse(featureID))
+	if err != nil {
+		return nil, err
 	}
 
 	return s.planFeatureQuotaRepo.GetPlanFeatureQuota(ctx, planFeatureID)
 }
 
 // UpdatePlanFeatureQuota updates an existing quota
-func (s *PlanManagementService) UpdatePlanFeatureQuota(ctx context.Context, input models.UpdatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error) {
+func (s *PlanManagementService) UpdatePlanFeatureQuota(ctx context.Context, input models.UpdatePlanFeatureQuotaInput, planID, featureID string) (*models.PlanFeatureQuota, error) {
 	// Check if the quota exists
-	existing, err := s.planFeatureQuotaRepo.GetPlanFeatureQuota(ctx, input.PlanFeatureID)
+	planFeatureID, err := s.planFeatureStore.GetPlanFeatureIDByPlanAndFeature(ctx, uuid.MustParse(planID), uuid.MustParse(featureID))
+	if err != nil {
+		return nil, err
+	}
+
+	input.PlanFeatureID = planFeatureID.String()
+	existing, err := s.planFeatureQuotaRepo.GetPlanFeatureQuota(ctx, planFeatureID)
 	if err != nil {
 		return nil, err
 	}
 	if existing == nil {
-		return nil, errors.New("plan feature quota not found")
+		return nil, domainerrors.New(errors.New("plan feature quota not found"), domainerrors.ENOTFOUND, "The specified plan feature quota does not exist")
 	}
 
 	// Update the quota
@@ -206,10 +219,10 @@ func (s *PlanManagementService) UpdatePlanFeatureQuota(ctx context.Context, inpu
 }
 
 // DeletePlanFeatureQuota deletes a quota by plan feature ID
-func (s *PlanManagementService) DeletePlanFeatureQuota(ctx context.Context, planFeatureID string) error {
-	// Validate input
-	if _, err := uuid.Parse(planFeatureID); err != nil {
-		return errors.New("invalid plan feature ID format")
+func (s *PlanManagementService) DeletePlanFeatureQuota(ctx context.Context, planID, featureID string) error {
+	planFeatureID, err := s.planFeatureStore.GetPlanFeatureIDByPlanAndFeature(ctx, uuid.MustParse(planID), uuid.MustParse(featureID))
+	if err != nil {
+		return err
 	}
 
 	return s.planFeatureQuotaRepo.DeletePlanFeatureQuota(ctx, planFeatureID)

@@ -84,3 +84,21 @@ select exists (
         and f.id = $2
         and p.tenant_slug = $3 
 );
+
+-- name: GetPlanFeatureIDByPlanAndFeature :one
+select
+    pf.id as plan_feature_id
+from
+    plan_feature pf
+join
+    plan p on pf.plan_id = p.id
+join
+    feature f on pf.feature_id = f.id
+where
+    p.id = sqlc.arg('plan_id')::uuid
+    and f.id = sqlc.arg('feature_id')::uuid
+    and p.tenant_slug = $1;
+
+
+
+

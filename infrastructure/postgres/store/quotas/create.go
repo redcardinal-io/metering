@@ -1,4 +1,4 @@
-package planfeaturequota
+package quotas
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 
 func (r *PlanFeatureQuotaRepository) CreatePlanFeatureQuota(ctx context.Context, arg models.CreatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error) {
 	// First check if the feature is metered
-	isMetered, err := r.CheckMeteredFeature(ctx, arg.PlanFeatureID)
+	isMetered, err := r.CheckMeteredFeature(ctx, uuid.MustParse(arg.PlanFeatureID))
 	if err != nil {
 		r.logger.Error("failed to check if feature is metered", zap.Error(err))
 		return nil, postgres.MapError(err, "failed to check if feature is metered")

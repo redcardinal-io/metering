@@ -43,6 +43,7 @@ type Querier interface {
 	GetMeterBySlug(ctx context.Context, arg GetMeterBySlugParams) (Meter, error)
 	GetPlanByID(ctx context.Context, arg GetPlanByIDParams) (Plan, error)
 	GetPlanBySlug(ctx context.Context, arg GetPlanBySlugParams) (Plan, error)
+	GetPlanFeatureIDByPlanAndFeature(ctx context.Context, arg GetPlanFeatureIDByPlanAndFeatureParams) (pgtype.UUID, error)
 	GetPlanFeatureQuotaByPlanFeatureID(ctx context.Context, planFeatureID pgtype.UUID) (PlanFeatureQuotum, error)
 	GetPropertiesByEventType(ctx context.Context, arg GetPropertiesByEventTypeParams) ([]interface{}, error)
 	GetValuePropertiesByEventType(ctx context.Context, arg GetValuePropertiesByEventTypeParams) ([]pgtype.Text, error)

@@ -36,3 +36,4 @@ select exists (
     where pf.id = $1
     and f.type = 'metered'
 );
+
