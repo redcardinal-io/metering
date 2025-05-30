@@ -15,6 +15,19 @@ type listPlanFeaturesQuery struct {
 	FeatureType string `query:"feature_type"`
 }
 
+// @Summary List plan features
+// @Description Retrieves all features associated with a plan
+// @Tags Plan Features
+// @Accept json
+// @Produce json
+// @Param X-Tenant header string true "Tenant slug"
+// @Param planID path string true "Plan ID" format(uuid)
+// @Param feature_type query string false "Filter by feature type"
+// @Success 200 {object} models.HttpResponse[[]models.PlanFeature]  "List of plan features"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 401 {object} domainerrors.ErrorResponse "Unauthorized"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/{planID}/features [get]
 func (h *httpHandler) list(ctx *fiber.Ctx) error {
 	// Get tenant slug from context
 	tenantSlug := ctx.Get(constants.TenantHeader)

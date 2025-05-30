@@ -31,8 +31,19 @@ type publishEventRequestBody struct {
 	AllowPartialSuccess *bool   `json:"allow_partial_success" validate:"omitempty"`
 }
 
+// PublishEvent godoc
+// @Summary Publish events
+// @Description Publishes a batch of events to the system
+// @Tags events
+// @Accept json
+// @Produce json
+// @Param X-Tenant header string true "Tenant slug identifier"
+// @Param request body publishEventRequestBody true "Event batch to publish"
+// @Success 200 {object} models.HttpResponse[models.PublishEventsResult] "Events published successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 500 {object} domainerrors.ErrorResponse "Server error"
+// @Router /v1/events [post]
 func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
-
 	var body publishEventRequestBody
 	if err := ctx.BodyParser(&body); err != nil {
 		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse request body")
@@ -110,5 +121,5 @@ func (h *httpHandler) publishEvent(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.
-		Status(fiber.StatusOK).JSON(models.NewHttpResponse[any](res, "events published successfully", fiber.StatusOK))
+		Status(fiber.StatusOK).JSON(models.NewHttpResponse[*models.PublishEventsResult](res, "events published successfully", fiber.StatusOK))
 }

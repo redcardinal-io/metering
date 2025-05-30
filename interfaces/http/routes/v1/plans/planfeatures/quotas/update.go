@@ -17,6 +17,21 @@ type updatePlanFeatureQuotaRequest struct {
 	ActionAtLimit       string `json:"action_at_limit,omitempty" validate:"omitempty,oneof=none block throttle"`
 }
 
+// @Summary Update plan feature quota
+// @Description Updates the quota configuration for a plan feature
+// @Tags Plan Feature Quotas
+// @Accept json
+// @Produce json
+// @Param X-Tenant header string true "Tenant slug"
+// @Param planID path string true "Plan ID" format(uuid)
+// @Param featureID path string true "Feature ID" format(uuid)
+// @Param body body updatePlanFeatureQuotaRequest true "Updated quota configuration"
+// @Success 200 {object} models.HttpResponse[models.PlanFeatureQuota] "Quota updated successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 401 {object} domainerrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} domainerrors.ErrorResponse "Quota not found"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/{planID}/features/{featureID}/quotas [put]
 func (h *httpHandler) update(ctx *fiber.Ctx) error {
 	// Get tenant slug from context
 	tenantSlug := ctx.Get(constants.TenantHeader)

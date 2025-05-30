@@ -16,6 +16,20 @@ type updatePlanFeatureRequest struct {
 	UpdatedBy string                 `json:"updated_by" validate:"required"`
 }
 
+// @Description Updates configuration of a feature associated with a plan
+// @Tags Plan Features
+// @Accept json
+// @Produce json
+// @Param X-Tenant header string true "Tenant slug"
+// @Param planID path string true "Plan ID" format(uuid)
+// @Param featureID path string true "Feature ID" format(uuid)
+// @Param body body updatePlanFeatureRequest true "Updated plan feature details"
+// @Success 200 {object} models.HttpResponse[models.PlanFeature] "Plan feature updated successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 401 {object} domainerrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} domainerrors.ErrorResponse "Plan feature not found"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/{planID}/features/{featureID} [put]
 func (h *httpHandler) update(ctx *fiber.Ctx) error {
 	// Get tenant slug from context
 	tenantSlug := ctx.Get(constants.TenantHeader)

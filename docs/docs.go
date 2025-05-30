@@ -15,6 +15,698 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/v1/events": {
+            "post": {
+                "description": "Publishes a batch of events to the system",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "events"
+                ],
+                "summary": "Publish events",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug identifier",
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Event batch to publish",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/events.publishEventRequestBody"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Events published successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_PublishEventsResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/features": {
+            "get": {
+                "description": "Get a list of features for the tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "features"
+                ],
+                "summary": "List features",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort field",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort order (asc/desc)",
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by feature type (static/metered)",
+                        "name": "type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Features retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-array_models_Feature"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new feature for the tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "features"
+                ],
+                "summary": "Create a new feature",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Feature creation data",
+                        "name": "feature",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/features.createFeatureRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Feature created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_Feature"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/features/{idOrSlug}": {
+            "get": {
+                "description": "Get feature details by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "features"
+                ],
+                "summary": "Get feature details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Feature ID or Slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Feature retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_Feature"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Feature not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a feature by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "features"
+                ],
+                "summary": "Update a feature",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Feature ID or Slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Feature update data",
+                        "name": "feature",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/features.updateFeatureRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Feature updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_Feature"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Feature not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a feature by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "features"
+                ],
+                "summary": "Delete a feature",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Feature ID or Slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Feature deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Feature not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/meters": {
+            "get": {
+                "description": "Get a paginated list of all meters for the tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meters"
+                ],
+                "summary": "List all meters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Meters retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-pagination_PaginationView-models_Meter"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new meter for the tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meters"
+                ],
+                "summary": "Create a new meter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Meter creation data",
+                        "name": "meter",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/meters.createMeterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Meter created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_Meter"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/meters/query": {
+            "post": {
+                "description": "Query meter data with filters and grouping options",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meters"
+                ],
+                "summary": "Query meter data",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Query parameters",
+                        "name": "query",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/meters.queryMeterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Meter queried successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_QueryMeterResult"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Meter not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/meters/{idOrSlug}": {
+            "get": {
+                "description": "Get details of a specific meter by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meters"
+                ],
+                "summary": "Get meter details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Meter ID or slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Meter retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_Meter"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Meter not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a meter's details by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meters"
+                ],
+                "summary": "Update a meter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Meter ID or slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Meter update data",
+                        "name": "meter",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/meters.updateMeterRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Meter updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_Meter"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Meter not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a meter by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meters"
+                ],
+                "summary": "Delete a meter",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Meter ID or slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Meter deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Meter not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/plans": {
             "get": {
                 "description": "Get a paginated list of all plans for the tenant",
@@ -117,6 +809,364 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Plan already exists",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/plans/assignments": {
+            "get": {
+                "description": "Get a list of plan assignments with optional filtering",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plan-assignments"
+                ],
+                "summary": "List plan assignments",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Valid from date (format: YYYY-MM-DDThh:mm:ssZ)",
+                        "name": "validFrom",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Valid until date (format: YYYY-MM-DDThh:mm:ssZ)",
+                        "name": "validUntil",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Plan ID or slug",
+                        "name": "planIdOrSlug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Organization ID",
+                        "name": "orgId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Assignments retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-pagination_PaginationView-models_PlanAssignment"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update the validity period for a plan assignment",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plan-assignments"
+                ],
+                "summary": "Update a plan assignment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignment update information",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assignments.updateAssignedPlanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Assignment updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_PlanAssignment"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Plan assignment not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Assign a plan to either an organization or a user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plan-assignments"
+                ],
+                "summary": "Create a new plan assignment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignment information",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assignments.createAssignmentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Plan assignment created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_PlanAssignment"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Plan not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Terminate a plan assignment for an organization or user",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plan-assignments"
+                ],
+                "summary": "Delete a plan assignment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Assignment termination information",
+                        "name": "assignment",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/assignments.terminatePlanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Plan assignment not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/plans/assignments/history": {
+            "get": {
+                "description": "Get historical records of plan assignments with optional filtering",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plan-assignments"
+                ],
+                "summary": "List plan assignment history",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Valid from before date (format: YYYY-MM-DDThh:mm:ssZ)",
+                        "name": "validFromBefore",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Valid from after date (format: YYYY-MM-DDThh:mm:ssZ)",
+                        "name": "validFromAfter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Valid until before date (format: YYYY-MM-DDThh:mm:ssZ)",
+                        "name": "validUntilBefore",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Valid until after date (format: YYYY-MM-DDThh:mm:ssZ)",
+                        "name": "validUntilAfter",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Action type (Create, Update, Delete)",
+                        "name": "action",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Plan ID or slug",
+                        "name": "planIdOrSlug",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Organization ID",
+                        "name": "orgId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userId",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Assignment history retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-pagination_PaginationView-models_PlanAssignmentHistory"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
                         "schema": {
                             "$ref": "#/definitions/errors.ErrorResponse"
                         }
@@ -359,9 +1409,663 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/v1/plans/{planID}/features": {
+            "get": {
+                "description": "Retrieves all features associated with a plan",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan Features"
+                ],
+                "summary": "List plan features",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Plan ID",
+                        "name": "planID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by feature type",
+                        "name": "feature_type",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of plan features",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-array_models_PlanFeature"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Adds a new feature to a plan",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan Features"
+                ],
+                "summary": "Create plan feature",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Plan ID",
+                        "name": "planID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Plan feature details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/planfeatures.createPlanFeatureRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Plan feature created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_PlanFeature"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Plan feature already exists",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/plans/{planID}/features/{featureID}": {
+            "put": {
+                "description": "Updates configuration of a feature associated with a plan",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan Features"
+                ],
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Plan ID",
+                        "name": "planID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Feature ID",
+                        "name": "featureID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated plan feature details",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/planfeatures.updatePlanFeatureRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plan feature updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_PlanFeature"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Plan feature not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes a feature from a plan",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan Features"
+                ],
+                "summary": "Delete plan feature",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Plan ID",
+                        "name": "planID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Feature ID",
+                        "name": "featureID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Plan feature deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Plan feature not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/plans/{planID}/features/{featureID}/quotas": {
+            "get": {
+                "description": "Retrieves quota configuration for a specific plan feature",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan Feature Quotas"
+                ],
+                "summary": "Get plan feature quota details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Plan ID",
+                        "name": "planID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Feature ID",
+                        "name": "featureID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Quota details retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_PlanFeatureQuota"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Quota not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Updates the quota configuration for a plan feature",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan Feature Quotas"
+                ],
+                "summary": "Update plan feature quota",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Plan ID",
+                        "name": "planID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Feature ID",
+                        "name": "featureID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated quota configuration",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/quotas.updatePlanFeatureQuotaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Quota updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_PlanFeatureQuota"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Quota not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Adds a quota configuration to a plan feature",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan Feature Quotas"
+                ],
+                "summary": "Create plan feature quota",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Plan ID",
+                        "name": "planID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Feature ID",
+                        "name": "featureID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Quota configuration",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/quotas.createQuotaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Quota created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_PlanFeatureQuota"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Quota already exists",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Removes the quota configuration from a plan feature",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Plan Feature Quotas"
+                ],
+                "summary": "Delete plan feature quota",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant slug",
+                        "name": "X-Tenant",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Plan ID",
+                        "name": "planID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Feature ID",
+                        "name": "featureID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Quota deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Quota not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "assignments.createAssignmentRequest": {
+            "type": "object",
+            "required": [
+                "created_by",
+                "plan_id_or_slug",
+                "valid_from"
+            ],
+            "properties": {
+                "created_by": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "plan_id_or_slug": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "valid_from": {
+                    "type": "string"
+                },
+                "valid_until": {
+                    "type": "string"
+                }
+            }
+        },
+        "assignments.terminatePlanRequest": {
+            "type": "object",
+            "required": [
+                "plan_id_or_slug"
+            ],
+            "properties": {
+                "organization_id": {
+                    "type": "string"
+                },
+                "plan_id_or_slug": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "assignments.updateAssignedPlanRequest": {
+            "type": "object",
+            "required": [
+                "plan_id_or_slug",
+                "updated_by"
+            ],
+            "properties": {
+                "organization_id": {
+                    "type": "string"
+                },
+                "plan_id_or_slug": {
+                    "type": "string"
+                },
+                "set_valid_until_to_zero": {
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "valid_from": {
+                    "type": "string"
+                },
+                "valid_until": {
+                    "type": "string"
+                }
+            }
+        },
         "errors.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -377,11 +2081,503 @@ const docTemplate = `{
                 }
             }
         },
+        "events.event": {
+            "type": "object",
+            "required": [
+                "organization",
+                "type",
+                "user"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "organization": {
+                    "type": "string"
+                },
+                "properties": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "source": {
+                    "type": "string"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "events.publishEventRequestBody": {
+            "type": "object",
+            "required": [
+                "events"
+            ],
+            "properties": {
+                "allow_partial_success": {
+                    "type": "boolean"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/events.event"
+                    }
+                }
+            }
+        },
+        "features.createFeatureRequest": {
+            "type": "object",
+            "required": [
+                "created_by",
+                "name",
+                "slug",
+                "type"
+            ],
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "static",
+                        "metered"
+                    ]
+                }
+            }
+        },
+        "features.updateFeatureRequest": {
+            "type": "object",
+            "required": [
+                "updated_by"
+            ],
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 10
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "updated_by": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                }
+            }
+        },
+        "meters.createMeterRequest": {
+            "type": "object",
+            "required": [
+                "aggregation",
+                "created_by",
+                "event_type",
+                "name",
+                "populate",
+                "properties",
+                "slug"
+            ],
+            "properties": {
+                "aggregation": {
+                    "type": "string",
+                    "enum": [
+                        "count",
+                        "sum",
+                        "avg",
+                        "unique_count",
+                        "min",
+                        "max"
+                    ]
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "event_type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "populate": {
+                    "type": "boolean"
+                },
+                "properties": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "value_property": {
+                    "type": "string"
+                }
+            }
+        },
+        "meters.queryMeterRequest": {
+            "type": "object",
+            "required": [
+                "meter_slug"
+            ],
+            "properties": {
+                "filter_group_by": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "from": {
+                    "type": "string"
+                },
+                "group_by": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "meter_slug": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "window_size": {
+                    "$ref": "#/definitions/models.WindowSize"
+                },
+                "window_time_zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "meters.updateMeterRequest": {
+            "type": "object",
+            "required": [
+                "updated_by"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                },
+                "updated_by": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
+        "models.AggregationEnum": {
+            "type": "string",
+            "enum": [
+                "count",
+                "sum",
+                "avg",
+                "unique_count",
+                "min",
+                "max"
+            ],
+            "x-enum-varnames": [
+                "AggregationCount",
+                "AggregationSum",
+                "AggregationAvg",
+                "AggregationUniqueCount",
+                "AggregationMin",
+                "AggregationMax"
+            ]
+        },
+        "models.Event": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "description": "The event ID.",
+                    "type": "string"
+                },
+                "ingested_at": {
+                    "description": "The time the event was ingested.",
+                    "type": "string"
+                },
+                "organization": {
+                    "description": "ID of the organization that user belongs to.",
+                    "type": "string"
+                },
+                "properties": {
+                    "description": "The event data as a JSON string.",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "The event source.",
+                    "type": "string"
+                },
+                "timestamp": {
+                    "description": "The event time.",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "The event type.",
+                    "type": "string"
+                },
+                "user": {
+                    "description": "The ID of the user that owns the event.",
+                    "type": "string"
+                }
+            }
+        },
+        "models.FailedEvent": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "description": "The error that occurred"
+                },
+                "event": {
+                    "description": "The event that failed",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.Event"
+                        }
+                    ]
+                }
+            }
+        },
+        "models.Feature": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tenant_slug": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/models.FeatureTypeEnum"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.FeatureTypeEnum": {
+            "type": "string",
+            "enum": [
+                "static",
+                "metered"
+            ],
+            "x-enum-varnames": [
+                "FeatureTypeStatic",
+                "FeatureTypeMetered"
+            ]
+        },
+        "models.HttpResponse-array_models_Feature": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Feature"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-array_models_PlanFeature": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.PlanFeature"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-models_Feature": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.Feature"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-models_Meter": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.Meter"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.HttpResponse-models_Plan": {
             "type": "object",
             "properties": {
                 "data": {
                     "$ref": "#/definitions/models.Plan"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-models_PlanAssignment": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.PlanAssignment"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-models_PlanFeature": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.PlanFeature"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-models_PlanFeatureQuota": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.PlanFeatureQuota"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-models_PublishEventsResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.PublishEventsResult"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-models_QueryMeterResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.QueryMeterResult"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-pagination_PaginationView-models_Meter": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/pagination.PaginationView-models_Meter"
                 },
                 "message": {
                     "type": "string"
@@ -404,6 +2600,115 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "models.HttpResponse-pagination_PaginationView-models_PlanAssignment": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/pagination.PaginationView-models_PlanAssignment"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-pagination_PaginationView-models_PlanAssignmentHistory": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/pagination.PaginationView-models_PlanAssignmentHistory"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Meter": {
+            "type": "object",
+            "properties": {
+                "aggregation": {
+                    "$ref": "#/definitions/models.AggregationEnum"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "event_type": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "properties": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tenant_slug": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "value_property": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.MeteredActionAtLimit": {
+            "type": "string",
+            "enum": [
+                "none",
+                "block",
+                "throttle"
+            ],
+            "x-enum-varnames": [
+                "MeteredActionAtLimitNone",
+                "MeteredActionAtLimitBlock",
+                "MeteredActionAtLimitThrottle"
+            ]
+        },
+        "models.MeteredResetPeriod": {
+            "type": "string",
+            "enum": [
+                "day",
+                "week",
+                "month",
+                "year",
+                "custom",
+                "rolling",
+                "never"
+            ],
+            "x-enum-varnames": [
+                "MeteredResetPeriodDay",
+                "MeteredResetPeriodWeek",
+                "MeteredResetPeriodMonth",
+                "MeteredResetPeriodYear",
+                "MeteredResetPeriodCustom",
+                "MeteredResetPeriodRolling",
+                "MeteredResetPeriodNever"
+            ]
         },
         "models.Plan": {
             "type": "object",
@@ -443,6 +2748,150 @@ const docTemplate = `{
                 }
             }
         },
+        "models.PlanAssignment": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "plan_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "valid_from": {
+                    "type": "string"
+                },
+                "valid_until": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.PlanAssignmentHistory": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "organization_id": {
+                    "type": "string"
+                },
+                "plan_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "valid_from": {
+                    "type": "string"
+                },
+                "valid_until": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.PlanFeature": {
+            "type": "object",
+            "properties": {
+                "config": {},
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "feature_id": {
+                    "type": "string"
+                },
+                "feature_name": {
+                    "type": "string"
+                },
+                "feature_slug": {
+                    "type": "string"
+                },
+                "feature_type": {
+                    "$ref": "#/definitions/models.FeatureTypeEnum"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "plan_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.PlanFeatureQuota": {
+            "type": "object",
+            "properties": {
+                "action_at_limit": {
+                    "$ref": "#/definitions/models.MeteredActionAtLimit"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "custom_period_minutes": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "limit_value": {
+                    "type": "integer"
+                },
+                "plan_feature_id": {
+                    "type": "string"
+                },
+                "reset_period": {
+                    "$ref": "#/definitions/models.MeteredResetPeriod"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                }
+            }
+        },
         "models.PlanTypeEnum": {
             "type": "string",
             "enum": [
@@ -453,6 +2902,94 @@ const docTemplate = `{
                 "Standard",
                 "Custom"
             ]
+        },
+        "models.PublishEventsResult": {
+            "type": "object",
+            "properties": {
+                "error": {},
+                "failed_events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.FailedEvent"
+                    }
+                },
+                "success_count": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.QueryMeterResult": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.QueryMeterRow"
+                    }
+                },
+                "window_end": {
+                    "type": "string"
+                },
+                "window_size": {
+                    "$ref": "#/definitions/models.WindowSize"
+                },
+                "window_start": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.QueryMeterRow": {
+            "type": "object",
+            "properties": {
+                "group_by": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "value": {
+                    "type": "number"
+                },
+                "window_end": {
+                    "type": "string"
+                },
+                "window_start": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.WindowSize": {
+            "type": "string",
+            "enum": [
+                "minute",
+                "hour",
+                "day"
+            ],
+            "x-enum-varnames": [
+                "WindowSizeMinute",
+                "WindowSizeHour",
+                "WindowSizeDay"
+            ]
+        },
+        "pagination.PaginationView-models_Meter": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Meter"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
         },
         "pagination.PaginationView-models_Plan": {
             "type": "object",
@@ -474,6 +3011,80 @@ const docTemplate = `{
                 }
             }
         },
+        "pagination.PaginationView-models_PlanAssignment": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.PlanAssignment"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "pagination.PaginationView-models_PlanAssignmentHistory": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.PlanAssignmentHistory"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "planfeatures.createPlanFeatureRequest": {
+            "type": "object",
+            "required": [
+                "created_by",
+                "feature_id"
+            ],
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "feature_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "planfeatures.updatePlanFeatureRequest": {
+            "type": "object",
+            "required": [
+                "updated_by"
+            ],
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "additionalProperties": true
+                },
+                "updated_by": {
+                    "type": "string"
+                }
+            }
+        },
         "plans.archivePlanRequest": {
             "type": "object",
             "required": [
@@ -481,11 +3092,9 @@ const docTemplate = `{
             ],
             "properties": {
                 "archive": {
-                    "description": "Whether to archive (true) or unarchive (false) the plan\nexample: true",
                     "type": "boolean"
                 },
                 "updated_by": {
-                    "description": "User who is performing the archive/unarchive action\nrequired: true\nmin length: 3\nmax length: 255\nexample: admin@example.com",
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 3
@@ -502,23 +3111,20 @@ const docTemplate = `{
             ],
             "properties": {
                 "created_by": {
-                    "description": "User who created the plan\nrequired: true\nexample: admin@example.com",
                     "type": "string"
                 },
                 "description": {
-                    "description": "Optional description of the plan\nexample: This is our enterprise level plan with premium features",
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 10
                 },
                 "name": {
-                    "description": "Name of the plan\nrequired: true\nexample: Enterprise Plan",
                     "type": "string"
                 },
                 "slug": {
-                    "description": "Slug identifier for the plan\nrequired: true\nexample: enterprise-plan",
                     "type": "string"
                 },
                 "type": {
-                    "description": "Type of plan (standard or custom)\nrequired: true\nenum: standard,custom\nexample: standard",
                     "type": "string",
                     "enum": [
                         "standard",
@@ -534,22 +3140,86 @@ const docTemplate = `{
             ],
             "properties": {
                 "description": {
-                    "description": "Optional updated description for the plan\nmin length: 10\nmax length: 255\nexample: This is our updated enterprise level plan with additional premium features",
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 10
                 },
                 "name": {
-                    "description": "Optional updated name for the plan\nmin length: 3\nmax length: 255\nexample: Updated Enterprise Plan",
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 3
                 },
                 "updated_by": {
-                    "description": "User who is updating the plan\nrequired: true\nmin length: 3\nmax length: 255\nexample: admin@example.com",
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 3
+                }
+            }
+        },
+        "quotas.createQuotaRequest": {
+            "type": "object",
+            "required": [
+                "action_at_limit",
+                "limit_value",
+                "reset_period"
+            ],
+            "properties": {
+                "action_at_limit": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "block",
+                        "throttle"
+                    ]
+                },
+                "custom_period_minutes": {
+                    "type": "integer"
+                },
+                "limit_value": {
+                    "type": "integer"
+                },
+                "reset_period": {
+                    "type": "string",
+                    "enum": [
+                        "day",
+                        "week",
+                        "month",
+                        "year",
+                        "custom",
+                        "rolling",
+                        "never"
+                    ]
+                }
+            }
+        },
+        "quotas.updatePlanFeatureQuotaRequest": {
+            "type": "object",
+            "properties": {
+                "action_at_limit": {
+                    "type": "string",
+                    "enum": [
+                        "none",
+                        "block",
+                        "throttle"
+                    ]
+                },
+                "custom_period_minutes": {
+                    "type": "integer"
+                },
+                "limit_value": {
+                    "type": "integer"
+                },
+                "reset_period": {
+                    "type": "string",
+                    "enum": [
+                        "day",
+                        "week",
+                        "month",
+                        "year",
+                        "custom",
+                        "rolling",
+                        "never"
+                    ]
                 }
             }
         }

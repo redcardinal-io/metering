@@ -11,6 +11,20 @@ import (
 	"go.uber.org/zap"
 )
 
+// @Summary Delete plan feature
+// @Description Removes a feature from a plan
+// @Tags Plan Features
+// @Accept json
+// @Produce json
+// @Param X-Tenant header string true "Tenant slug"
+// @Param planID path string true "Plan ID" format(uuid)
+// @Param featureID path string true "Feature ID" format(uuid)
+// @Success 204  "Plan feature deleted successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 401 {object} domainerrors.ErrorResponse "Unauthorized"
+// @Failure 404 {object} domainerrors.ErrorResponse "Plan feature not found"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/{planID}/features/{featureID} [delete]
 func (h *httpHandler) delete(ctx *fiber.Ctx) error {
 	// Get tenant slug from context
 	tenantSlug := ctx.Get(constants.TenantHeader)

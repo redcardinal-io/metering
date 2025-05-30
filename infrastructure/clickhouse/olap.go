@@ -92,7 +92,7 @@ func (olap *ClickHouseOlap) CreateMeter(ctx context.Context, arg models.CreateMe
 	return nil
 }
 
-func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMeterInput, agg *models.AggregationEnum) (*models.QueryMeterOutput, error) {
+func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMeterParams, agg *models.AggregationEnum) (*models.QueryMeterResult, error) {
 	tenantSlug := ctx.Value(constants.TenantSlugKey).(string)
 	queryMeter := meters.QueryMeter{
 		TenantSlug:     tenantSlug,
@@ -132,7 +132,7 @@ func (olap *ClickHouseOlap) QueryMeter(ctx context.Context, input models.QueryMe
 	// Determine the actual time range of the query results
 	windowStart, windowEnd := determineQueryTimeRange(results, input.From, input.To)
 
-	return &models.QueryMeterOutput{
+	return &models.QueryMeterResult{
 		WindowStart: windowStart,
 		WindowEnd:   windowEnd,
 		WindowSize:  queryMeter.WindowSize,

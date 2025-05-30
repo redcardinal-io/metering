@@ -14,6 +14,6 @@ type OlapRepository interface {
 
 	// meter methods
 	CreateMeter(ctx context.Context, arg models.CreateMeterInput) error
-	QueryMeter(ctx context.Context, arg models.QueryMeterInput, agg *models.AggregationEnum) (*models.QueryMeterOutput, error)
+	QueryMeter(ctx context.Context, arg models.QueryMeterParams, agg *models.AggregationEnum) (*models.QueryMeterResult, error)
 	DeleteMeter(ctx context.Context, meterSlug string) error
 }

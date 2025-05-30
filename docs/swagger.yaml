@@ -1,4 +1,54 @@
 definitions:
+  assignments.createAssignmentRequest:
+    properties:
+      created_by:
+        type: string
+      organization_id:
+        type: string
+      plan_id_or_slug:
+        type: string
+      user_id:
+        type: string
+      valid_from:
+        type: string
+      valid_until:
+        type: string
+    required:
+    - created_by
+    - plan_id_or_slug
+    - valid_from
+    type: object
+  assignments.terminatePlanRequest:
+    properties:
+      organization_id:
+        type: string
+      plan_id_or_slug:
+        type: string
+      user_id:
+        type: string
+    required:
+    - plan_id_or_slug
+    type: object
+  assignments.updateAssignedPlanRequest:
+    properties:
+      organization_id:
+        type: string
+      plan_id_or_slug:
+        type: string
+      set_valid_until_to_zero:
+        type: boolean
+      updated_by:
+        type: string
+      user_id:
+        type: string
+      valid_from:
+        type: string
+      valid_until:
+        type: string
+    required:
+    - plan_id_or_slug
+    - updated_by
+    type: object
   errors.ErrorResponse:
     properties:
       code:
@@ -9,10 +59,348 @@ definitions:
       message:
         type: string
     type: object
+  events.event:
+    properties:
+      id:
+        type: string
+      organization:
+        type: string
+      properties:
+        additionalProperties: {}
+        type: object
+      source:
+        type: string
+      timestamp:
+        type: string
+      type:
+        type: string
+      user:
+        type: string
+    required:
+    - organization
+    - type
+    - user
+    type: object
+  events.publishEventRequestBody:
+    properties:
+      allow_partial_success:
+        type: boolean
+      events:
+        items:
+          $ref: '#/definitions/events.event'
+        type: array
+    required:
+    - events
+    type: object
+  features.createFeatureRequest:
+    properties:
+      config:
+        additionalProperties: {}
+        type: object
+      created_by:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      type:
+        enum:
+        - static
+        - metered
+        type: string
+    required:
+    - created_by
+    - name
+    - slug
+    - type
+    type: object
+  features.updateFeatureRequest:
+    properties:
+      config:
+        additionalProperties: {}
+        type: object
+      description:
+        maxLength: 255
+        minLength: 10
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      updated_by:
+        maxLength: 100
+        minLength: 3
+        type: string
+    required:
+    - updated_by
+    type: object
+  meters.createMeterRequest:
+    properties:
+      aggregation:
+        enum:
+        - count
+        - sum
+        - avg
+        - unique_count
+        - min
+        - max
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      event_type:
+        type: string
+      name:
+        type: string
+      populate:
+        type: boolean
+      properties:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      slug:
+        type: string
+      value_property:
+        type: string
+    required:
+    - aggregation
+    - created_by
+    - event_type
+    - name
+    - populate
+    - properties
+    - slug
+    type: object
+  meters.queryMeterRequest:
+    properties:
+      filter_group_by:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+      from:
+        type: string
+      group_by:
+        items:
+          type: string
+        type: array
+      meter_slug:
+        type: string
+      to:
+        type: string
+      window_size:
+        $ref: '#/definitions/models.WindowSize'
+      window_time_zone:
+        type: string
+    required:
+    - meter_slug
+    type: object
+  meters.updateMeterRequest:
+    properties:
+      description:
+        maxLength: 255
+        minLength: 3
+        type: string
+      name:
+        maxLength: 100
+        minLength: 3
+        type: string
+      updated_by:
+        maxLength: 255
+        minLength: 3
+        type: string
+    required:
+    - updated_by
+    type: object
+  models.AggregationEnum:
+    enum:
+    - count
+    - sum
+    - avg
+    - unique_count
+    - min
+    - max
+    type: string
+    x-enum-varnames:
+    - AggregationCount
+    - AggregationSum
+    - AggregationAvg
+    - AggregationUniqueCount
+    - AggregationMin
+    - AggregationMax
+  models.Event:
+    properties:
+      id:
+        description: The event ID.
+        type: string
+      ingested_at:
+        description: The time the event was ingested.
+        type: string
+      organization:
+        description: ID of the organization that user belongs to.
+        type: string
+      properties:
+        description: The event data as a JSON string.
+        type: string
+      source:
+        description: The event source.
+        type: string
+      timestamp:
+        description: The event time.
+        type: string
+      type:
+        description: The event type.
+        type: string
+      user:
+        description: The ID of the user that owns the event.
+        type: string
+    type: object
+  models.FailedEvent:
+    properties:
+      error:
+        description: The error that occurred
+      event:
+        allOf:
+        - $ref: '#/definitions/models.Event'
+        description: The event that failed
+    type: object
+  models.Feature:
+    properties:
+      config:
+        additionalProperties: {}
+        type: object
+      created_at:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      tenant_slug:
+        type: string
+      type:
+        $ref: '#/definitions/models.FeatureTypeEnum'
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  models.FeatureTypeEnum:
+    enum:
+    - static
+    - metered
+    type: string
+    x-enum-varnames:
+    - FeatureTypeStatic
+    - FeatureTypeMetered
+  models.HttpResponse-array_models_Feature:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Feature'
+        type: array
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-array_models_PlanFeature:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.PlanFeature'
+        type: array
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-models_Feature:
+    properties:
+      data:
+        $ref: '#/definitions/models.Feature'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-models_Meter:
+    properties:
+      data:
+        $ref: '#/definitions/models.Meter'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
   models.HttpResponse-models_Plan:
     properties:
       data:
         $ref: '#/definitions/models.Plan'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-models_PlanAssignment:
+    properties:
+      data:
+        $ref: '#/definitions/models.PlanAssignment'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-models_PlanFeature:
+    properties:
+      data:
+        $ref: '#/definitions/models.PlanFeature'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-models_PlanFeatureQuota:
+    properties:
+      data:
+        $ref: '#/definitions/models.PlanFeatureQuota'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-models_PublishEventsResult:
+    properties:
+      data:
+        $ref: '#/definitions/models.PublishEventsResult'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-models_QueryMeterResult:
+    properties:
+      data:
+        $ref: '#/definitions/models.QueryMeterResult'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-pagination_PaginationView-models_Meter:
+    properties:
+      data:
+        $ref: '#/definitions/pagination.PaginationView-models_Meter'
       message:
         type: string
       status:
@@ -27,6 +415,83 @@ definitions:
       status:
         type: integer
     type: object
+  models.HttpResponse-pagination_PaginationView-models_PlanAssignment:
+    properties:
+      data:
+        $ref: '#/definitions/pagination.PaginationView-models_PlanAssignment'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-pagination_PaginationView-models_PlanAssignmentHistory:
+    properties:
+      data:
+        $ref: '#/definitions/pagination.PaginationView-models_PlanAssignmentHistory'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.Meter:
+    properties:
+      aggregation:
+        $ref: '#/definitions/models.AggregationEnum'
+      created_at:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      event_type:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      properties:
+        items:
+          type: string
+        type: array
+      slug:
+        type: string
+      tenant_slug:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+      value_property:
+        type: string
+    type: object
+  models.MeteredActionAtLimit:
+    enum:
+    - none
+    - block
+    - throttle
+    type: string
+    x-enum-varnames:
+    - MeteredActionAtLimitNone
+    - MeteredActionAtLimitBlock
+    - MeteredActionAtLimitThrottle
+  models.MeteredResetPeriod:
+    enum:
+    - day
+    - week
+    - month
+    - year
+    - custom
+    - rolling
+    - never
+    type: string
+    x-enum-varnames:
+    - MeteredResetPeriodDay
+    - MeteredResetPeriodWeek
+    - MeteredResetPeriodMonth
+    - MeteredResetPeriodYear
+    - MeteredResetPeriodCustom
+    - MeteredResetPeriodRolling
+    - MeteredResetPeriodNever
   models.Plan:
     properties:
       archived_at:
@@ -52,6 +517,101 @@ definitions:
       updated_by:
         type: string
     type: object
+  models.PlanAssignment:
+    properties:
+      created_at:
+        type: string
+      created_by:
+        type: string
+      id:
+        type: string
+      organization_id:
+        type: string
+      plan_id:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+      user_id:
+        type: string
+      valid_from:
+        type: string
+      valid_until:
+        type: string
+    type: object
+  models.PlanAssignmentHistory:
+    properties:
+      action:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      id:
+        type: string
+      organization_id:
+        type: string
+      plan_id:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+      user_id:
+        type: string
+      valid_from:
+        type: string
+      valid_until:
+        type: string
+    type: object
+  models.PlanFeature:
+    properties:
+      config: {}
+      created_at:
+        type: string
+      created_by:
+        type: string
+      feature_id:
+        type: string
+      feature_name:
+        type: string
+      feature_slug:
+        type: string
+      feature_type:
+        $ref: '#/definitions/models.FeatureTypeEnum'
+      id:
+        type: string
+      plan_id:
+        type: string
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  models.PlanFeatureQuota:
+    properties:
+      action_at_limit:
+        $ref: '#/definitions/models.MeteredActionAtLimit'
+      created_at:
+        type: string
+      created_by:
+        type: string
+      custom_period_minutes:
+        type: integer
+      id:
+        type: string
+      limit_value:
+        type: integer
+      plan_feature_id:
+        type: string
+      reset_period:
+        $ref: '#/definitions/models.MeteredResetPeriod'
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
   models.PlanTypeEnum:
     enum:
     - standard
@@ -60,6 +620,65 @@ definitions:
     x-enum-varnames:
     - Standard
     - Custom
+  models.PublishEventsResult:
+    properties:
+      error: {}
+      failed_events:
+        items:
+          $ref: '#/definitions/models.FailedEvent'
+        type: array
+      success_count:
+        type: integer
+    type: object
+  models.QueryMeterResult:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.QueryMeterRow'
+        type: array
+      window_end:
+        type: string
+      window_size:
+        $ref: '#/definitions/models.WindowSize'
+      window_start:
+        type: string
+    type: object
+  models.QueryMeterRow:
+    properties:
+      group_by:
+        additionalProperties:
+          type: string
+        type: object
+      value:
+        type: number
+      window_end:
+        type: string
+      window_start:
+        type: string
+    type: object
+  models.WindowSize:
+    enum:
+    - minute
+    - hour
+    - day
+    type: string
+    x-enum-varnames:
+    - WindowSizeMinute
+    - WindowSizeHour
+    - WindowSizeDay
+  pagination.PaginationView-models_Meter:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      results:
+        items:
+          $ref: '#/definitions/models.Meter'
+        type: array
+      total:
+        type: integer
+    type: object
   pagination.PaginationView-models_Plan:
     properties:
       limit:
@@ -73,20 +692,60 @@ definitions:
       total:
         type: integer
     type: object
+  pagination.PaginationView-models_PlanAssignment:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      results:
+        items:
+          $ref: '#/definitions/models.PlanAssignment'
+        type: array
+      total:
+        type: integer
+    type: object
+  pagination.PaginationView-models_PlanAssignmentHistory:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      results:
+        items:
+          $ref: '#/definitions/models.PlanAssignmentHistory'
+        type: array
+      total:
+        type: integer
+    type: object
+  planfeatures.createPlanFeatureRequest:
+    properties:
+      config:
+        additionalProperties: true
+        type: object
+      created_by:
+        type: string
+      feature_id:
+        type: string
+    required:
+    - created_by
+    - feature_id
+    type: object
+  planfeatures.updatePlanFeatureRequest:
+    properties:
+      config:
+        additionalProperties: true
+        type: object
+      updated_by:
+        type: string
+    required:
+    - updated_by
+    type: object
   plans.archivePlanRequest:
     properties:
       archive:
-        description: |-
-          Whether to archive (true) or unarchive (false) the plan
-          example: true
         type: boolean
       updated_by:
-        description: |-
-          User who is performing the archive/unarchive action
-          required: true
-          min length: 3
-          max length: 255
-          example: admin@example.com
         maxLength: 255
         minLength: 3
         type: string
@@ -96,34 +755,16 @@ definitions:
   plans.createPlanRequest:
     properties:
       created_by:
-        description: |-
-          User who created the plan
-          required: true
-          example: admin@example.com
         type: string
       description:
-        description: |-
-          Optional description of the plan
-          example: This is our enterprise level plan with premium features
+        maxLength: 255
+        minLength: 10
         type: string
       name:
-        description: |-
-          Name of the plan
-          required: true
-          example: Enterprise Plan
         type: string
       slug:
-        description: |-
-          Slug identifier for the plan
-          required: true
-          example: enterprise-plan
         type: string
       type:
-        description: |-
-          Type of plan (standard or custom)
-          required: true
-          enum: standard,custom
-          example: standard
         enum:
         - standard
         - custom
@@ -137,39 +778,535 @@ definitions:
   plans.updatePlanRequest:
     properties:
       description:
-        description: |-
-          Optional updated description for the plan
-          min length: 10
-          max length: 255
-          example: This is our updated enterprise level plan with additional premium features
         maxLength: 255
         minLength: 10
         type: string
       name:
-        description: |-
-          Optional updated name for the plan
-          min length: 3
-          max length: 255
-          example: Updated Enterprise Plan
         maxLength: 255
         minLength: 3
         type: string
       updated_by:
-        description: |-
-          User who is updating the plan
-          required: true
-          min length: 3
-          max length: 255
-          example: admin@example.com
         maxLength: 255
         minLength: 3
         type: string
     required:
     - updated_by
     type: object
+  quotas.createQuotaRequest:
+    properties:
+      action_at_limit:
+        enum:
+        - none
+        - block
+        - throttle
+        type: string
+      custom_period_minutes:
+        type: integer
+      limit_value:
+        type: integer
+      reset_period:
+        enum:
+        - day
+        - week
+        - month
+        - year
+        - custom
+        - rolling
+        - never
+        type: string
+    required:
+    - action_at_limit
+    - limit_value
+    - reset_period
+    type: object
+  quotas.updatePlanFeatureQuotaRequest:
+    properties:
+      action_at_limit:
+        enum:
+        - none
+        - block
+        - throttle
+        type: string
+      custom_period_minutes:
+        type: integer
+      limit_value:
+        type: integer
+      reset_period:
+        enum:
+        - day
+        - week
+        - month
+        - year
+        - custom
+        - rolling
+        - never
+        type: string
+    type: object
 info:
   contact: {}
 paths:
+  /v1/events:
+    post:
+      consumes:
+      - application/json
+      description: Publishes a batch of events to the system
+      parameters:
+      - description: Tenant slug identifier
+        in: header
+        name: X-Tenant
+        required: true
+        type: string
+      - description: Event batch to publish
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/events.publishEventRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Events published successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_PublishEventsResult'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Publish events
+      tags:
+      - events
+  /v1/features:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of features for the tenant
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Sort field
+        in: query
+        name: sort
+        type: string
+      - description: Sort order (asc/desc)
+        in: query
+        name: order
+        type: string
+      - description: Filter by feature type (static/metered)
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Features retrieved successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-array_models_Feature'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: List features
+      tags:
+      - features
+    post:
+      consumes:
+      - application/json
+      description: Create a new feature for the tenant
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Feature creation data
+        in: body
+        name: feature
+        required: true
+        schema:
+          $ref: '#/definitions/features.createFeatureRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Feature created successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_Feature'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Create a new feature
+      tags:
+      - features
+  /v1/features/{idOrSlug}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a feature by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Feature ID or Slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Feature deleted successfully
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Feature not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Delete a feature
+      tags:
+      - features
+    get:
+      consumes:
+      - application/json
+      description: Get feature details by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Feature ID or Slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Feature retrieved successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_Feature'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Feature not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Get feature details
+      tags:
+      - features
+    put:
+      consumes:
+      - application/json
+      description: Update a feature by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Feature ID or Slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      - description: Feature update data
+        in: body
+        name: feature
+        required: true
+        schema:
+          $ref: '#/definitions/features.updateFeatureRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Feature updated successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_Feature'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Feature not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Update a feature
+      tags:
+      - features
+  /v1/meters:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of all meters for the tenant
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meters retrieved successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-pagination_PaginationView-models_Meter'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: List all meters
+      tags:
+      - meters
+    post:
+      consumes:
+      - application/json
+      description: Create a new meter for the tenant
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Meter creation data
+        in: body
+        name: meter
+        required: true
+        schema:
+          $ref: '#/definitions/meters.createMeterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Meter created successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_Meter'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Create a new meter
+      tags:
+      - meters
+  /v1/meters/{idOrSlug}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a meter by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Meter ID or slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Meter deleted successfully
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Meter not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Delete a meter
+      tags:
+      - meters
+    get:
+      consumes:
+      - application/json
+      description: Get details of a specific meter by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Meter ID or slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meter retrieved successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_Meter'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Meter not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Get meter details
+      tags:
+      - meters
+    put:
+      consumes:
+      - application/json
+      description: Update a meter's details by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Meter ID or slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      - description: Meter update data
+        in: body
+        name: meter
+        required: true
+        schema:
+          $ref: '#/definitions/meters.updateMeterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meter updated successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_Meter'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Meter not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Update a meter
+      tags:
+      - meters
+  /v1/meters/query:
+    post:
+      consumes:
+      - application/json
+      description: Query meter data with filters and grouping options
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Query parameters
+        in: body
+        name: query
+        required: true
+        schema:
+          $ref: '#/definitions/meters.queryMeterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meter queried successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_QueryMeterResult'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Meter not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Query meter data
+      tags:
+      - meters
   /v1/plans:
     get:
       consumes:
@@ -401,4 +1538,636 @@ paths:
       summary: Archive or unarchive a plan
       tags:
       - plans
+  /v1/plans/{planID}/features:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all features associated with a plan
+      parameters:
+      - description: Tenant slug
+        in: header
+        name: X-Tenant
+        required: true
+        type: string
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: planID
+        required: true
+        type: string
+      - description: Filter by feature type
+        in: query
+        name: feature_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of plan features
+          schema:
+            $ref: '#/definitions/models.HttpResponse-array_models_PlanFeature'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: List plan features
+      tags:
+      - Plan Features
+    post:
+      consumes:
+      - application/json
+      description: Adds a new feature to a plan
+      parameters:
+      - description: Tenant slug
+        in: header
+        name: X-Tenant
+        required: true
+        type: string
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: planID
+        required: true
+        type: string
+      - description: Plan feature details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/planfeatures.createPlanFeatureRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Plan feature created successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_PlanFeature'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "409":
+          description: Plan feature already exists
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Create plan feature
+      tags:
+      - Plan Features
+  /v1/plans/{planID}/features/{featureID}:
+    delete:
+      consumes:
+      - application/json
+      description: Removes a feature from a plan
+      parameters:
+      - description: Tenant slug
+        in: header
+        name: X-Tenant
+        required: true
+        type: string
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: planID
+        required: true
+        type: string
+      - description: Feature ID
+        format: uuid
+        in: path
+        name: featureID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Plan feature deleted successfully
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Plan feature not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Delete plan feature
+      tags:
+      - Plan Features
+    put:
+      consumes:
+      - application/json
+      description: Updates configuration of a feature associated with a plan
+      parameters:
+      - description: Tenant slug
+        in: header
+        name: X-Tenant
+        required: true
+        type: string
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: planID
+        required: true
+        type: string
+      - description: Feature ID
+        format: uuid
+        in: path
+        name: featureID
+        required: true
+        type: string
+      - description: Updated plan feature details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/planfeatures.updatePlanFeatureRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Plan feature updated successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_PlanFeature'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Plan feature not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      tags:
+      - Plan Features
+  /v1/plans/{planID}/features/{featureID}/quotas:
+    delete:
+      consumes:
+      - application/json
+      description: Removes the quota configuration from a plan feature
+      parameters:
+      - description: Tenant slug
+        in: header
+        name: X-Tenant
+        required: true
+        type: string
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: planID
+        required: true
+        type: string
+      - description: Feature ID
+        format: uuid
+        in: path
+        name: featureID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Quota deleted successfully
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Quota not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Delete plan feature quota
+      tags:
+      - Plan Feature Quotas
+    get:
+      consumes:
+      - application/json
+      description: Retrieves quota configuration for a specific plan feature
+      parameters:
+      - description: Tenant slug
+        in: header
+        name: X-Tenant
+        required: true
+        type: string
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: planID
+        required: true
+        type: string
+      - description: Feature ID
+        format: uuid
+        in: path
+        name: featureID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Quota details retrieved successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_PlanFeatureQuota'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Quota not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Get plan feature quota details
+      tags:
+      - Plan Feature Quotas
+    post:
+      consumes:
+      - application/json
+      description: Adds a quota configuration to a plan feature
+      parameters:
+      - description: Tenant slug
+        in: header
+        name: X-Tenant
+        required: true
+        type: string
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: planID
+        required: true
+        type: string
+      - description: Feature ID
+        format: uuid
+        in: path
+        name: featureID
+        required: true
+        type: string
+      - description: Quota configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/quotas.createQuotaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Quota created successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_PlanFeatureQuota'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "409":
+          description: Quota already exists
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Create plan feature quota
+      tags:
+      - Plan Feature Quotas
+    put:
+      consumes:
+      - application/json
+      description: Updates the quota configuration for a plan feature
+      parameters:
+      - description: Tenant slug
+        in: header
+        name: X-Tenant
+        required: true
+        type: string
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: planID
+        required: true
+        type: string
+      - description: Feature ID
+        format: uuid
+        in: path
+        name: featureID
+        required: true
+        type: string
+      - description: Updated quota configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/quotas.updatePlanFeatureQuotaRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Quota updated successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_PlanFeatureQuota'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Quota not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Update plan feature quota
+      tags:
+      - Plan Feature Quotas
+  /v1/plans/assignments:
+    delete:
+      consumes:
+      - application/json
+      description: Terminate a plan assignment for an organization or user
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Assignment termination information
+        in: body
+        name: assignment
+        required: true
+        schema:
+          $ref: '#/definitions/assignments.terminatePlanRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Plan assignment not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Delete a plan assignment
+      tags:
+      - plan-assignments
+    get:
+      consumes:
+      - application/json
+      description: Get a list of plan assignments with optional filtering
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: 'Valid from date (format: YYYY-MM-DDThh:mm:ssZ)'
+        in: query
+        name: validFrom
+        type: string
+      - description: 'Valid until date (format: YYYY-MM-DDThh:mm:ssZ)'
+        in: query
+        name: validUntil
+        type: string
+      - description: Plan ID or slug
+        in: query
+        name: planIdOrSlug
+        type: string
+      - description: Organization ID
+        in: query
+        name: orgId
+        type: string
+      - description: User ID
+        in: query
+        name: userId
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Assignments retrieved successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-pagination_PaginationView-models_PlanAssignment'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: List plan assignments
+      tags:
+      - plan-assignments
+    post:
+      consumes:
+      - application/json
+      description: Assign a plan to either an organization or a user
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Assignment information
+        in: body
+        name: assignment
+        required: true
+        schema:
+          $ref: '#/definitions/assignments.createAssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Plan assignment created successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_PlanAssignment'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Plan not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Create a new plan assignment
+      tags:
+      - plan-assignments
+    put:
+      consumes:
+      - application/json
+      description: Update the validity period for a plan assignment
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Assignment update information
+        in: body
+        name: assignment
+        required: true
+        schema:
+          $ref: '#/definitions/assignments.updateAssignedPlanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Assignment updated successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_PlanAssignment'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Plan assignment not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Update a plan assignment
+      tags:
+      - plan-assignments
+  /v1/plans/assignments/history:
+    get:
+      consumes:
+      - application/json
+      description: Get historical records of plan assignments with optional filtering
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: 'Valid from before date (format: YYYY-MM-DDThh:mm:ssZ)'
+        in: query
+        name: validFromBefore
+        type: string
+      - description: 'Valid from after date (format: YYYY-MM-DDThh:mm:ssZ)'
+        in: query
+        name: validFromAfter
+        type: string
+      - description: 'Valid until before date (format: YYYY-MM-DDThh:mm:ssZ)'
+        in: query
+        name: validUntilBefore
+        type: string
+      - description: 'Valid until after date (format: YYYY-MM-DDThh:mm:ssZ)'
+        in: query
+        name: validUntilAfter
+        type: string
+      - description: Action type (Create, Update, Delete)
+        in: query
+        name: action
+        type: string
+      - description: Plan ID or slug
+        in: query
+        name: planIdOrSlug
+        type: string
+      - description: Organization ID
+        in: query
+        name: orgId
+        type: string
+      - description: User ID
+        in: query
+        name: userId
+        type: string
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Assignment history retrieved successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-pagination_PaginationView-models_PlanAssignmentHistory'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: List plan assignment history
+      tags:
+      - plan-assignments
 swagger: "2.0"

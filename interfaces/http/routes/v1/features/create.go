@@ -19,6 +19,17 @@ type createFeatureRequest struct {
 	CreatedBy   string         `json:"created_by" validate:"required"`
 }
 
+// @Summary Create a new feature
+// @Description Create a new feature for the tenant
+// @Tags features
+// @Accept json
+// @Produce json
+// @Param X-Tenant-Slug header string true "Tenant Slug"
+// @Param feature body createFeatureRequest true "Feature creation data"
+// @Success 201 {object} models.HttpResponse[models.Feature] "Feature created successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/features [post]
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	tenant_slug := ctx.Get(constants.TenantHeader)
 

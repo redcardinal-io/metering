@@ -11,6 +11,7 @@ import (
 )
 
 // TenantPlanFeatureMiddleware creates a middleware that checks if the plan and feature belong to the tenant
+// before allowing access to the requested endpoint
 func (h *httpHandler) TenantPlanFeatureMiddleware() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		// Get tenant slug from context
