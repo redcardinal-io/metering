@@ -2,11 +2,9 @@ package services
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/application/repositories"
-	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 )
@@ -206,14 +204,6 @@ func (s *PlanManagementService) UpdatePlanFeatureQuota(ctx context.Context, inpu
 	}
 
 	input.PlanFeatureID = planFeatureID.String()
-	existing, err := s.planFeatureQuotaRepo.GetPlanFeatureQuota(ctx, planFeatureID)
-	if err != nil {
-		return nil, err
-	}
-	if existing == nil {
-		return nil, domainerrors.New(errors.New("plan feature quota not found"), domainerrors.ENOTFOUND, "The specified plan feature quota does not exist")
-	}
-
 	// Update the quota
 	return s.planFeatureQuotaRepo.UpdatePlanFeatureQuota(ctx, input)
 }

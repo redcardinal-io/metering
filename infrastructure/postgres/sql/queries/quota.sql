@@ -16,11 +16,10 @@ where plan_feature_id = $1;
 -- name: UpdatePlanFeatureQuota :one
 update plan_feature_quota
 set
-    limit_value = $2,
-    reset_period = $3,
-    custom_period_minutes = $4,
-    action_at_limit = $5,
-    updated_at = now()
+    limit_value = coalesce(sqlc.narg('limit_value'), limit_value),
+    reset_period = coalesce(sqlc.narg('reset_period'), reset_period),
+    custom_period_minutes = coalesce(sqlc.narg('custom_period_minutes'), custom_period_minutes),
+    action_at_limit = coalesce(sqlc.narg('action_at_limit'), action_at_limit)
 where plan_feature_id = $1
 returning *;
 

@@ -104,21 +104,20 @@ func (q *Queries) GetPlanFeatureQuotaByPlanFeatureID(ctx context.Context, planFe
 const updatePlanFeatureQuota = `-- name: UpdatePlanFeatureQuota :one
 update plan_feature_quota
 set
-    limit_value = $2,
-    reset_period = $3,
-    custom_period_minutes = $4,
-    action_at_limit = $5,
-    updated_at = now()
+    limit_value = coalesce($2, limit_value),
+    reset_period = coalesce($3, reset_period),
+    custom_period_minutes = coalesce($4, custom_period_minutes),
+    action_at_limit = coalesce($5, action_at_limit)
 where plan_feature_id = $1
 returning id, plan_feature_id, limit_value, reset_period, custom_period_minutes, action_at_limit, created_at, updated_at
 `
 
 type UpdatePlanFeatureQuotaParams struct {
 	PlanFeatureID       pgtype.UUID
-	LimitValue          int64
-	ResetPeriod         MeteredResetPeriodEnum
+	LimitValue          pgtype.Int8
+	ResetPeriod         NullMeteredResetPeriodEnum
 	CustomPeriodMinutes pgtype.Int8
-	ActionAtLimit       MeteredActionAtLimitEnum
+	ActionAtLimit       NullMeteredActionAtLimitEnum
 }
 
 func (q *Queries) UpdatePlanFeatureQuota(ctx context.Context, arg UpdatePlanFeatureQuotaParams) (PlanFeatureQuotum, error) {

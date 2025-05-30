@@ -2,7 +2,6 @@ package quotas
 
 import (
 	"context"
-	"errors"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -13,16 +12,6 @@ import (
 )
 
 func (r *PlanFeatureQuotaRepository) UpdatePlanFeatureQuota(ctx context.Context, arg models.UpdatePlanFeatureQuotaInput) (*models.PlanFeatureQuota, error) {
-	// First get the existing quota to ensure it exists
-	existingQuota, err := r.GetPlanFeatureQuota(ctx, uuid.MustParse(arg.PlanFeatureID))
-	if err != nil {
-		return nil, err
-	}
-	if existingQuota == nil {
-		r.logger.Error("plan feature quota not found", zap.String("planFeatureID", arg.PlanFeatureID))
-		return nil, errors.New("plan feature quota not found")
-	}
-
 	// Parse the plan feature ID
 	planFeatureIDStr := arg.PlanFeatureID
 	planFeatureID := uuid.MustParse(planFeatureIDStr)
@@ -33,28 +22,23 @@ func (r *PlanFeatureQuotaRepository) UpdatePlanFeatureQuota(ctx context.Context,
 	}
 
 	// Only update the fields that are provided
-	if arg.LimitValue != nil {
-		params.LimitValue = *arg.LimitValue
-	} else {
-		params.LimitValue = existingQuota.LimitValue
+	if arg.LimitValue != 0 {
+		params.LimitValue = pgtype.Int8{Int64: arg.LimitValue, Valid: true}
 	}
-
-	if arg.ResetPeriod != nil {
-		params.ResetPeriod = gen.MeteredResetPeriodEnum(*arg.ResetPeriod)
-	} else {
-		params.ResetPeriod = gen.MeteredResetPeriodEnum(existingQuota.ResetPeriod)
+	if arg.ResetPeriod != "" {
+		params.ResetPeriod = gen.NullMeteredResetPeriodEnum{
+			Valid:                  true,
+			MeteredResetPeriodEnum: gen.MeteredResetPeriodEnum(arg.ResetPeriod),
+		}
 	}
-
-	if arg.CustomPeriodMinutes != nil {
-		params.CustomPeriodMinutes = pgtype.Int8{Int64: *arg.CustomPeriodMinutes, Valid: true}
-	} else if existingQuota.CustomPeriodMinutes != nil {
-		params.CustomPeriodMinutes = pgtype.Int8{Int64: *existingQuota.CustomPeriodMinutes, Valid: true}
+	if arg.CustomPeriodMinutes != 0 {
+		params.CustomPeriodMinutes = pgtype.Int8{Int64: arg.CustomPeriodMinutes, Valid: true}
 	}
-
-	if arg.ActionAtLimit != nil {
-		params.ActionAtLimit = gen.MeteredActionAtLimitEnum(*arg.ActionAtLimit)
-	} else {
-		params.ActionAtLimit = gen.MeteredActionAtLimitEnum(existingQuota.ActionAtLimit)
+	if arg.ActionAtLimit != "" {
+		params.ActionAtLimit = gen.NullMeteredActionAtLimitEnum{
+			Valid:                    true,
+			MeteredActionAtLimitEnum: gen.MeteredActionAtLimitEnum(arg.ActionAtLimit),
+		}
 	}
 
 	// Perform the update

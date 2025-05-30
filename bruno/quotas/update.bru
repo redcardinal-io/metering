@@ -1,0 +1,21 @@
+meta {
+  name: update
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{base_url}}/v1/plans/b818ee8a-4513-4ef9-b3b4-74cd7b6ed56b/features/b36aa53b-2c0d-496c-8dc4-13e396009439/quotas
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "action_at_limit":"throttle"
+  }
+}

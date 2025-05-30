@@ -15,7 +15,6 @@ type createQuotaRequest struct {
 	ResetPeriod         string `json:"reset_period" validate:"required,oneof=day week month year custom rolling never"`
 	CustomPeriodMinutes *int64 `json:"custom_period_minutes,omitempty" validate:"required_if=ResetPeriod custom,omitempty,gt=0"`
 	ActionAtLimit       string `json:"action_at_limit" validate:"required,oneof=none block throttle"`
-	CreatedBy           string `json:"created_by" validate:"required"`
 }
 
 func (h *httpHandler) create(ctx *fiber.Ctx) error {
@@ -65,7 +64,6 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 		ResetPeriod:         models.MeteredResetPeriod(req.ResetPeriod),
 		CustomPeriodMinutes: req.CustomPeriodMinutes,
 		ActionAtLimit:       models.MeteredActionAtLimit(req.ActionAtLimit),
-		CreatedBy:           req.CreatedBy,
 	}, planID, featureID)
 	if err != nil {
 		h.logger.Error("failed to create plan feature quota",
@@ -77,6 +75,5 @@ func (h *httpHandler) create(ctx *fiber.Ctx) error {
 	}
 
 	h.logger.Info("created plan feature quota")
-
 	return ctx.Status(fiber.StatusCreated).JSON(models.NewHttpResponse(quota, "plan feature quota created successfully", fiber.StatusCreated))
 }

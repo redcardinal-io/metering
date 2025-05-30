@@ -11,11 +11,10 @@ import (
 )
 
 type updatePlanFeatureQuotaRequest struct {
-	LimitValue          *int64 `json:"limit_value,omitempty" validate:"omitempty,gt=0"`
+	LimitValue          int64  `json:"limit_value,omitempty" validate:"omitempty,gt=0"`
 	ResetPeriod         string `json:"reset_period,omitempty" validate:"omitempty,oneof=day week month year custom rolling never"`
-	CustomPeriodMinutes *int64 `json:"custom_period_minutes,omitempty" validate:"omitempty,gt=0"`
+	CustomPeriodMinutes int64  `json:"custom_period_minutes,omitempty" validate:"omitempty,gt=0"`
 	ActionAtLimit       string `json:"action_at_limit,omitempty" validate:"omitempty,oneof=none block throttle"`
-	UpdatedBy           string `json:"updated_by" validate:"required"`
 }
 
 func (h *httpHandler) update(ctx *fiber.Ctx) error {
@@ -49,7 +48,7 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.LimitValue == nil && req.ResetPeriod == "" && req.CustomPeriodMinutes == nil && req.ActionAtLimit == "" {
+	if req.LimitValue == 0 && req.ResetPeriod == "" && req.CustomPeriodMinutes == 0 && req.ActionAtLimit == "" {
 		errResp := domainerrors.NewErrorResponseWithOpts(
 			nil,
 			domainerrors.EINVALID,
@@ -59,7 +58,7 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.ResetPeriod == "custom" && req.CustomPeriodMinutes == nil {
+	if req.ResetPeriod == "custom" && req.CustomPeriodMinutes == 0 {
 		errResp := domainerrors.NewErrorResponseWithOpts(
 			nil,
 			domainerrors.EINVALID,
@@ -69,8 +68,8 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
-	if req.ResetPeriod != "custom" && req.CustomPeriodMinutes != nil {
-		req.CustomPeriodMinutes = nil // Clear custom period if reset period is not custom
+	if req.ResetPeriod != "custom" && req.CustomPeriodMinutes != 0 {
+		req.CustomPeriodMinutes = 0 // Clear custom period if reset period is not custom
 	}
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
@@ -79,10 +78,9 @@ func (h *httpHandler) update(ctx *fiber.Ctx) error {
 	actionAtLimit := models.MeteredActionAtLimit(req.ActionAtLimit)
 	quota, err := h.planSvc.UpdatePlanFeatureQuota(c, models.UpdatePlanFeatureQuotaInput{
 		LimitValue:          req.LimitValue,
-		ResetPeriod:         &resetPeriod,
+		ResetPeriod:         resetPeriod,
 		CustomPeriodMinutes: req.CustomPeriodMinutes,
-		ActionAtLimit:       &actionAtLimit,
-		UpdatedBy:           req.UpdatedBy,
+		ActionAtLimit:       actionAtLimit,
 	}, planID, featureID)
 	if err != nil {
 		h.logger.Error("failed to update plan feature quota",
