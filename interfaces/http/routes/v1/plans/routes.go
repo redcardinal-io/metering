@@ -36,7 +36,7 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	plan := plans.Group("/:idOrSlug")
 	plan.Get("/", h.details)
 	plan.Put("/", h.update)
-	plan.Delete("/", h.delete_h)
+	plan.Delete("/", h.delete)
 	plan.Put("/archive", h.archive)
 
 	// Plan Features routes

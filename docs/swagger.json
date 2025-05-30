@@ -1,0 +1,546 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/v1/plans": {
+            "get": {
+                "description": "Get a paginated list of all plans for the tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plans"
+                ],
+                "summary": "List all plans",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Items per page",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plans retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-pagination_PaginationView-models_Plan"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new plan for the tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plans"
+                ],
+                "summary": "Create a new plan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Plan information",
+                        "name": "plan",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/plans.createPlanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Plan created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_Plan"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Plan already exists",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/plans/{idOrSlug}": {
+            "get": {
+                "description": "Get detailed information about a plan by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plans"
+                ],
+                "summary": "Get plan details",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Plan ID or slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plan retrieved successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_Plan"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Plan not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update a plan's details by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plans"
+                ],
+                "summary": "Update a plan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Plan ID or slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated plan information",
+                        "name": "plan",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/plans.updatePlanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Plan updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/models.HttpResponse-models_Plan"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Plan not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "Delete a plan by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plans"
+                ],
+                "summary": "Delete a plan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Plan ID or slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Plan deleted successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/plans/{idOrSlug}/archive": {
+            "put": {
+                "description": "Archive or unarchive a plan by ID or slug",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "plans"
+                ],
+                "summary": "Archive or unarchive a plan",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Slug",
+                        "name": "X-Tenant-Slug",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Plan ID or slug",
+                        "name": "idOrSlug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Archive request information",
+                        "name": "archiveRequest",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/plans.archivePlanRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Plan archived/unarchived successfully"
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Plan not found",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/errors.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "errors.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "string"
+                },
+                "details": {
+                    "type": "object",
+                    "additionalProperties": {}
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.HttpResponse-models_Plan": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/models.Plan"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.HttpResponse-pagination_PaginationView-models_Plan": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/pagination.PaginationView-models_Plan"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.Plan": {
+            "type": "object",
+            "properties": {
+                "archived_at": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "created_by": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "slug": {
+                    "type": "string"
+                },
+                "tenant_slug": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/models.PlanTypeEnum"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "updated_by": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.PlanTypeEnum": {
+            "type": "string",
+            "enum": [
+                "standard",
+                "custom"
+            ],
+            "x-enum-varnames": [
+                "Standard",
+                "Custom"
+            ]
+        },
+        "pagination.PaginationView-models_Plan": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer"
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Plan"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "plans.archivePlanRequest": {
+            "type": "object",
+            "required": [
+                "updated_by"
+            ],
+            "properties": {
+                "archive": {
+                    "description": "Whether to archive (true) or unarchive (false) the plan\nexample: true",
+                    "type": "boolean"
+                },
+                "updated_by": {
+                    "description": "User who is performing the archive/unarchive action\nrequired: true\nmin length: 3\nmax length: 255\nexample: admin@example.com",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        },
+        "plans.createPlanRequest": {
+            "type": "object",
+            "required": [
+                "created_by",
+                "name",
+                "slug",
+                "type"
+            ],
+            "properties": {
+                "created_by": {
+                    "description": "User who created the plan\nrequired: true\nexample: admin@example.com",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "Optional description of the plan\nexample: This is our enterprise level plan with premium features",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the plan\nrequired: true\nexample: Enterprise Plan",
+                    "type": "string"
+                },
+                "slug": {
+                    "description": "Slug identifier for the plan\nrequired: true\nexample: enterprise-plan",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "Type of plan (standard or custom)\nrequired: true\nenum: standard,custom\nexample: standard",
+                    "type": "string",
+                    "enum": [
+                        "standard",
+                        "custom"
+                    ]
+                }
+            }
+        },
+        "plans.updatePlanRequest": {
+            "type": "object",
+            "required": [
+                "updated_by"
+            ],
+            "properties": {
+                "description": {
+                    "description": "Optional updated description for the plan\nmin length: 10\nmax length: 255\nexample: This is our updated enterprise level plan with additional premium features",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 10
+                },
+                "name": {
+                    "description": "Optional updated name for the plan\nmin length: 3\nmax length: 255\nexample: Updated Enterprise Plan",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                },
+                "updated_by": {
+                    "description": "User who is updating the plan\nrequired: true\nmin length: 3\nmax length: 255\nexample: admin@example.com",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 3
+                }
+            }
+        }
+    }
+}

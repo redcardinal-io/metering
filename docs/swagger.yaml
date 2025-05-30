@@ -1,0 +1,404 @@
+definitions:
+  errors.ErrorResponse:
+    properties:
+      code:
+        type: string
+      details:
+        additionalProperties: {}
+        type: object
+      message:
+        type: string
+    type: object
+  models.HttpResponse-models_Plan:
+    properties:
+      data:
+        $ref: '#/definitions/models.Plan'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.HttpResponse-pagination_PaginationView-models_Plan:
+    properties:
+      data:
+        $ref: '#/definitions/pagination.PaginationView-models_Plan'
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+  models.Plan:
+    properties:
+      archived_at:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      slug:
+        type: string
+      tenant_slug:
+        type: string
+      type:
+        $ref: '#/definitions/models.PlanTypeEnum'
+      updated_at:
+        type: string
+      updated_by:
+        type: string
+    type: object
+  models.PlanTypeEnum:
+    enum:
+    - standard
+    - custom
+    type: string
+    x-enum-varnames:
+    - Standard
+    - Custom
+  pagination.PaginationView-models_Plan:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      results:
+        items:
+          $ref: '#/definitions/models.Plan'
+        type: array
+      total:
+        type: integer
+    type: object
+  plans.archivePlanRequest:
+    properties:
+      archive:
+        description: |-
+          Whether to archive (true) or unarchive (false) the plan
+          example: true
+        type: boolean
+      updated_by:
+        description: |-
+          User who is performing the archive/unarchive action
+          required: true
+          min length: 3
+          max length: 255
+          example: admin@example.com
+        maxLength: 255
+        minLength: 3
+        type: string
+    required:
+    - updated_by
+    type: object
+  plans.createPlanRequest:
+    properties:
+      created_by:
+        description: |-
+          User who created the plan
+          required: true
+          example: admin@example.com
+        type: string
+      description:
+        description: |-
+          Optional description of the plan
+          example: This is our enterprise level plan with premium features
+        type: string
+      name:
+        description: |-
+          Name of the plan
+          required: true
+          example: Enterprise Plan
+        type: string
+      slug:
+        description: |-
+          Slug identifier for the plan
+          required: true
+          example: enterprise-plan
+        type: string
+      type:
+        description: |-
+          Type of plan (standard or custom)
+          required: true
+          enum: standard,custom
+          example: standard
+        enum:
+        - standard
+        - custom
+        type: string
+    required:
+    - created_by
+    - name
+    - slug
+    - type
+    type: object
+  plans.updatePlanRequest:
+    properties:
+      description:
+        description: |-
+          Optional updated description for the plan
+          min length: 10
+          max length: 255
+          example: This is our updated enterprise level plan with additional premium features
+        maxLength: 255
+        minLength: 10
+        type: string
+      name:
+        description: |-
+          Optional updated name for the plan
+          min length: 3
+          max length: 255
+          example: Updated Enterprise Plan
+        maxLength: 255
+        minLength: 3
+        type: string
+      updated_by:
+        description: |-
+          User who is updating the plan
+          required: true
+          min length: 3
+          max length: 255
+          example: admin@example.com
+        maxLength: 255
+        minLength: 3
+        type: string
+    required:
+    - updated_by
+    type: object
+info:
+  contact: {}
+paths:
+  /v1/plans:
+    get:
+      consumes:
+      - application/json
+      description: Get a paginated list of all plans for the tenant
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Plans retrieved successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-pagination_PaginationView-models_Plan'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: List all plans
+      tags:
+      - plans
+    post:
+      consumes:
+      - application/json
+      description: Create a new plan for the tenant
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Plan information
+        in: body
+        name: plan
+        required: true
+        schema:
+          $ref: '#/definitions/plans.createPlanRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Plan created successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_Plan'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "409":
+          description: Plan already exists
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Create a new plan
+      tags:
+      - plans
+  /v1/plans/{idOrSlug}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a plan by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Plan ID or slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Plan deleted successfully
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Delete a plan
+      tags:
+      - plans
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a plan by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Plan ID or slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Plan retrieved successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_Plan'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Plan not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Get plan details
+      tags:
+      - plans
+    put:
+      consumes:
+      - application/json
+      description: Update a plan's details by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Plan ID or slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      - description: Updated plan information
+        in: body
+        name: plan
+        required: true
+        schema:
+          $ref: '#/definitions/plans.updatePlanRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Plan updated successfully
+          schema:
+            $ref: '#/definitions/models.HttpResponse-models_Plan'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Plan not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Update a plan
+      tags:
+      - plans
+  /v1/plans/{idOrSlug}/archive:
+    put:
+      consumes:
+      - application/json
+      description: Archive or unarchive a plan by ID or slug
+      parameters:
+      - description: Tenant Slug
+        in: header
+        name: X-Tenant-Slug
+        required: true
+        type: string
+      - description: Plan ID or slug
+        in: path
+        name: idOrSlug
+        required: true
+        type: string
+      - description: Archive request information
+        in: body
+        name: archiveRequest
+        required: true
+        schema:
+          $ref: '#/definitions/plans.archivePlanRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Plan archived/unarchived successfully
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "404":
+          description: Plan not found
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      summary: Archive or unarchive a plan
+      tags:
+      - plans
+swagger: "2.0"

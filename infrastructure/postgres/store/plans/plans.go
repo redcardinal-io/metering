@@ -29,7 +29,7 @@ func toPlanModel(m gen.Plan) *models.Plan {
 		Slug:        m.Slug,
 		Type:        models.PlanTypeEnum(m.Type),
 		Description: m.Description.String,
-		ArchivedAt:  m.ArchivedAt,
+		ArchivedAt:  m.ArchivedAt.Time,
 		TenantSlug:  m.TenantSlug,
 		Base: models.Base{
 			ID:        uuid.UUID(m.ID.Bytes),

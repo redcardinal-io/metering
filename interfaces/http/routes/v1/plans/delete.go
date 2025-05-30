@@ -9,7 +9,18 @@ import (
 	"go.uber.org/zap"
 )
 
-func (h *httpHandler) delete_h(ctx *fiber.Ctx) error {
+// @Summary Delete a plan
+// @Description Delete a plan by ID or slug
+// @Tags plans
+// @Accept json
+// @Produce json
+// @Param X-Tenant-Slug header string true "Tenant Slug"
+// @Param idOrSlug path string true "Plan ID or slug"
+// @Success 204 "Plan deleted successfully"
+// @Failure 400 {object} domainerrors.ErrorResponse "Invalid request"
+// @Failure 500 {object} domainerrors.ErrorResponse "Internal server error"
+// @Router /v1/plans/{idOrSlug} [delete]
+func (h *httpHandler) delete(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 	idOrSlug := ctx.Params("idOrSlug")
 
