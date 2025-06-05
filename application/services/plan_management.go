@@ -2,9 +2,12 @@ package services
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/application/repositories"
+	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 )
@@ -44,7 +47,48 @@ func (s *PlanManagementService) TerminateAssignment(ctx context.Context, arg mod
 }
 
 func (s *PlanManagementService) UpdateAssignment(ctx context.Context, arg models.UpdateAssignmentInput) (*models.PlanAssignment, error) {
+	if !arg.ValidFrom.IsZero() || !arg.ValidUntil.IsZero() {
+		if err := s.validateAssignmentTimeRange(ctx, arg); err != nil {
+			return nil, err
+		}
+	}
 	return s.planAssignmentsStore.UpdateAssignment(ctx, arg)
+}
+
+func (s *PlanManagementService) validateAssignmentTimeRange(
+	ctx context.Context,
+	updateInput models.UpdateAssignmentInput,
+) error {
+	assignmentQuery := models.QueryPlanAssignmentInput{
+		PlanID:         updateInput.PlanID,
+		OrganizationID: updateInput.OrganizationID,
+		UserID:         updateInput.UserID,
+	}
+	existingAssignments, err := s.ListAssignments(ctx, assignmentQuery, pagination.Pagination{Limit: 1, Page: 1})
+	if err != nil {
+		return fmt.Errorf("failed to list assignments: %w", err)
+	}
+
+	if len(existingAssignments.Results) == 0 {
+		return domainerrors.New(errors.New("no existing assignment found"), domainerrors.ENOTFOUND, "no existing assignment found for the given criteria")
+	}
+
+	existingAssignment := existingAssignments.Results[0]
+	existingValidFrom := existingAssignment.ValidFrom
+	existingValidUntil := existingAssignment.ValidUntil
+
+	if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.Before(existingValidFrom) {
+		return domainerrors.New(errors.New("valid_from cannot be before the current valid_from"), domainerrors.EINVALID, "valid_from cannot be before the current valid_from")
+	}
+
+	if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.After(existingValidUntil) {
+		return domainerrors.New(errors.New(fmt.Sprintf("valid_from cannot be after the current valid_until: %s", existingValidUntil)), domainerrors.EINVALID, fmt.Sprintf("valid_from cannot be after the current valid_until: %s", existingValidUntil))
+	}
+
+	if !updateInput.ValidUntil.IsZero() && !existingValidUntil.IsZero() && updateInput.ValidUntil.After(existingValidUntil) {
+		return domainerrors.New(errors.New("valid_until cannot be after the current valid_until"), domainerrors.EINVALID, "valid_until cannot be after the current valid_until")
+	}
+	return nil
 }
 
 func (s *PlanManagementService) ListAssignments(ctx context.Context, arg models.QueryPlanAssignmentInput, pagination pagination.Pagination) (*pagination.PaginationView[models.PlanAssignment], error) {
