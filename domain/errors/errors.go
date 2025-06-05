@@ -119,7 +119,11 @@ func New(err error, code ErrorCode, message string, opts ...ErrorOption) *AppErr
 	}
 
 	// If message is empty, use error string
-	message = fmt.Sprintf("%s: %s", message, err.Error())
+	if message == "" {
+		message = err.Error()
+	} else {
+		message = fmt.Sprintf("%s: %s", message, err.Error())
+	}
 
 	data := make(map[string]any)
 	if appErr != nil && appErr.Data != nil {
