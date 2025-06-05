@@ -11,6 +11,12 @@ import (
 	"go.uber.org/zap"
 )
 
+type queryPlanParams struct {
+	Page  int    `query:"page" validate:"omitempty,min=1"`
+	Limit int    `query:"limit" validate:"omitempty,min=1,max=100"`
+	Type  string `query:"type" validate:"omitempty,oneof=standard custom"`
+}
+
 // @Summary List all plans
 // @Description Get a paginated list of all plans for the tenant
 // @Tags plans
@@ -26,8 +32,26 @@ import (
 func (h *httpHandler) list(ctx *fiber.Ctx) error {
 	tenantSlug := ctx.Get(constants.TenantHeader)
 
+	// Parse and validate query parameters
+	params := new(queryPlanParams)
+	if err := ctx.QueryParser(params); err != nil {
+		h.logger.Error("failed to parse query parameters", zap.Error(err))
+		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "failed to parse query parameters")
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
+	// Validate the parsed parameters
+	if err := h.validator.Struct(params); err != nil {
+		h.logger.Error("invalid query parameters", zap.Error(err))
+		errResp := domainerrors.NewErrorResponseWithOpts(err, domainerrors.EINVALID, "invalid query parameters")
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	// Create pagination input
 	paginationInput := pagination.ExtractPaginationFromContext(ctx)
+
+	// Add type filter if provided
+
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 	var plans *pagination.PaginationView[models.Plan]
 	var err error
