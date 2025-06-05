@@ -244,6 +244,7 @@ const listPlansPaginated = `-- name: ListPlansPaginated :many
 SELECT id, name, slug, description, type, tenant_slug, created_at, updated_at, archived_at, created_by, updated_by FROM plan
 WHERE tenant_slug = $1
 and ($4::plan_type_enum is null or type = $4::plan_type_enum)
+and ($5::boolean is null or archived_at is not null = $5::boolean)
 ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3
@@ -254,6 +255,7 @@ type ListPlansPaginatedParams struct {
 	Limit      int32
 	Offset     int32
 	Type       NullPlanTypeEnum
+	Archived   pgtype.Bool
 }
 
 func (q *Queries) ListPlansPaginated(ctx context.Context, arg ListPlansPaginatedParams) ([]Plan, error) {
@@ -262,6 +264,7 @@ func (q *Queries) ListPlansPaginated(ctx context.Context, arg ListPlansPaginated
 		arg.Limit,
 		arg.Offset,
 		arg.Type,
+		arg.Archived,
 	)
 	if err != nil {
 		return nil, err

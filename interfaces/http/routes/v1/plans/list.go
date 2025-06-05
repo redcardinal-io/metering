@@ -12,9 +12,10 @@ import (
 )
 
 type queryPlanParams struct {
-	Page  int    `query:"page" validate:"omitempty,min=1"`
-	Limit int    `query:"limit" validate:"omitempty,min=1,max=100"`
-	Type  string `query:"type" validate:"omitempty,oneof=standard custom"`
+	Page     int    `query:"page" validate:"omitempty,min=1"`
+	Limit    int    `query:"limit" validate:"omitempty,min=1,max=100"`
+	Type     string `query:"type" validate:"omitempty,oneof=standard custom"`
+	Archived bool   `query:"archived" validate:"omitempty"`
 }
 
 // @Summary List all plans
@@ -49,8 +50,6 @@ func (h *httpHandler) list(ctx *fiber.Ctx) error {
 
 	// Create pagination input
 	paginationInput := pagination.ExtractPaginationFromContext(ctx)
-
-	// Add type filter if provided
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 	var plans *pagination.PaginationView[models.Plan]

@@ -25,6 +25,7 @@ AND tenant_slug = $2;
 SELECT * FROM plan
 WHERE tenant_slug = $1
 and (sqlc.narg('type')::plan_type_enum is null or type = sqlc.narg('type')::plan_type_enum)
+and (sqlc.narg('archived')::boolean is null or archived_at is not null = sqlc.narg('archived')::boolean)
 ORDER BY created_at DESC
 LIMIT $2
 OFFSET $3;
