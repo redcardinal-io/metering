@@ -77,17 +77,29 @@ func (s *PlanManagementService) validateAssignmentTimeRange(
 	existingValidFrom := existingAssignment.ValidFrom
 	existingValidUntil := existingAssignment.ValidUntil
 
-	if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.Before(existingValidFrom) {
-		return domainerrors.New(errors.New("valid_from cannot be before the current valid_from"), domainerrors.EINVALID, "valid_from cannot be before the current valid_from")
-	}
+    if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.Before(existingValidFrom) {
+        return domainerrors.New(
+            fmt.Errorf("valid_from cannot be before the current valid_from: %s", existingValidFrom),
+            domainerrors.EINVALID,
+            fmt.Sprintf("valid_from cannot be before the current valid_from: %s", existingValidFrom),
+        )
+    }
 
-	if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.After(existingValidUntil) {
-		return domainerrors.New(errors.New(fmt.Sprintf("valid_from cannot be after the current valid_until: %s", existingValidUntil)), domainerrors.EINVALID, fmt.Sprintf("valid_from cannot be after the current valid_until: %s", existingValidUntil))
-	}
+    if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.After(existingValidUntil) {
+        return domainerrors.New(
+            fmt.Errorf("valid_from cannot be after the current valid_until: %s", existingValidUntil),
+            domainerrors.EINVALID,
+            fmt.Sprintf("valid_from cannot be after the current valid_until: %s", existingValidUntil),
+        )
+    }
 
-	if !updateInput.ValidUntil.IsZero() && !existingValidUntil.IsZero() && updateInput.ValidUntil.After(existingValidUntil) {
-		return domainerrors.New(errors.New("valid_until cannot be after the current valid_until"), domainerrors.EINVALID, "valid_until cannot be after the current valid_until")
-	}
+    if !updateInput.ValidUntil.IsZero() && !existingValidUntil.IsZero() && updateInput.ValidUntil.After(existingValidUntil) {
+        return domainerrors.New(
+            fmt.Errorf("valid_until cannot be after the current valid_until: %s", existingValidUntil),
+            domainerrors.EINVALID,
+            fmt.Sprintf("valid_until cannot be after the current valid_until: %s", existingValidUntil),
+        )
+    }
 	return nil
 }
 
