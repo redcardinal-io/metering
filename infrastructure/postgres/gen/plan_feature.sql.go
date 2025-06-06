@@ -161,21 +161,24 @@ select
     f.slug as feature_slug,
     f.description as feature_description,
     f.type as feature_type,
-    f.config as feature_config,
-    f.tenant_slug as feature_tenant_slug
+    f.config as feature_config
 from 
     plan_feature pf
 join
     feature f on pf.feature_id = f.id
+join
+    plan p on pf.plan_id = p.id
 where
     pf.plan_id = $1
-    and ($2::feature_enum is null or f.type = $2::feature_enum)
+    and p.tenant_slug = $2
+    and ($3::feature_enum is null or f.type = $3::feature_enum)
 order by
     pf.created_at desc
 `
 
 type ListPlanFeaturesByPlanParams struct {
 	PlanID      pgtype.UUID
+	TenantSlug  string
 	FeatureType NullFeatureEnum
 }
 
@@ -193,11 +196,10 @@ type ListPlanFeaturesByPlanRow struct {
 	FeatureDescription pgtype.Text
 	FeatureType        FeatureEnum
 	FeatureConfig      []byte
-	FeatureTenantSlug  string
 }
 
 func (q *Queries) ListPlanFeaturesByPlan(ctx context.Context, arg ListPlanFeaturesByPlanParams) ([]ListPlanFeaturesByPlanRow, error) {
-	rows, err := q.db.Query(ctx, listPlanFeaturesByPlan, arg.PlanID, arg.FeatureType)
+	rows, err := q.db.Query(ctx, listPlanFeaturesByPlan, arg.PlanID, arg.TenantSlug, arg.FeatureType)
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +221,6 @@ func (q *Queries) ListPlanFeaturesByPlan(ctx context.Context, arg ListPlanFeatur
 			&i.FeatureDescription,
 			&i.FeatureType,
 			&i.FeatureConfig,
-			&i.FeatureTenantSlug,
 		); err != nil {
 			return nil, err
 		}

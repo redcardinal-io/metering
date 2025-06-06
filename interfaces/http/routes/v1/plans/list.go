@@ -52,10 +52,8 @@ func (h *httpHandler) list(ctx *fiber.Ctx) error {
 	paginationInput := pagination.ExtractPaginationFromContext(ctx)
 
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
-	var plans *pagination.PaginationView[models.Plan]
-	var err error
 
-	plans, err = h.planSvc.ListPlans(c, paginationInput)
+	plans, err := h.planSvc.ListPlans(c, paginationInput)
 	if err != nil {
 		h.logger.Error("failed to list plans", zap.Reflect("error", err))
 		errResp := domainerrors.NewErrorResponse(err)

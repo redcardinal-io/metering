@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
+	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/infrastructure/postgres"
 	"github.com/redcardinal-io/metering/infrastructure/postgres/gen"
@@ -21,7 +22,7 @@ func (r *PlanFeatureQuotaRepository) CreatePlanFeatureQuota(ctx context.Context,
 	}
 	if !isMetered {
 		r.logger.Error("quota can only be set for metered features", zap.String("planFeatureID", arg.PlanFeatureID))
-		return nil, errors.New("quota can only be set for metered features")
+		return nil, domainerrors.New(errors.New("quota can only be set for metered features"), domainerrors.EINVALID, "quota can only be set for metered features")
 	}
 
 	planFeatureID := uuid.MustParse(arg.PlanFeatureID)

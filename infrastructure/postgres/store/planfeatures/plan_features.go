@@ -1,6 +1,8 @@
 package planfeatures
 
 import (
+	"encoding/json"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redcardinal-io/metering/application/repositories"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
@@ -17,4 +19,15 @@ func NewPgPlanFeatureStoreRepository(db any, logger *logger.Logger) repositories
 		q:      gen.New(db.(*pgxpool.Pool)),
 		logger: logger,
 	}
+}
+
+func UnMarshalPlanFeatureConfig(configBytes []byte) map[string]any {
+	if configBytes == nil {
+		return nil
+	}
+
+	var config map[string]any
+	// INFO: As configBytes is returned from database, it is expected to be in JSON format. So we can unmarshal it directly.
+	_ = json.Unmarshal(configBytes, &config)
+	return config
 }

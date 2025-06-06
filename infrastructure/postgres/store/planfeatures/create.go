@@ -57,7 +57,7 @@ func (p *PgPlanFeatureStoreRepository) CreatePlanFeature(ctx context.Context, ar
 	planFeature := &models.PlanFeature{
 		PlanID:    planID,
 		FeatureID: featureID,
-		Config:    m.Config,
+		Config:    UnMarshalPlanFeatureConfig(m.Config),
 		Base: models.Base{
 			ID:        id,
 			CreatedAt: m.CreatedAt.Time,

@@ -39,6 +39,17 @@ func NewPlanService(
 
 func (s *PlanManagementService) CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error) {
 	// Assign the plan based on isOrg parameter in the database
+	plan, err := s.planStore.GetPlanByIDorSlug(ctx, arg.PlanID.String())
+	if err != nil {
+		return nil, err
+	}
+	if !plan.ArchivedAt.IsZero() {
+		return nil, domainerrors.New(
+			fmt.Errorf("plan %s is archived on %s and cannot be assigned", arg.PlanID, plan.ArchivedAt.Format("2006-01-02 15:04:05")),
+			domainerrors.EINVALID,
+			fmt.Sprintf("plan %s is archived and cannot be assigned. This plan was archived on %s. Please choose an active plan instead.", arg.PlanID, plan.ArchivedAt.Format("2006-01-02 15:04:05")),
+		)
+	}
 	return s.planAssignmentsStore.CreateAssignment(ctx, arg)
 }
 
@@ -77,29 +88,29 @@ func (s *PlanManagementService) validateAssignmentTimeRange(
 	existingValidFrom := existingAssignment.ValidFrom
 	existingValidUntil := existingAssignment.ValidUntil
 
-    if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.Before(existingValidFrom) {
-        return domainerrors.New(
-            fmt.Errorf("valid_from cannot be before the current valid_from: %s", existingValidFrom),
-            domainerrors.EINVALID,
-            fmt.Sprintf("valid_from cannot be before the current valid_from: %s", existingValidFrom),
-        )
-    }
+	if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.Before(existingValidFrom) {
+		return domainerrors.New(
+			fmt.Errorf("valid_from cannot be before the current valid_from: %s", existingValidFrom),
+			domainerrors.EINVALID,
+			fmt.Sprintf("valid_from cannot be before the current valid_from: %s", existingValidFrom),
+		)
+	}
 
-    if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.After(existingValidUntil) {
-        return domainerrors.New(
-            fmt.Errorf("valid_from cannot be after the current valid_until: %s", existingValidUntil),
-            domainerrors.EINVALID,
-            fmt.Sprintf("valid_from cannot be after the current valid_until: %s", existingValidUntil),
-        )
-    }
+	if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.After(existingValidUntil) {
+		return domainerrors.New(
+			fmt.Errorf("valid_from cannot be after the current valid_until: %s", existingValidUntil),
+			domainerrors.EINVALID,
+			fmt.Sprintf("valid_from cannot be after the current valid_until: %s", existingValidUntil),
+		)
+	}
 
-    if !updateInput.ValidUntil.IsZero() && !existingValidUntil.IsZero() && updateInput.ValidUntil.After(existingValidUntil) {
-        return domainerrors.New(
-            fmt.Errorf("valid_until cannot be after the current valid_until: %s", existingValidUntil),
-            domainerrors.EINVALID,
-            fmt.Sprintf("valid_until cannot be after the current valid_until: %s", existingValidUntil),
-        )
-    }
+	if !updateInput.ValidUntil.IsZero() && !existingValidUntil.IsZero() && updateInput.ValidUntil.After(existingValidUntil) {
+		return domainerrors.New(
+			fmt.Errorf("valid_until cannot be after the current valid_until: %s", existingValidUntil),
+			domainerrors.EINVALID,
+			fmt.Sprintf("valid_until cannot be after the current valid_until: %s", existingValidUntil),
+		)
+	}
 	return nil
 }
 

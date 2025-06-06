@@ -14,6 +14,8 @@ import (
 func (p *PgPlanFeatureStoreRepository) ListPlanFeaturesByPlan(ctx context.Context, planID uuid.UUID, filter models.PlanFeatureListFilter) ([]models.PlanFeature, error) {
 	params := gen.ListPlanFeaturesByPlanParams{
 		PlanID: pgtype.UUID{Bytes: planID, Valid: true},
+		// INFO: TenantSlug is set from context, so we can use it directly
+		TenantSlug: ctx.Value("tenant_slug").(string),
 	}
 	if filter.FeatureType != "" {
 		params.FeatureType = gen.NullFeatureEnum{
@@ -51,7 +53,7 @@ func (p *PgPlanFeatureStoreRepository) ListPlanFeaturesByPlan(ctx context.Contex
 		planFeatures = append(planFeatures, models.PlanFeature{
 			PlanID:      planIDResult,
 			FeatureID:   featureIDResult,
-			Config:      row.Config,
+			Config:      UnMarshalPlanFeatureConfig(row.Config),
 			FeatureName: row.FeatureName,
 			FeatureSlug: row.FeatureSlug,
 			Type:        models.FeatureTypeEnum(row.FeatureType),
