@@ -14,6 +14,7 @@ type PgPlanFeatureStoreRepository struct {
 	logger *logger.Logger
 }
 
+// NewPgPlanFeatureStoreRepository creates a new PostgreSQL-backed plan feature store repository using the provided database connection and logger.
 func NewPgPlanFeatureStoreRepository(db any, logger *logger.Logger) repositories.PlanFeatureStoreRepository {
 	return &PgPlanFeatureStoreRepository{
 		q:      gen.New(db.(*pgxpool.Pool)),
@@ -21,6 +22,8 @@ func NewPgPlanFeatureStoreRepository(db any, logger *logger.Logger) repositories
 	}
 }
 
+// UnMarshalPlanFeatureConfig parses JSON-encoded configuration data into a map.
+// Returns nil if the input is nil or if unmarshaling fails.
 func UnMarshalPlanFeatureConfig(configBytes []byte) map[string]any {
 	if configBytes == nil {
 		return nil
