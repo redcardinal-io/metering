@@ -35,14 +35,16 @@ select
     f.slug as feature_slug,
     f.description as feature_description,
     f.type as feature_type,
-    f.config as feature_config,
-    f.tenant_slug as feature_tenant_slug
+    f.config as feature_config
 from 
     plan_feature pf
 join
     feature f on pf.feature_id = f.id
+join
+    plan p on pf.plan_id = p.id
 where
     pf.plan_id = $1
+    and p.tenant_slug = $2
     and (sqlc.narg('feature_type')::feature_enum is null or f.type = sqlc.narg('feature_type')::feature_enum)
 order by
     pf.created_at desc;

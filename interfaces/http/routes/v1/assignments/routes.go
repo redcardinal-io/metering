@@ -2,15 +2,12 @@ package assignments
 
 import (
 	"context"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/application/services"
-	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/logger"
-	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 )
 
 type httpHandler struct {
@@ -38,6 +35,8 @@ func (h *httpHandler) RegisterRoutes(r fiber.Router) {
 	assignments.Delete("/", h.delete)
 }
 
+// getPlanIDFromIdentifier retrieves the UUID of a plan given its ID or slug identifier.
+// Returns a pointer to the plan's UUID if found, or an error if the plan does not exist.
 func getPlanIDFromIdentifier(ctx context.Context, idOrSlug string, planSvc *services.PlanManagementService) (*uuid.UUID, error) {
 	plan, err := planSvc.GetPlanByIDorSlug(ctx, idOrSlug)
 	if err != nil {
@@ -45,21 +44,4 @@ func getPlanIDFromIdentifier(ctx context.Context, idOrSlug string, planSvc *serv
 	}
 
 	return &plan.ID, nil
-}
-
-func getPlanTimeRange(ctx context.Context, planId *uuid.UUID, orgId string, userId string, planSvc *services.PlanManagementService) (*time.Time, *time.Time, error) {
-	assignmentQueryInput := models.QueryPlanAssignmentInput{
-		PlanID:         planId,
-		OrganizationID: orgId,
-		UserID:         userId,
-	}
-	plan, err := planSvc.ListAssignments(ctx, assignmentQueryInput, pagination.Pagination{Limit: 1, Page: 0})
-	if err != nil {
-		return nil, nil, err
-	}
-
-	validFrom := plan.Results[0].ValidFrom
-	validUntil := plan.Results[0].ValidUntil
-
-	return &validFrom, &validUntil, nil
 }

@@ -56,7 +56,7 @@ func (p *PgPlanFeatureStoreRepository) UpdatePlanFeature(ctx context.Context, pl
 	planFeature := &models.PlanFeature{
 		PlanID:    planIDResult,
 		FeatureID: featureIDResult,
-		Config:    m.Config,
+		Config:    UnMarshalPlanFeatureConfig(m.Config),
 		Base: models.Base{
 			ID:        id,
 			CreatedAt: m.CreatedAt.Time,

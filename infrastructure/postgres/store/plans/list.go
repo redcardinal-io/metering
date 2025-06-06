@@ -3,6 +3,7 @@ package plans
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/constants"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
@@ -18,6 +19,10 @@ func (p *PgPlanStoreRepository) ListPlans(ctx context.Context, page pagination.P
 		Offset:     int32(page.GetOffset()),
 		TenantSlug: ctx.Value(constants.TenantSlugKey).(string),
 		Type:       createPlanTypeEnum(page.Queries["type"]),
+		Archived: pgtype.Bool{
+			Valid: page.Queries["archived"] != "",
+			Bool:  page.Queries["archived"] == "true",
+		},
 	})
 	if err != nil {
 		p.logger.Error("Error listing plans: ", zap.Error(err))

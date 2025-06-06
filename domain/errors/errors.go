@@ -95,7 +95,10 @@ type ErrorOption func(*AppError)
 
 // New constructs an AppError with the specified underlying error, error code, and user-facing message.
 // If the error is nil, it defaults to an internal server error. The status code is determined by the error code or inherited from an existing AppError. Optional configuration can be applied via ErrorOption functions.
-// Returns a pointer to the created AppError.
+// New creates a new AppError with the specified underlying error, error code, and message.
+// If the provided error is already an AppError, its fields are preserved unless explicitly overridden.
+// The resulting AppError includes a combined message and supports additional configuration via options.
+// Returns a pointer to the constructed AppError.
 func New(err error, code ErrorCode, message string, opts ...ErrorOption) *AppError {
 	if err == nil {
 		err = ErrInternalServer
@@ -121,6 +124,8 @@ func New(err error, code ErrorCode, message string, opts ...ErrorOption) *AppErr
 	// If message is empty, use error string
 	if message == "" {
 		message = err.Error()
+	} else {
+		message = fmt.Sprintf("%s: %s", message, err.Error())
 	}
 
 	data := make(map[string]any)

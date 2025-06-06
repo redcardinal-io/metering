@@ -2,6 +2,7 @@ package planfeatures
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -66,7 +67,7 @@ func (h *httpHandler) TenantPlanFeatureMiddleware() fiber.Handler {
 
 			if !belongs {
 				errResp := domainerrors.NewErrorResponseWithOpts(
-					nil,
+					fmt.Errorf("plan %s and feature %s do not belong to tenant %s or are not found", planID, featureID, tenantSlug),
 					domainerrors.EUNAUTHORIZED,
 					"plan feature not found or does not belong to tenant",
 				)

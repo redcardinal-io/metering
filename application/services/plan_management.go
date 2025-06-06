@@ -2,9 +2,12 @@ package services
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/redcardinal-io/metering/application/repositories"
+	domainerrors "github.com/redcardinal-io/metering/domain/errors"
 	"github.com/redcardinal-io/metering/domain/models"
 	"github.com/redcardinal-io/metering/domain/pkg/pagination"
 )
@@ -36,6 +39,17 @@ func NewPlanService(
 
 func (s *PlanManagementService) CreateAssignment(ctx context.Context, arg models.CreateAssignmentInput) (*models.PlanAssignment, error) {
 	// Assign the plan based on isOrg parameter in the database
+	plan, err := s.planStore.GetPlanByIDorSlug(ctx, arg.PlanID.String())
+	if err != nil {
+		return nil, err
+	}
+	if !plan.ArchivedAt.IsZero() {
+		return nil, domainerrors.New(
+			fmt.Errorf("plan %s is archived on %s and cannot be assigned", arg.PlanID, plan.ArchivedAt.Format("2006-01-02 15:04:05")),
+			domainerrors.EINVALID,
+			fmt.Sprintf("plan %s is archived and cannot be assigned. This plan was archived on %s. Please choose an active plan instead.", arg.PlanID, plan.ArchivedAt.Format("2006-01-02 15:04:05")),
+		)
+	}
 	return s.planAssignmentsStore.CreateAssignment(ctx, arg)
 }
 
@@ -44,7 +58,60 @@ func (s *PlanManagementService) TerminateAssignment(ctx context.Context, arg mod
 }
 
 func (s *PlanManagementService) UpdateAssignment(ctx context.Context, arg models.UpdateAssignmentInput) (*models.PlanAssignment, error) {
+	if !arg.ValidFrom.IsZero() || !arg.ValidUntil.IsZero() {
+		if err := s.validateAssignmentTimeRange(ctx, arg); err != nil {
+			return nil, err
+		}
+	}
 	return s.planAssignmentsStore.UpdateAssignment(ctx, arg)
+}
+
+func (s *PlanManagementService) validateAssignmentTimeRange(
+	ctx context.Context,
+	updateInput models.UpdateAssignmentInput,
+) error {
+	assignmentQuery := models.QueryPlanAssignmentInput{
+		PlanID:         updateInput.PlanID,
+		OrganizationID: updateInput.OrganizationID,
+		UserID:         updateInput.UserID,
+	}
+	existingAssignments, err := s.ListAssignments(ctx, assignmentQuery, pagination.Pagination{Limit: 1, Page: 1})
+	if err != nil {
+		return fmt.Errorf("failed to list assignments: %w", err)
+	}
+
+	if len(existingAssignments.Results) == 0 {
+		return domainerrors.New(errors.New("no existing assignment found"), domainerrors.ENOTFOUND, "no existing assignment found for the given criteria")
+	}
+
+	existingAssignment := existingAssignments.Results[0]
+	existingValidFrom := existingAssignment.ValidFrom
+	existingValidUntil := existingAssignment.ValidUntil
+
+	if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.Before(existingValidFrom) {
+		return domainerrors.New(
+			fmt.Errorf("valid_from cannot be before the current valid_from: %s", existingValidFrom),
+			domainerrors.EINVALID,
+			fmt.Sprintf("valid_from cannot be before the current valid_from: %s", existingValidFrom),
+		)
+	}
+
+	if !updateInput.ValidFrom.IsZero() && updateInput.ValidFrom.After(existingValidUntil) {
+		return domainerrors.New(
+			fmt.Errorf("valid_from cannot be after the current valid_until: %s", existingValidUntil),
+			domainerrors.EINVALID,
+			fmt.Sprintf("valid_from cannot be after the current valid_until: %s", existingValidUntil),
+		)
+	}
+
+	if !updateInput.ValidUntil.IsZero() && !existingValidUntil.IsZero() && updateInput.ValidUntil.After(existingValidUntil) {
+		return domainerrors.New(
+			fmt.Errorf("valid_until cannot be after the current valid_until: %s", existingValidUntil),
+			domainerrors.EINVALID,
+			fmt.Sprintf("valid_until cannot be after the current valid_until: %s", existingValidUntil),
+		)
+	}
+	return nil
 }
 
 func (s *PlanManagementService) ListAssignments(ctx context.Context, arg models.QueryPlanAssignmentInput, pagination pagination.Pagination) (*pagination.PaginationView[models.PlanAssignment], error) {
