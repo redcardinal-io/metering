@@ -14,7 +14,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// validateUUID checks if a string is a valid UUID
+// validateUUID returns true if the input string is empty or matches the UUID format.
 func validateUUID(id string) bool {
 	if id == "" {
 		return true // Empty is allowed for optional params
@@ -24,7 +24,7 @@ func validateUUID(id string) bool {
 	return regex.MatchString(id)
 }
 
-// validateTimeFormat checks if a string is in the correct time format
+// validateTimeFormat returns true if the input string is empty or matches the expected time format defined by constants.TimeFormat.
 func validateTimeFormat(t string) bool {
 	if t == "" {
 		return true // Empty is allowed for optional params
