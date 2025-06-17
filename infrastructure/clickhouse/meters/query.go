@@ -40,6 +40,9 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 	// Handle window size grouping
 	groupByWindowSize := q.WindowSize != nil
 	if groupByWindowSize {
+		if q.From == nil || q.To == nil {
+			return "", nil, fmt.Errorf("From/To must be provided when WindowSize is set")
+		}
 		switch *q.WindowSize {
 		case models.WindowSizeMinute:
 			// Truncate 'from' to the start of the minute
@@ -64,13 +67,13 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleStart(windowstart, toIntervalHour(1), '%s') AS windowstart", tz))
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleEnd(windowend, toIntervalHour(1), '%s') AS windowend", tz))
 		case models.WindowSizeDay:
-			from := q.From
-			to := q.To
+			from := *q.From
+			to := *q.To
 			adjustedFrom = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
 			if to.Hour() != 0 || to.Minute() != 0 || to.Second() != 0 || to.Nanosecond() != 0 {
 				adjustedTo = time.Date(to.Year(), to.Month(), to.Day()+1, 0, 0, 0, 0, to.Location())
 			} else {
-				adjustedTo = *to
+				adjustedTo = to
 			}
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleStart(windowstart, toIntervalDay(1), '%s') AS windowstart", tz))
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleEnd(windowend, toIntervalDay(1), '%s') AS windowend", tz))

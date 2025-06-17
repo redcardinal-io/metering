@@ -1,0 +1,31 @@
+meta {
+  name: create_avg
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/v1/meters
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "name": "RC_TENANT API REQUESTS",
+    "slug": "api_avg",
+    "event_type": "api.avg",
+    "value_property":"percentage",
+    "description": "Tracks requests to RC_TENANT apis",
+    "properties": [
+      "subject"
+    ],
+    "aggregation": "avg",
+    "created_by": "rc_tenant_admin_user",
+    "populate": true
+  }
+}

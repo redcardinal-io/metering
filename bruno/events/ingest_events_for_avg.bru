@@ -1,0 +1,57 @@
+meta {
+  name: ingest_events_for_avg
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/v1/events
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "events": [
+      {
+        "type": "api.avg",
+        "source": "web_api",
+        "organization": "org_example",
+        "user": "usr_developer1",
+        "timestamp": "2025-04-15T09:45:30Z",
+        "properties": {
+          "percentage": 99,
+          "subject":"eng"
+        }
+      },
+      {
+        "type": "api.avg",
+        "source": "web_api",
+        "organization": "org_example",
+        "user": "usr_developer1",
+        "timestamp": "2025-04-15T09:45:30Z",
+        "properties": {
+          "percentage": 78,
+          "subject":"math"
+        }
+      }
+      ,
+      {
+        "type": "api.avg",
+        "source": "web_api",
+        "organization": "org_example",
+        "user": "usr_developer1",
+        "timestamp": "2025-04-15T09:45:30Z",
+        "properties": {
+          "percentage": 43,
+          "subject":"math"
+        }
+      }
+    ]
+  }
+}
