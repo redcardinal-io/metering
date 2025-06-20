@@ -45,17 +45,11 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 		}
 		switch *q.WindowSize {
 		case models.WindowSizeMinute:
-			// Truncate 'from' to the start of the minute
 			adjustedFrom = q.From.Truncate(time.Minute)
-			// Extend 'to' to the end of the minute if it's not already at the start
-			truncatedTo := q.To.Truncate(time.Minute)
-			if !truncatedTo.Equal(*q.To) {
-				adjustedTo = truncatedTo.Add(time.Minute)
-			} else {
-				adjustedTo = *q.To
-			}
-			selectColumns = append(selectColumns, fmt.Sprintf("tumbleStart(windowstart, toIntervalMinute(1), '%s') AS windowstart", tz))
-			selectColumns = append(selectColumns, fmt.Sprintf("tumbleEnd(windowend, toIntervalMinute(1), '%s') AS windowend", tz))
+			adjustedTo = q.To.Truncate(time.Minute)
+
+			selectColumns = append(selectColumns, fmt.Sprintf("windowstart"))
+			selectColumns = append(selectColumns, fmt.Sprintf("windowend"))
 		case models.WindowSizeHour:
 			adjustedFrom = q.From.Truncate(time.Hour)
 			truncatedTo := q.To.Truncate(time.Hour)
