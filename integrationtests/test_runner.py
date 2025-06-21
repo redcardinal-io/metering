@@ -130,6 +130,10 @@ class IntegrationTestRunner:
         if plan:
             self.run_test("Plan Assignment Lifecycle", self.plan_tests.test_plan_assignment_lifecycle, plan["plan_id"])
 
+        if plan:
+            self.run_test("Delte Plan", self.plan_tests.test_delete_plan, plan["plan_id"])
+
+
         # Test Summary
         self.print_summary()
 

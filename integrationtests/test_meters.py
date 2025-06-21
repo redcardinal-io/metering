@@ -51,7 +51,6 @@ class MeterTests(BaseAPITest):
         response = self.client.delete(f"/v1/meters/{meter_id}")
         self.assert_response_success(response, 204)
         
-        # Verify feature is deleted
         response = self.client.get(f"/v1/meters/{meter_id}")
         self.assert_response_error(response, 404)
         

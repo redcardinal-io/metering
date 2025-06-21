@@ -65,4 +65,16 @@ class PlanTests(BaseAPITest):
         self.assert_response_success(response, 204)
         self.logger.info("✓ Terminated plan assignment")
 
+    def test_delete_plan(self, plan_id: str):
+        """Test deleting a plan"""
+        self.logger.info(f"Testing: Delete Plan - {plan_id}")
+        
+        response = self.client.delete(f"/v1/plans/{plan_id}")
+        self.assert_response_success(response, 204)
+        
+        response = self.client.get(f"/v1/plans/{plan_id}")
+        self.assert_response_error(response, 404)
+        
+        self.logger.info("✓ Deleted plan successfully")
+
 
