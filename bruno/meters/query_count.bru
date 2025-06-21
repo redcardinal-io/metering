@@ -1,0 +1,28 @@
+meta {
+  name: query_count
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{base_url}}/v1/meters/query
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+      "meter_slug": "api_requests",
+      "window_size": "minute",
+      "from": "2025-04-15T00:06:00Z",
+      "to":"2025-04-20T11:14:00Z",
+      "group_by": ["endpoint", "status_code", "organization"],
+      "filter_group_by": {
+        "user": ["usr_developer1"]
+      }
+    }
+}

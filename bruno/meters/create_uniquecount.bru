@@ -1,7 +1,7 @@
 meta {
-  name: create
+  name: create_uniquecount
   type: http
-  seq: 1
+  seq: 6
 }
 
 post {
@@ -17,15 +17,14 @@ headers {
 body:json {
   {
     "name": "RC_TENANT API REQUESTS",
-    "slug": "api_requests",
-    "event_type": "api.request",
+    "slug": "api_uniquecount",
+    "event_type": "api.uniquecount",
+    "value_property":"user_session_id",
     "description": "Tracks requests to RC_TENANT apis",
     "properties": [
-      "endpoint",
-      "method",
-      "status_code"
+      "userid"
     ],
-    "aggregation": "count",
+    "aggregation": "unique_count",
     "created_by": "rc_tenant_admin_user",
     "populate": true
   }

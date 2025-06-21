@@ -1,0 +1,32 @@
+meta {
+  name: create_sum
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/v1/meters
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "name": "RC_TENANT API REQUESTS",
+    "slug": "api_sum",
+    "event_type": "api.sum",
+    "value_property":"tokens",
+    "description": "Tracks requests to RC_TENANT apis",
+    "properties": [
+      "llm",
+      "persona"
+    ],
+    "aggregation": "sum",
+    "created_by": "rc_tenant_admin_user",
+    "populate": true
+  }
+}

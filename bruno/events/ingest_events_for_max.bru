@@ -1,0 +1,57 @@
+meta {
+  name: ingest_events_for_max
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{base_url}}/v1/events
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+    "events": [
+      {
+        "type": "api.max",
+        "source": "web_api",
+        "organization": "org_example",
+        "user": "usr_developer1",
+        "timestamp": "2025-04-15T09:45:30Z",
+        "properties": {
+          "score": 99,
+          "subject":"eng"
+        }
+      },
+      {
+        "type": "api.max",
+        "source": "web_api",
+        "organization": "org_example",
+        "user": "usr_developer1",
+        "timestamp": "2025-04-15T09:45:30Z",
+        "properties": {
+          "score": 78,
+          "subject":"math"
+        }
+      }
+      ,
+      {
+        "type": "api.max",
+        "source": "web_api",
+        "organization": "org_example",
+        "user": "usr_developer1",
+        "timestamp": "2025-04-15T09:45:30Z",
+        "properties": {
+          "score": 43,
+          "subject":"math"
+        }
+      }
+    ]
+  }
+}

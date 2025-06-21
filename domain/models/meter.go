@@ -50,6 +50,15 @@ const (
 	WindowSizeDay    WindowSize = "day"
 )
 
+func IsValidWindowSize(ws *WindowSize) bool {
+	switch *ws {
+	case WindowSizeMinute, WindowSizeHour, WindowSizeDay:
+		return true
+	default:
+		return false
+	}
+}
+
 // ValidateAggregation returns true if the provided string is a valid aggregation type.
 func ValidateAggregation(value string) bool {
 	switch AggregationEnum(value) {

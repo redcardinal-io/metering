@@ -1,0 +1,25 @@
+meta {
+  name: query_max
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{base_url}}/v1/meters/query
+  body: json
+  auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
+}
+
+body:json {
+  {
+      "meter_slug": "api_max",
+      "window_size": "minute",
+      "from": "2025-04-15T00:06:00Z",
+      "to":"2025-04-20T11:14:00Z",
+      "group_by": ["subject"]
+    }
+}

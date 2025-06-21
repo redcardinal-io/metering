@@ -26,10 +26,10 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 	if q.WindowTimeZone != nil && *q.WindowTimeZone != "UTC" {
 		return "", nil, fmt.Errorf("Currently, only UTC is supported for WindowTimeZone")
 	}
-
 	viewName := GetMeterViewName(q.TenantSlug, q.MeterSlug)
 	var selectColumns []string
 	var groupByColumns []string
+	var adjustedFrom, adjustedTo time.Time
 
 	tz := "UTC" // Default timezone
 	// TODO: Handle time zone conversion in ClickHouse
@@ -40,14 +40,35 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 	// Handle window size grouping
 	groupByWindowSize := q.WindowSize != nil
 	if groupByWindowSize {
+		if q.From == nil || q.To == nil {
+			return "", nil, fmt.Errorf("From/To must be provided when WindowSize is set")
+		}
 		switch *q.WindowSize {
 		case models.WindowSizeMinute:
-			selectColumns = append(selectColumns, fmt.Sprintf("tumbleStart(windowstart, toIntervalMinute(1), '%s') AS windowstart", tz))
-			selectColumns = append(selectColumns, fmt.Sprintf("tumbleEnd(windowend, toIntervalMinute(1), '%s') AS windowend", tz))
+			adjustedFrom = q.From.Truncate(time.Minute)
+			adjustedTo = q.To.Truncate(time.Minute)
+
+			selectColumns = append(selectColumns, "windowstart")
+			selectColumns = append(selectColumns, "windowend")
 		case models.WindowSizeHour:
+			adjustedFrom = q.From.Truncate(time.Hour)
+			truncatedTo := q.To.Truncate(time.Hour)
+			if !truncatedTo.Equal(*q.To) {
+				adjustedTo = truncatedTo.Add(time.Hour)
+			} else {
+				adjustedTo = *q.To
+			}
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleStart(windowstart, toIntervalHour(1), '%s') AS windowstart", tz))
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleEnd(windowend, toIntervalHour(1), '%s') AS windowend", tz))
 		case models.WindowSizeDay:
+			from := *q.From
+			to := *q.To
+			adjustedFrom = time.Date(from.Year(), from.Month(), from.Day(), 0, 0, 0, 0, from.Location())
+			if to.Hour() != 0 || to.Minute() != 0 || to.Second() != 0 || to.Nanosecond() != 0 {
+				adjustedTo = time.Date(to.Year(), to.Month(), to.Day()+1, 0, 0, 0, 0, to.Location())
+			} else {
+				adjustedTo = to
+			}
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleStart(windowstart, toIntervalDay(1), '%s') AS windowstart", tz))
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleEnd(windowend, toIntervalDay(1), '%s') AS windowend", tz))
 		default:
@@ -106,11 +127,11 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 	}
 
 	// Add time range filters
-	if q.From != nil {
-		builder.Where(builder.GE("windowstart", q.From.Unix()))
+	if !adjustedFrom.IsZero() {
+		builder.Where(builder.GE("windowstart", adjustedFrom.Unix()))
 	}
-	if q.To != nil {
-		builder.Where(builder.LE("windowend", q.To.Unix()))
+	if !adjustedTo.IsZero() {
+		builder.Where(builder.LE("windowend", adjustedTo.Unix()))
 	}
 
 	// Add GROUP BY clause

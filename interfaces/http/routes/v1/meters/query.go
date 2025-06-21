@@ -49,6 +49,12 @@ func (h *httpHandler) query(ctx *fiber.Ctx) error {
 		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
 	}
 
+	if req.WindowSize != nil && !models.IsValidWindowSize(req.WindowSize) {
+		errResp := domainerrors.NewErrorResponseWithOpts(nil, domainerrors.EINVALID, "invalid window_size")
+		h.logger.Error("invalid window_size", zap.Reflect("error", errResp))
+		return ctx.Status(errResp.Status).JSON(errResp.ToJson())
+	}
+
 	c := context.WithValue(ctx.UserContext(), constants.TenantSlugKey, tenantSlug)
 	result, err := h.meterSvc.QueryMeter(c, models.QueryMeterParams{
 		MeterSlug:      req.MeterSlug,

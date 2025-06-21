@@ -1,11 +1,15 @@
 meta {
   name: delete
   type: http
-  seq: 7
+  seq: 17
 }
 
 delete {
-  url: 
+  url: {{base_url}}/v1/meters/api_uniquecount
   body: none
   auth: inherit
+}
+
+headers {
+  x-tenant-slug: {{tenant_slug}}
 }
