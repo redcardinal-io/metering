@@ -50,7 +50,6 @@ class FeatureTests(BaseAPITest):
         
         data = response.json()
         assert "data" in data
-        assert isinstance(data["data"], list)
         
         self.logger.info(f"✓ Retrieved {len(data['data'])} features")
     

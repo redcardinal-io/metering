@@ -47,7 +47,7 @@ class PlanTests(BaseAPITest):
         update_data = {
             "plan_id_or_slug": plan_id,
             "user_id": assignment_data["user_id"],
-            "valid_until": (datetime.utcnow() + timedelta(days=60)).isoformat() + "Z",
+            "valid_from": (datetime.utcnow() + timedelta(days=15)).isoformat() + "Z",
             "updated_by": "integration-test"
         }
         

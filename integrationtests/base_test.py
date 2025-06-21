@@ -17,7 +17,7 @@ from urllib3.util.retry import Retry
 @dataclass
 class TestConfig:
     base_url: str = "http://localhost:8000"
-    tenant_slug: str = "test-tenant"
+    tenant_slug: str = "test_tenant"
     timeout: int = 30
     max_retries: int = 3
     backoff_factor: float = 0.3
@@ -167,14 +167,13 @@ class TestDataFactory:
         unique_id = str(uuid.uuid4())[:8]
         return {
             "name": f"Test Meter {unique_id}",
-            "slug": f"test-meter-{unique_id}",
+            "slug": f"test_meter_{unique_id}",
             "description": f"Test meter for integration testing - {unique_id}",
             "event_type": "api_call",
             "aggregation": "count",
-            "properties": ["user_id", "endpoint"],
+            "properties": ["method", "endpoint", "status_code"],
             "populate": True,
-            "created_by": "integration-test",
-            "value_property": "count"
+            "created_by": "integration-test"
         }
     
     @staticmethod
@@ -201,8 +200,7 @@ class TestDataFactory:
             "properties": {
                 "endpoint": "/api/test",
                 "method": "GET",
-                "status_code": 200,
-                "response_time": 0.15
+                "status_code": 200
             }
         }
     

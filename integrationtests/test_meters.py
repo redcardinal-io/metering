@@ -44,4 +44,17 @@ class MeterTests(BaseAPITest):
         
         self.logger.info("✓ Queried meter data successfully")
 
+    def test_delete_meter(self, meter_id: str):
+        """Test deleting a meter"""
+        self.logger.info(f"Testing: Delete Meter - {meter_id}")
+        
+        response = self.client.delete(f"/v1/meters/{meter_id}")
+        self.assert_response_success(response, 204)
+        
+        # Verify feature is deleted
+        response = self.client.get(f"/v1/meters/{meter_id}")
+        self.assert_response_error(response, 404)
+        
+        self.logger.info("✓ Deleted meter successfully")
+    
 
