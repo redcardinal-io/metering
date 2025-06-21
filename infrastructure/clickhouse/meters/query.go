@@ -48,8 +48,8 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 			adjustedFrom = q.From.Truncate(time.Minute)
 			adjustedTo = q.To.Truncate(time.Minute)
 
-			selectColumns = append(selectColumns, fmt.Sprintf("windowstart"))
-			selectColumns = append(selectColumns, fmt.Sprintf("windowend"))
+			selectColumns = append(selectColumns, "windowstart")
+			selectColumns = append(selectColumns, "windowend")
 		case models.WindowSizeHour:
 			adjustedFrom = q.From.Truncate(time.Hour)
 			truncatedTo := q.To.Truncate(time.Hour)
@@ -72,8 +72,6 @@ func (q *QueryMeter) ToSQL() (string, []any, error) {
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleStart(windowstart, toIntervalDay(1), '%s') AS windowstart", tz))
 			selectColumns = append(selectColumns, fmt.Sprintf("tumbleEnd(windowend, toIntervalDay(1), '%s') AS windowend", tz))
 		default:
-			adjustedFrom = *q.From
-			adjustedTo = *q.To
 			return "", nil, fmt.Errorf("unsupported window size")
 		}
 		groupByColumns = append(groupByColumns, "windowstart", "windowend")
