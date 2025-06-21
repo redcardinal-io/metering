@@ -1,0 +1,7 @@
+requests
+pytest
+pytest-html
+pytest-json-report
+urllib3
+dataclasses-json
+colorlog
